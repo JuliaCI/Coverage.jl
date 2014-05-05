@@ -4,8 +4,8 @@
 # https://github.com/IainNZ/Coverage.jl
 #######################################################################
 module Coverage
-    #using Requests
-    using HTTPClient
+    using Requests
+    #using HTTPClient
     using JSON
 
     # process_cov
@@ -80,10 +80,15 @@ module Coverage
         #            files = {"json_file"=>data}, 
         #            {"Content-Type" => "application/x-www-form-urlencoded;charset=UTF-8"})
         #print(r.data)
-        r = HTTPClient.HTTPC.post("https://coveralls.io/api/v1/jobs", #"http://httpbin.org/post", 
-                                    ["json_file" => data])
-        println(r)
-        println(r.body)
+        #r = HTTPClient.HTTPC.post("https://coveralls.io/api/v1/jobs", #"http://httpbin.org/post", 
+        #                            ["json_file" => data])
+        #println(r)
+        #println(r.body)
+
+        # Try Keno's hack
+        files = {JSON.json(data)}
+        r = Requests.post("https://coveralls.io/api/v1/jobs",join([string("--someuniquestring\nContent-Type: text/json\n\n",filetext) for filetext in files],""),["Content-Type"=>"multipart/mixed; boundary=someuniquestring"])
+        println(r.data)
     end
 
 
