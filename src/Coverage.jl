@@ -38,7 +38,7 @@ module Coverage
     function process_src_coveralls(filename)
         return ["name" => filename,
                 "source" => readall(filename),
-                "coverage" => process_cov(filename*".cov")])
+                "coverage" => process_cov(filename*".cov")]
     end
 
     # create_coveralls_post
@@ -61,7 +61,7 @@ module Coverage
     #     }
     #   ]
     # }
-    export create_coveralls_post
+    export create_coveralls_travis_post
     function create_coveralls_travis_post(source_files)
         return ["service_job_id" => ENV["TRAVIS_JOB_ID"],
                 "service_name" => "travis-ci",

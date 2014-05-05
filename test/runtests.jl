@@ -11,3 +11,5 @@ c = process_cov(joinpath("src","Coverage.jl.cov"))
 j = process_src_coveralls(joinpath("src","Coverage.jl"))
 
 g = create_coveralls_travis_post({j})
+
+submit_coveralls(g)
