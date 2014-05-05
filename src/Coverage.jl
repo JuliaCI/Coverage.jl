@@ -73,7 +73,8 @@ module Coverage
     export submit_coveralls
     function submit_coveralls(data)
         println(JSON.json(data))
-        post("https://coveralls.io/api/v1/jobs"; data = {"json_file" => JSON.json(data)})
+        response = post("https://coveralls.io/api/v1/jobs"; data = {"json_file" => JSON.json(data)})
+        dump(response)
     end
 
 
