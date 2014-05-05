@@ -4,7 +4,8 @@
 # https://github.com/IainNZ/Coverage.jl
 #######################################################################
 module Coverage
-    using Requests
+    #using Requests
+    using HTTPClient
     using JSON
 
     # process_cov
@@ -73,8 +74,16 @@ module Coverage
     export submit_coveralls
     function submit_coveralls(data)
         println(JSON.json(data))
-        response = post("https://coveralls.io/api/v1/jobs"; data = {"json_file" => JSON.json(data)})
-        dump(response)
+        println(JSON.parse(JSON.json(data)))
+        
+        #r = post(URI("http://httpbin.org/post"), #"https://coveralls.io/api/v1/jobs"),
+        #            files = {"json_file"=>data}, 
+        #            {"Content-Type" => "application/x-www-form-urlencoded;charset=UTF-8"})
+        #print(r.data)
+        r = HTTPClient.HTTPC.post("https://coveralls.io/api/v1/jobs", #"http://httpbin.org/post", 
+                                    ["json_file" => data])
+        println(r)
+        println(r.body)
     end
 
 
