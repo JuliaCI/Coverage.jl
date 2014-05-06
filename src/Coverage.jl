@@ -87,7 +87,7 @@ module Coverage
 
         # Try Keno's hack
         files = {JSON.json(data)}
-        r = Requests.post(URI("https://coveralls.io/api/v1/jobs"),join([string("--someuniquestring\nContent-Type: text/json\n\n",filetext) for filetext in files],""),["Content-Type"=>"multipart/mixed; boundary=someuniquestring"])
+        r = Requests.post(URI("https://coveralls.io/api/v1/jobs"), data={"json" => JSON.json(data)}, headers={"Content-Type"=>"text/form-data"})
         println(r.data)
     end
 
