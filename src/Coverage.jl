@@ -5,7 +5,6 @@
 #######################################################################
 module Coverage
     using Requests
-    #using HTTPClient
     using JSON
 
     # process_cov
@@ -25,72 +24,79 @@ module Coverage
         return coverage
     end
 
-    # process_src_coveralls
-    # Given a .jl file, return the Coveralls.io dictionary for this
-    # file by reading in the file and its matching .cov. Don't convert
-    # to JSON yet, just return dictionary. 
-    # https://coveralls.io/docs/api
-    # {
-    #   "name" : "$filename"
-    #   "source": "...\n....\n...."
-    #   "coverage": [null, 1, null]
-    # }
-    export process_src_coveralls
-    function process_src_coveralls(filename)
-        return ["name" => filename,
-                "source" => readall(filename),
-                "coverage" => process_cov(filename*".cov")]
-    end
-
-    # create_coveralls_post
-    # Create the request to submit to Coveralls.io (as a dictionary, 
-    # not a JSON string)
-    # https://coveralls.io/docs/api
-    # {
-    #   "service_job_id": "1234567890",
-    #   "service_name": "travis-ci",
-    #   "source_files": [
-    #     {
-    #       "name": "example.rb",
-    #       "source": "def four\n  4\nend",
-    #       "coverage": [null, 1, null]
-    #     },
-    #     {
-    #       "name": "lib/two.rb",
-    #       "source": "def seven\n  eight\n  nine\nend",
-    #       "coverage": [null, 1, 0, null]
-    #     }
-    #   ]
-    # }
-    export create_coveralls_travis_post
-    function create_coveralls_travis_post(source_files)
-        return ["service_job_id" => ENV["TRAVIS_JOB_ID"],
-                "service_name" => "travis-ci",
-                "source_files" => source_files]
-    end
-
-    # submit_coveralls
-    # Submit coverage to Coveralls.io
-    export submit_coveralls
-    function submit_coveralls(data)
-        println(JSON.json(data))
-        println(JSON.parse(JSON.json(data)))
+    export Coveralls
+    module Coveralls
+        using Coverage
         
-        #r = post(URI("http://httpbin.org/post"), #"https://coveralls.io/api/v1/jobs"),
-        #            files = {"json_file"=>data}, 
-        #            {"Content-Type" => "application/x-www-form-urlencoded;charset=UTF-8"})
-        #print(r.data)
-        #r = HTTPClient.HTTPC.post("https://coveralls.io/api/v1/jobs", #"http://httpbin.org/post", 
-        #                            ["json_file" => data])
-        #println(r)
-        #println(r.body)
+        # coveralls_process_file
+        # Given a .jl file, return the Coveralls.io dictionary for this
+        # file by reading in the file and its matching .cov. Don't convert
+        # to JSON yet, just return dictionary. 
+        # https://coveralls.io/docs/api
+        # {
+        #   "name" : "$filename"
+        #   "source": "...\n....\n...."
+        #   "coverage": [null, 1, null]
+        # }
+        export process_file
+        function process_file(filename)
+            return ["name" => filename,
+                    "source" => readall(filename),
+                    "coverage" => process_cov(filename*".cov")]
+        end
 
-        # Try Keno's hack
-        files = {JSON.json(data)}
-        r = Requests.post(URI("https://coveralls.io/api/v1/jobs"), data={"json" => JSON.json(data)}, headers={"Content-Type"=>"text/form-data"})
-        println(r.data)
-    end
+        # coveralls_process_src
+        # Recursively walk through a Julia package's src/ folder
+        # and collect coverage statistics
+        export process_folder
+        function process_folder(folder="src",source_files={})
+            filelist = readdir(folder)
+            for file in filelist
+                fullfile = joinpath(folder,file)
+                println(fullfile)
+                if isfile(fullfile)
+                    try
+                        new_sf = process_file(fullfile)
+                        push!(source_files, new_sf)
+                    catch
+                        # Skip
+                        println("Skipped $fullfile")
+                    end
+                else isdir(fullfile)
+                    process_folder(fullfile,source_files)
+                end
+            end
+            if folder == "src"
+                return source_files
+            end
+        end
 
-
-
+        # submit
+        # Submit coverage to Coveralls.io
+        # https://coveralls.io/docs/api
+        # {
+        #   "service_job_id": "1234567890",
+        #   "service_name": "travis-ci",
+        #   "source_files": [
+        #     {
+        #       "name": "example.rb",
+        #       "source": "def four\n  4\nend",
+        #       "coverage": [null, 1, null]
+        #     },
+        #     {
+        #       "name": "lib/two.rb",
+        #       "source": "def seven\n  eight\n  nine\nend",
+        #       "coverage": [null, 1, 0, null]
+        #     }
+        #   ]
+        # }
+        export submit
+        function submit(source_files)
+            data = ["service_job_id" => ENV["TRAVIS_JOB_ID"],
+                    "service_name" => "travis-ci",
+                    "source_files" => source_files]
+            r = Requests.post(URI("https://coveralls.io/api/v1/jobs"), data={"json" => JSON.json(data)}, headers={"Content-Type"=>"text/form-data"})
+            dump(r.data)
+        end
+    end  # module Coveralls
 end

@@ -6,6 +6,5 @@
 
 using Coverage
 
-j = process_src_coveralls(joinpath("test","data","Coverage.jl"))
-g = create_coveralls_travis_post({j})
-submit_coveralls(g)
+cd(Pkg.dir("Coverage"))
+j = Coveralls.process_file(joinpath("test","data","Coverage.jl"))
