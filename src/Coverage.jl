@@ -4,8 +4,6 @@
 # https://github.com/IainNZ/Coverage.jl
 #######################################################################
 module Coverage
-    using Requests
-    using JSON
 
     # process_cov
     # Given a .cov file, return the counts for each line, where the
@@ -26,8 +24,10 @@ module Coverage
 
     export Coveralls
     module Coveralls
+        using Requests
         using Coverage
-        
+        using JSON
+
         # coveralls_process_file
         # Given a .jl file, return the Coveralls.io dictionary for this
         # file by reading in the file and its matching .cov. Don't convert
