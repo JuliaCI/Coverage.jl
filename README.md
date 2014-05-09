@@ -22,8 +22,10 @@ After enabling Coveralls.io for your repo, add something like this to your `.tra
 
 ```
 - julia --code-coverage test/runtests.jl
-- julia -e 'Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'
+- julia -e 'cd(Pkg.dir("MyPackage")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'
 ```
 
 * The first line says to run the tests with the code-coverage option enabled.
-* The second line downloads this package, collects the per-file coverage data, then bundles it up and submits to Coveralls. It assumes that the working directory is the package directory. If this isn't the case, you might want to stick a `cd(Pkg.dir("MyPackage"))` in there. Pull Requests welcome for a better setup.
+* The second line downloads this package, collects the per-file coverage data, then bundles it up and submits to Coveralls. It assumes that the working directory is the package directory.
+
+Note: something is screwy somewhere in the interaction between HttpParser.jl and Coveralls.io when it comes to UTF8 strings. As a result, only ASCII characters will appear in the Coveralls.io listings.
