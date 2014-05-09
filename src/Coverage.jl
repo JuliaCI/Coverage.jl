@@ -28,6 +28,14 @@ module Coverage
         using Coverage
         using JSON
 
+        # ***HACK***
+        # Something seems to be wrong with Coveralls, or HttpParser's
+        # interaction with it. Basically, non-ASCII seems to kill it.
+        # So this kills the non-ASCII - may the Unicode Gods have mercy
+        # on our souls
+        striputf8(s) = 
+            bytestring( [int(c) > 127 ? uint8('?') : uint8(c) for c in s])
+
         # coveralls_process_file
         # Given a .jl file, return the Coveralls.io dictionary for this
         # file by reading in the file and its matching .cov. Don't convert
@@ -41,7 +49,7 @@ module Coverage
         export process_file
         function process_file(filename)
             return ["name" => filename,
-                    "source" => readall(filename),
+                    "source" => striputf8(readall(filename)),
                     "coverage" => process_cov(filename*".cov")]
         end
 
