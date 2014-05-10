@@ -18,12 +18,13 @@ you will find a matching `.cov` file for every `.jl` file run.
 
 ## How do I use Coverage.jl to get automated test coverage results submitted to Coveralls.io?
 
-After enabling Coveralls.io for your repo, add something like this to your `.travis.yml`:
+After enabling Coveralls.io for your repo, and changing your ``runtests`` line to use the ``--code-coverage`` option, add something like this to the end of your `.travis.yml`:
 
-```
-- julia --code-coverage test/runtests.jl
+```yml
+after_success:
 - julia -e 'cd(Pkg.dir("MyPackage")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'
 ```
 
-* The first line says to run the tests with the code-coverage option enabled.
-* The second line downloads this package, collects the per-file coverage data, then bundles it up and submits to Coveralls. It assumes that the working directory is the package directory.
+* The line downloads this package, collects the per-file coverage data, then bundles it up and submits to Coveralls. Coverage assumes that the working directory is the package directory, so it changes to that first.
+
+You can see examples [here](https://github.com/JuliaOpt/JuMP.jl/blob/master/.travis.yml) and [here](https://github.com/cdsousa/Robotics.jl/blob/master/.travis.yml)
