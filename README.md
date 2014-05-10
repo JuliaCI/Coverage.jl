@@ -27,5 +27,3 @@ After enabling Coveralls.io for your repo, add something like this to your `.tra
 
 * The first line says to run the tests with the code-coverage option enabled.
 * The second line downloads this package, collects the per-file coverage data, then bundles it up and submits to Coveralls. It assumes that the working directory is the package directory.
-
-Note: something is screwy somewhere in the interaction between HttpParser.jl and Coveralls.io when it comes to UTF8 strings. As a result, only ASCII characters will appear in the Coveralls.io listings.

@@ -28,18 +28,10 @@ module Coverage
         using Coverage
         using JSON
 
-        # ***HACK***
-        # Something seems to be wrong with Coveralls, or HttpParser's
-        # interaction with it. Basically, non-ASCII seems to kill it.
-        # So this kills the non-ASCII - may the Unicode Gods have mercy
-        # on our souls
-        striputf8(s) = 
-            bytestring( [int(c) > 127 ? uint8('?') : uint8(c) for c in s])
-
         # coveralls_process_file
         # Given a .jl file, return the Coveralls.io dictionary for this
         # file by reading in the file and its matching .cov. Don't convert
-        # to JSON yet, just return dictionary. 
+        # to JSON yet, just return dictionary.
         # https://coveralls.io/docs/api
         # {
         #   "name" : "$filename"
@@ -49,7 +41,7 @@ module Coverage
         export process_file
         function process_file(filename)
             return ["name" => filename,
-                    "source" => striputf8(readall(filename)),
+                    "source" => readall(filename),
                     "coverage" => process_cov(filename*".cov")]
         end
 
@@ -66,7 +58,10 @@ module Coverage
                     try
                         new_sf = process_file(fullfile)
                         push!(source_files, new_sf)
-                    catch
+                    catch e
+                        if !isa(e,SystemError)
+                            rethrow(e)
+                        end
                         # Skip
                         println("Skipped $fullfile")
                     end
@@ -98,12 +93,21 @@ module Coverage
         #     }
         #   ]
         # }
-        export submit
+        export submit, submit_token
         function submit(source_files)
             data = ["service_job_id" => ENV["TRAVIS_JOB_ID"],
                     "service_name" => "travis-ci",
                     "source_files" => source_files]
-            r = Requests.post(URI("https://coveralls.io/api/v1/jobs"), data={"json" => JSON.json(data)}, headers={"Content-Type"=>"text/form-data"})
+            r = Requests.post(URI("https://coveralls.io/api/v1/jobs"), files =
+                [FileParam(JSON.json(data),"application/json","json_file","coverage.json")])
+            dump(r.data)
+        end
+
+        function submit_token(source_files)
+            data = ["repo_token" => ENV["REPO_TOKEN"],
+                    "source_files" => source_files]
+            r = post(URI("https://coveralls.io/api/v1/jobs"), files =
+                [FileParam(JSON.json(data),"application/json","json_file","coverage.json")])
             dump(r.data)
         end
     end  # module Coveralls
