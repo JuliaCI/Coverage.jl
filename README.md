@@ -25,6 +25,7 @@ If you make it through that, consider adding your package to the list below. Alt
 
 *Pull requests to add your package welcome (or open an issue)*
 
+* [DataFrames.jl](https://github.com/JuliaStats/DataFrames.jl/blob/master/.travis.yml)
 * [Gadfly](https://github.com/dcjones/Gadfly.jl/blob/master/.travis.yml)
 * [IntervalTrees.jl](https://github.com/BioJulia/IntervalTrees.jl/blob/master/.travis.yml)
 * [JuMP](https://github.com/JuliaOpt/JuMP.jl/blob/master/.travis.yml)
