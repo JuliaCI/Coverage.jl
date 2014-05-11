@@ -18,7 +18,8 @@ Right now, that is submitting them to [Coveralls.io](https://coveralls.io), a te
 after_success:
 - julia -e 'cd(Pkg.dir("MyPackage")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'
 ```
-5. Consider adding your package to the list below!
+
+If you make it through that, consider adding your package to the list below. Alternatively, if you get stuck see on the examples below or checkout [Coveralls troubleshooting page](https://coveralls.io/docs/troubleshooting).
 
 ## Julia packages using Coverage.jl
 
