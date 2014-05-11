@@ -33,6 +33,7 @@ If you make it through that, consider adding your package to the list below. Alt
 * [RationalSimplex.jl](https://github.com/IainNZ/RationalSimplex.jl/blob/master/.travis.yml)
 * [Robotics.jl](https://github.com/cdsousa/Robotics.jl/blob/master/.travis.yml)
 * [SIUnits.jl](https://github.com/loladiro/SIUnits.jl/blob/master/.travis.yml)
+* [StatsBase.jl](https://github.com/JuliaStats/StatsBase.jl/blob/master/.travis.yml)
 * [URIParser.jl](https://github.com/loladiro/URIParser.jl/blob/master/.travis.yml)
 * [URITemplate.jl](https://github.com/loladiro/URITemplate.jl/blob/master/.travis.yml)
 * [YAML.jl](https://github.com/dcjones/YAML.jl)
