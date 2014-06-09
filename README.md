@@ -39,6 +39,7 @@ If you make it through that, consider adding your package to the list below. Alt
 * [LinearExpressions.jl](https://github.com/cdsousa/LinearExpressions.jl/blob/master/.travis.yml)
 * [ODE.jl](https://github.com/JuliaLang/ODE.jl/blob/master/.travis.yml)
 * [OpenCL.jl](https://github.com/JuliaGPU/OpenCL.jl/blob/master/.travis.yml)
+* [PValueAdjust.jl](https://github.com/dirkschumacher/PValueAdjust.jl/blob/master/.travis.yml)
 * [RationalSimplex.jl](https://github.com/IainNZ/RationalSimplex.jl/blob/master/.travis.yml)
 * [Requests.jl](https://github.com/loladiro/Requests.jl/blob/master/.travis.yml)
 * [Robotics.jl](https://github.com/cdsousa/Robotics.jl/blob/master/.travis.yml)
