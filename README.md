@@ -28,6 +28,7 @@ If you make it through that, consider adding your package to the list below. Alt
 * [CAIRS.jl](https://github.com/scheidan/CAIRS.jl/blob/master/.travis.yml)
 * [DASSL.jl](https://github.com/pwl/DASSL.jl/blob/master/.travis.yml)
 * [DataFrames.jl](https://github.com/JuliaStats/DataFrames.jl/blob/master/.travis.yml)
+* [Distributions.jl](https://github.com/JuliaStats/Distributions.jl/blob/master/.travis.yml)
 * [DSP.jl](https://github.com/JuliaDSP/DSP.jl/blob/master/.travis.yml)
 * [Gadfly.jl](https://github.com/dcjones/Gadfly.jl/blob/master/.travis.yml)
 * [Glob.jl](https://github.com/vtjnash/Glob.jl/blob/master/.travis.yml)
