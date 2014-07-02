@@ -49,7 +49,8 @@ module Coverage
         # Recursively walk through a Julia package's src/ folder
         # and collect coverage statistics
         export process_folder
-        function process_folder(folder="src",source_files={})
+        function process_folder(folder="src")
+            source_files={}
             filelist = readdir(folder)
             for file in filelist
                 fullfile = joinpath(folder,file)
@@ -66,12 +67,10 @@ module Coverage
                         println("Skipped $fullfile")
                     end
                 else isdir(fullfile)
-                    process_folder(fullfile,source_files)
+                    append!(source_files, process_folder(fullfile))
                 end
             end
-            if folder == "src"
-                return source_files
-            end
+            return source_files
         end
 
         # submit
