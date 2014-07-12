@@ -146,7 +146,7 @@ module Coverage
                 file = joinpath(dir, file)
                 if isdir(file)
                     append!(files, find_malloc_files(file))
-                elseif endswith(file, "jl.mlc")
+                elseif endswith(file, "jl.mem")
                     push!(files, file)
                 end
             end
@@ -158,7 +158,7 @@ module Coverage
     analyze_malloc(dirs) = analyze_malloc_files(find_malloc_files(dirs))
     analyze_malloc(dir::ByteString) = analyze_malloc([dir])
 
-    # Support Unix command line usage like julia Coverage.jl $(find ~/.julia/v0.3 -name "*.jl.mlc")
+    # Support Unix command line usage like `julia Coverage.jl $(find ~/.julia/v0.3 -name "*.jl.mem")`
     if !isinteractive()
         bc = analyze_malloc_files(ARGS)
         println(bc)
