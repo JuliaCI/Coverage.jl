@@ -33,6 +33,7 @@ If you make it through that, consider adding your package to the list below. Alt
 * [DSP.jl](https://github.com/JuliaDSP/DSP.jl/blob/master/.travis.yml)
 * [Gadfly.jl](https://github.com/dcjones/Gadfly.jl/blob/master/.travis.yml)
 * [Glob.jl](https://github.com/vtjnash/Glob.jl/blob/master/.travis.yml)
+* [GradientBoost.jl](https://github.com/svs14/GradientBoost.jl/blob/master/.travis.yml)
 * [GraphLayout.jl](https://github.com/IainNZ/GraphLayout.jl/blob/master/.travis.yml)
 * [Homebrew.jl](https://github.com/JuliaLang/Homebrew.jl/blob/master/.travis.yml)
 * [HttpParser.jl](https://github.com/JuliaLang/HttpParser.jl/blob/master/.travis.yml)
