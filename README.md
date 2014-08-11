@@ -25,6 +25,7 @@ If you make it through that, consider adding your package to the list below. Alt
 
 *Pull requests to add your package welcome (or open an issue)*
 
+* [ArgParse.jl](https://github.com/carlobaldassi/ArgParse.jl/blob/master/.travis.yml)
 * [CAIRS.jl](https://github.com/scheidan/CAIRS.jl/blob/master/.travis.yml)
 * [DASSL.jl](https://github.com/pwl/DASSL.jl/blob/master/.travis.yml)
 * [DataFrames.jl](https://github.com/JuliaStats/DataFrames.jl/blob/master/.travis.yml)
@@ -48,6 +49,7 @@ If you make it through that, consider adding your package to the list below. Alt
 * [Robotics.jl](https://github.com/cdsousa/Robotics.jl/blob/master/.travis.yml)
 * [SIUnits.jl](https://github.com/loladiro/SIUnits.jl/blob/master/.travis.yml)
 * [StatsBase.jl](https://github.com/JuliaStats/StatsBase.jl/blob/master/.travis.yml)
+* [TextWrap.jl](https://github.com/carlobaldassi/TextWrap.jl/blob/master/.travis.yml)
 * [TimeData.jl](https://github.com/cgroll/TimeData.jl/blob/master/.travis.yml)
 * [TypeCheck.jl](https://github.com/astrieanna/TypeCheck.jl/blob/master/.travis.yml)
 * [URIParser.jl](https://github.com/loladiro/URIParser.jl/blob/master/.travis.yml)
