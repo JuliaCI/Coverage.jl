@@ -32,6 +32,7 @@ If you make it through that, consider adding your package to the list below. Alt
 * [Decimals.jl](https://github.com/tensorjack/Decimals.jl/blob/master/.travis.yml)
 * [Distributions.jl](https://github.com/JuliaStats/Distributions.jl/blob/master/.travis.yml)
 * [DSP.jl](https://github.com/JuliaDSP/DSP.jl/blob/master/.travis.yml)
+* [FastaIO.jl](https://github.com/carlobaldassi/FastaIO.jl/blob/master/.travis.yml)
 * [Gadfly.jl](https://github.com/dcjones/Gadfly.jl/blob/master/.travis.yml)
 * [Glob.jl](https://github.com/vtjnash/Glob.jl/blob/master/.travis.yml)
 * [GraphLayout.jl](https://github.com/IainNZ/GraphLayout.jl/blob/master/.travis.yml)
