@@ -11,12 +11,14 @@ Right now, that is submitting them to [Coveralls.io](https://coveralls.io), a te
 ## Using Coverage.jl with Coveralls.io?
 
 1. Enable [Coveralls.io](https://coveralls.io) for your repository. If it is public on GitHub and you are using using TravisCI, this is all you need to do. If this isn't the case, please submit an issue, and we can work on adding additional functionality for your use case.
-2. You must be using `Julia 0.3` or higher, which added the `--code-coverage` commandline argument. If you are testing against Julia 0.2 and 0.3, you will want to put an `if` around some of the following lines - see an [example](https://github.com/JuliaOpt/JuMP.jl/blob/master/.travis.yml) for more detail.
-3. Use the commandline option when you run your tests, e.g. `julia --code-coverage test/runtests.jl`.
+2. You must be using `Julia 0.3` or higher, which added the `--code-coverage` command line argument.
+3. Use the command line option when you run your tests
+  * Either with something like `julia --code-coverage test/runtests.jl`, or
+  * with something like  `julia -e 'Pkg.test("MyPkg", coverage=true)'`
 4. Add the following to the end of your `.travis.yml` file. This line downloads this package, collects the per-file coverage data, then bundles it up and submits to Coveralls. Coverage.jl assumes that the working directory is the package directory, so it changes to that first (so don't forget to replace `MyPackage` with your package's name!
 ```yml
 after_success:
-- julia -e 'cd(Pkg.dir("MyPackage")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'
+- julia -e 'cd(Pkg.dir("MyPkg")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'
 ```
 
 If you make it through that, consider adding your package to the list below. Alternatively, if you get stuck see on the examples below or checkout [Coveralls troubleshooting page](https://coveralls.io/docs/troubleshooting).
