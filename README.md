@@ -36,6 +36,7 @@ If you make it through that, consider adding your package to the list below. Alt
 * [Distributions.jl](https://github.com/JuliaStats/Distributions.jl/blob/master/.travis.yml)
 * [DSP.jl](https://github.com/JuliaDSP/DSP.jl/blob/master/.travis.yml)
 * [FastaIO.jl](https://github.com/carlobaldassi/FastaIO.jl/blob/master/.travis.yml)
+* [FiniteStateMachine.jl](https://github.com/tensorjack/FiniteStateMachine.jl/blob/master/.travis.yml)
 * [Gadfly.jl](https://github.com/dcjones/Gadfly.jl/blob/master/.travis.yml)
 * [Glob.jl](https://github.com/vtjnash/Glob.jl/blob/master/.travis.yml)
 * [GradientBoost.jl](https://github.com/svs14/GradientBoost.jl/blob/master/.travis.yml)
