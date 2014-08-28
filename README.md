@@ -51,6 +51,7 @@ If you make it through that, consider adding your package to the list below. Alt
 * [ODE.jl](https://github.com/JuliaLang/ODE.jl/blob/master/.travis.yml)
 * [OpenCL.jl](https://github.com/JuliaGPU/OpenCL.jl/blob/master/.travis.yml)
 * [PValueAdjust.jl](https://github.com/dirkschumacher/PValueAdjust.jl/blob/master/.travis.yml)
+* [QuantEcon.jl](https://github.com/spencerlyon2/QuantEcon.jl/blob/master/.travis.yml)
 * [RationalSimplex.jl](https://github.com/IainNZ/RationalSimplex.jl/blob/master/.travis.yml)
 * [RDF.jl](https://github.com/joejimbo/RDF.jl/blob/master/.travis.yml)
 * [Requests.jl](https://github.com/loladiro/Requests.jl/blob/master/.travis.yml)
