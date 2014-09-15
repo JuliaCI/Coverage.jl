@@ -22,6 +22,27 @@ module Coverage
         return coverage
     end
 
+    export src_files
+    function src_files(;folder="src", pkg="")
+        source_files = String[]
+
+        # Prioritize pkg keyword
+        if pkg != ""
+            folder = Pkg.dir(pkg)*"/src"
+        end
+
+        filelist = readdir(folder)
+        for file in filelist
+            fullfile = joinpath(folder,file)
+            if isfile(fullfile) && endswith(fullfile, ".jl")
+                push!(source_files, fullfile)
+            elseif isdir(fullfile)
+                append!(source_files, src_files(folder=fullfile))
+            end
+        end
+        return source_files
+    end
+
     export Coveralls
     module Coveralls
         using Requests
@@ -50,27 +71,21 @@ module Coverage
         # and collect coverage statistics
         export process_folder
         function process_folder(folder="src")
-            source_files={}
-            filelist = readdir(folder)
+            filelist = src_files(folder=folder)
             for file in filelist
-                fullfile = joinpath(folder,file)
-                println(fullfile)
-                if isfile(fullfile)
-                    try
-                        new_sf = process_file(fullfile)
-                        push!(source_files, new_sf)
-                    catch e
-                        if !isa(e,SystemError)
-                            rethrow(e)
-                        end
-                        # Skip
-                        println("Skipped $fullfile")
+                println(file)
+                try
+                    new_sf = process_file(file)
+                    push!(processed_files, new_sf)
+                catch err
+                    if !isa(err,SystemError)
+                        rethrow(e)
                     end
-                else isdir(fullfile)
-                    append!(source_files, process_folder(fullfile))
+                    # Skip
+                    println("Skipped $file")
                 end
             end
-            return source_files
+            return processed_files
         end
 
         # submit
