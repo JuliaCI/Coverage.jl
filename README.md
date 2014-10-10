@@ -38,6 +38,7 @@ If you make it through that, consider adding your package to the list below. Alt
 * [FastaIO.jl](https://github.com/carlobaldassi/FastaIO.jl/blob/master/.travis.yml)
 * [FiniteStateMachine.jl](https://github.com/tensorjack/FiniteStateMachine.jl/blob/master/.travis.yml)
 * [Gadfly.jl](https://github.com/dcjones/Gadfly.jl/blob/master/.travis.yml)
+* [GeometricalPredicates.jl](https://github.com/skariel/GeometricalPredicates.jl/blob/master/.travis.yml)
 * [Glob.jl](https://github.com/vtjnash/Glob.jl/blob/master/.travis.yml)
 * [GradientBoost.jl](https://github.com/svs14/GradientBoost.jl/blob/master/.travis.yml)
 * [GraphLayout.jl](https://github.com/IainNZ/GraphLayout.jl/blob/master/.travis.yml)
