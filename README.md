@@ -15,7 +15,7 @@ Right now, that is submitting them to [Coveralls.io](https://coveralls.io), a te
 3. Use the command line option when you run your tests
   * Either with something like `julia --code-coverage test/runtests.jl`, or
   * with something like  `julia -e 'Pkg.test("MyPkg", coverage=true)'`
-4. Add the following to the end of your `.travis.yml` file. This line downloads this package, collects the per-file coverage data, then bundles it up and submits to Coveralls. Coverage.jl assumes that the working directory is the package directory, so it changes to that first (so don't forget to replace `MyPackage` with your package's name!
+4. Add the following to the end of your `.travis.yml` file. This line downloads this package, collects the per-file coverage data, then bundles it up and submits to Coveralls. Coverage.jl assumes that the working directory is the package directory, so it changes to that first (so don't forget to replace `MyPkg` with your package's name!
 ```yml
 after_success:
 - julia -e 'cd(Pkg.dir("MyPkg")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'
@@ -51,6 +51,7 @@ If you make it through that, consider adding your package to the list below. Alt
 * [Orchestra.jl](https://github.com/svs14/Orchestra.jl/blob/master/.travis.yml)
 * [ODE.jl](https://github.com/JuliaLang/ODE.jl/blob/master/.travis.yml)
 * [OpenCL.jl](https://github.com/JuliaGPU/OpenCL.jl/blob/master/.travis.yml)
+* [OpenStreetMap.jl](https://github.com/tedsteiner/OpenStreetMap.jl/blob/master/.travis.yml)
 * [PValueAdjust.jl](https://github.com/dirkschumacher/PValueAdjust.jl/blob/master/.travis.yml)
 * [QuantEcon.jl](https://github.com/spencerlyon2/QuantEcon.jl/blob/master/.travis.yml)
 * [RationalSimplex.jl](https://github.com/IainNZ/RationalSimplex.jl/blob/master/.travis.yml)
