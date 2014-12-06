@@ -46,6 +46,7 @@ If you make it through that, consider adding your package to the list below. Alt
 * [Homebrew.jl](https://github.com/JuliaLang/Homebrew.jl/blob/master/.travis.yml)
 * [HttpParser.jl](https://github.com/JuliaLang/HttpParser.jl/blob/master/.travis.yml)
 * [IntervalTrees.jl](https://github.com/BioJulia/IntervalTrees.jl/blob/master/.travis.yml)
+* [JuliaReport.jl](https://github.com/mpastell/JuliaReport.jl/blob/master/.travis.yml)
 * [JuMP.jl](https://github.com/JuliaOpt/JuMP.jl/blob/master/.travis.yml)
 * [LibGit2.jl](https://github.com/jakebolewski/LibGit2.jl/blob/master/.travis.yml)
 * [LinearExpressions.jl](https://github.com/cdsousa/LinearExpressions.jl/blob/master/.travis.yml)
