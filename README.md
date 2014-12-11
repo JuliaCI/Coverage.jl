@@ -30,7 +30,7 @@ If you make it through that, consider adding your package to the list below. Alt
 * [ArgParse.jl](https://github.com/carlobaldassi/ArgParse.jl/blob/master/.travis.yml)
 * [AudioIO.jl](https://github.com/ssfrr/AudioIO.jl/blob/master/.travis.yml)
 * [CAIRS.jl](https://github.com/scheidan/CAIRS.jl/blob/master/.travis.yml)
-* [Cumulants.jl](https://github.com/tensorjack/Cumulants.jl/blob/master/.travis.yml)
+* [CumulantTensors.jl](https://github.com/tensorjack/CumulantTensors.jl/blob/master/.travis.yml)
 * [DASSL.jl](https://github.com/pwl/DASSL.jl/blob/master/.travis.yml)
 * [DataFrames.jl](https://github.com/JuliaStats/DataFrames.jl/blob/master/.travis.yml)
 * [Decimals.jl](https://github.com/tensorjack/Decimals.jl/blob/master/.travis.yml)
