@@ -66,6 +66,7 @@ If you make it through that, consider adding your package to the list below. Alt
 * [TypeCheck.jl](https://github.com/astrieanna/TypeCheck.jl/blob/master/.travis.yml)
 * [URIParser.jl](https://github.com/loladiro/URIParser.jl/blob/master/.travis.yml)
 * [URITemplate.jl](https://github.com/loladiro/URITemplate.jl/blob/master/.travis.yml)
+* [WAV.jl](https://github.com/dancasimiro/WAV.jl/blob/master/.travis.yml)
 * [Weave.jl](https://github.com/mpastell/Weave.jl/blob/master/.travis.yml)
 * [WeightedStats.jl](https://github.com/tensorjack/WeightedStats.jl/blob/master/.travis.yml)
 * [YAML.jl](https://github.com/dcjones/YAML.jl)
