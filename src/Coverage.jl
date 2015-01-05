@@ -5,10 +5,12 @@
 #######################################################################
 module Coverage
 
+    import JuliaParser.Parser
+
     # process_cov
     # Given a .cov file, return the counts for each line, where the
     # lines that can't be counted are denoted with a -1
-    export process_cov
+    export process_cov, amend_coverage_from_src!
     function process_cov(filename)
         fp = open(filename, "r")
         lines = readlines(fp)
@@ -20,6 +22,41 @@ module Coverage
         end
         close(fp)
         return coverage
+    end
+    function amend_coverage_from_src!(coverage, srcname)
+        line = 0
+        io = open(srcname)
+        while !eof(io)
+            ast = Parser.parse(io)
+            isa(ast, Expr) || continue
+            linerngt = linerange(ast)
+            linerngt[1] > linerngt[2] && continue
+            linerng = line + (linerngt[1]:linerngt[2])
+            line = last(linerng)
+            Base.Cartesian.isfuncexpr(ast) || continue
+            for l in linerng
+                if coverage[l] == nothing
+                    coverage[l] = 0
+                end
+            end
+        end
+        coverage
+    end
+    linerange(ast::Expr) = linerange(ast::Expr, (typemax(Int), 0))
+    linerange(arg, rng) = rng
+    function linerange(node::LineNumberNode, rng)
+        ln = node.line
+        (min(rng[1],ln),max(rng[2],ln))
+    end
+    function linerange(ast::Expr, rng)
+        if ast.head == :line
+            ln = ast.args[1]
+            return (min(rng[1],ln),max(rng[2],ln))
+        end
+        for a in ast.args
+            rng = linerange(a, rng)
+        end
+        rng
     end
 
     export Coveralls
@@ -42,7 +79,7 @@ module Coverage
         function process_file(filename)
             return ["name" => filename,
                     "source" => readall(filename),
-                    "coverage" => process_cov(filename*".cov")]
+                    "coverage" => amend_coverage_from_src!(process_cov(filename*".cov"), filename)]
         end
 
         # coveralls_process_src
