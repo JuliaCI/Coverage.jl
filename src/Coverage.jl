@@ -13,6 +13,14 @@ module Coverage
     # lines that can't be counted are denoted with a -1
     export process_cov, amend_coverage_from_src!
     function process_cov(filename)
+        if !isfile(filename)
+            srcname, ext = splitext(filename)
+            lines = open(srcname) do fp
+                readlines(fp)
+            end
+            coverage = Array(Union(Nothing,Int), length(lines))
+            return fill!(coverage, nothing)
+        end
         fp = open(filename, "r")
         lines = readlines(fp)
         num_lines = length(lines)
@@ -39,7 +47,7 @@ module Coverage
                 pos = position(io)
                 linestart = minimum(searchsorted(linepos, pos))
                 ast = Parser.parse(io)
-                isa(ast, Expr) || (warn("Non-expression found at position $pos:$(position(io)), starting line $linestart"); continue)
+                isa(ast, Expr) || continue
                 flines = function_body_lines(ast)
                 if !isempty(flines)
                     flines += linestart-1
@@ -109,6 +117,10 @@ module Coverage
             source_files=Any[]
             filelist = readdir(folder)
             for file in filelist
+                _, ext = splitext(file)
+                if ext != ".jl"
+                    continue
+                end
                 fullfile = joinpath(folder,file)
                 println(fullfile)
                 if isfile(fullfile)
@@ -116,9 +128,9 @@ module Coverage
                         new_sf = process_file(fullfile)
                         push!(source_files, new_sf)
                     catch e
-                        if !isa(e,SystemError)
-                            rethrow(e)
-                        end
+#                         if !isa(e,SystemError)
+#                             rethrow(e)
+#                         end
                         # Skip
                         println("Skipped $fullfile")
                     end
