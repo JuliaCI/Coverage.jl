@@ -11,7 +11,7 @@ module Coverage
     # process_cov
     # Given a .cov file, return the counts for each line, where the
     # lines that can't be counted are denoted with a -1
-    export process_cov, amend_coverage_from_src!, coverage_folder
+    export process_cov, amend_coverage_from_src!, coverage_folder, analyze_malloc
     function process_cov(filename)
         if !isfile(filename)
             srcname, ext = splitext(filename)

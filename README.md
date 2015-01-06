@@ -6,7 +6,52 @@ Coverage.jl
 
 **"Take Julia test coverage results and do useful things with them."**
 
-Right now, that is submitting them to [Coveralls.io](https://coveralls.io), a test-coverage tracking tool that integrates with your continuous integration solution (e.g. [TravisCI](https://travis-ci.org/)).
+## Working locally
+
+### Code coverage
+
+Navigate to your test directory, and start julia like this:
+```sh
+julia --code-coverage=user
+```
+or, if you're running julia 0.4 or higher,
+```sh
+julia --code-coverage=user --inline=no
+```
+(Turning off inlining gives substantially more accurate results.)
+
+Then, run your tests (e.g., `include("runtests.jl")`) and quit julia.
+
+Finally, navigate to the top-level directory of your package, restart julia (with no special flags this time), and analyze coverage using
+```julia
+using Coverage
+covered, tot = coverage_folder()  # defaults to src/; alternatively, supply the folder name as a string
+```
+The fraction of total coverage is equal to `covered/tot`.
+
+### Memory allocation
+
+Start julia with
+```sh
+julia --track-allocation=user
+```
+Then:
+- Run whatever commands you wish to test. This first run is to ensure that everything is compiled (because compilation allocates memory).
+- Call `clear_malloc_data()` (or, if running julia 0.4 or higher, `Profile.clear_malloc_data()`)
+- Run your commands again
+- Quit julia
+
+Finally, navigate to the directory holding your source code. Start julia (without command-line flags), and analyze the results using
+```julia
+using Coverage
+analyze_malloc(dirnames)  # could be "." for the current directory, or "src", etc.
+```
+This will return a vector of `MallocInfo` objects, specifying the number of bytes allocated, the file name, and the line number.
+These are sorted in increasing order of allocation size.
+
+## Using Coveralls
+
+[Coveralls.io](https://coveralls.io) is a test-coverage tracking tool that integrates with your continuous integration solution (e.g. [TravisCI](https://travis-ci.org/)).
 
 ## Using Coverage.jl with Coveralls.io?
 
