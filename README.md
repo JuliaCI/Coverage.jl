@@ -29,6 +29,8 @@ covered, tot = coverage_folder()  # defaults to src/; alternatively, supply the 
 ```
 The fraction of total coverage is equal to `covered/tot`.
 
+**To discover which functions lack testing, browse through the `*.cov` files in your source directory and look for lines starting with `-` or `0` (meaning that those lines never executed; numbers bigger than 0 are counts of the number of times the line executed).**
+
 ### Memory allocation
 
 Start julia with
