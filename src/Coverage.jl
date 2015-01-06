@@ -24,39 +24,55 @@ module Coverage
         return coverage
     end
     function amend_coverage_from_src!(coverage, srcname)
-        line = 0
-        io = open(srcname)
-        while !eof(io)
-            ast = Parser.parse(io)
-            isa(ast, Expr) || continue
-            linerngt = linerange(ast)
-            linerngt[1] > linerngt[2] && continue
-            linerng = line + (linerngt[1]:linerngt[2])
-            line = last(linerng)
-            Base.Cartesian.isfuncexpr(ast) || continue
-            for l in linerng
-                if coverage[l] == nothing
-                    coverage[l] = 0
+        # To make sure things stay in sync, parse the file position corresonding to each new line
+        linepos = Int[]
+        open(srcname) do io
+            while !eof(io)
+                push!(linepos, position(io))
+                readline(io)
+            end
+            push!(linepos, position(io))
+        end
+        open(srcname) do io
+            while !eof(io)
+                pos = position(io)
+                linestart = minimum(searchsorted(linepos, pos))
+                ast = Parser.parse(io)
+                isa(ast, Expr) || (warn("Non-expression found at position $pos:$(position(io)), starting line $linestart"); continue)
+                flines, maxline = function_body_lines(ast)
+                if !isempty(flines)
+                    flines += linestart-1
+                    for l in flines
+                        if coverage[l] == nothing
+                            coverage[l] = 0
+                        end
+                    end
                 end
             end
         end
         coverage
     end
-    linerange(ast::Expr) = linerange(ast::Expr, (typemax(Int), 0))
-    linerange(arg, rng) = rng
-    function linerange(node::LineNumberNode, rng)
-        ln = node.line
-        (min(rng[1],ln),max(rng[2],ln))
+    function_body_lines(ast) = function_body_lines!(Int[], 0, ast, false)
+    function_body_lines!(flines, maxline, arg, infunction) = flines, maxline
+    function function_body_lines!(flines, maxline, node::LineNumberNode, infunction)
+        if infunction
+            push!(flines, node.line)
+        end
+        flines, max(maxline, node.line)
     end
-    function linerange(ast::Expr, rng)
+    function function_body_lines!(flines, maxline, ast::Expr, infunction)
         if ast.head == :line
             ln = ast.args[1]
-            return (min(rng[1],ln),max(rng[2],ln))
+            if infunction
+                push!(flines, ln)
+            end
+            return flines, max(maxline, ln)
         end
-        for a in ast.args
-            rng = linerange(a, rng)
+        infunction |= Base.Cartesian.isfuncexpr(ast)
+        for arg in ast.args
+            flines, maxline = function_body_lines!(flines, maxline, arg, infunction)
         end
-        rng
+        flines, maxline
     end
 
     export Coveralls
