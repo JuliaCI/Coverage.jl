@@ -6,6 +6,7 @@
 module Coverage
 
     import JuliaParser.Parser
+    using Compat
 
     # process_cov
     # Given a .cov file, return the counts for each line, where the
@@ -80,6 +81,7 @@ module Coverage
         using Requests
         using Coverage
         using JSON
+        using Compat
 
         # coveralls_process_file
         # Given a .jl file, return the Coveralls.io dictionary for this
@@ -93,9 +95,9 @@ module Coverage
         # }
         export process_file
         function process_file(filename)
-            return ["name" => filename,
+            return @compat Dict("name" => filename,
                     "source" => readall(filename),
-                    "coverage" => amend_coverage_from_src!(process_cov(filename*".cov"), filename)]
+                    "coverage" => amend_coverage_from_src!(process_cov(filename*".cov"), filename))
         end
 
         # coveralls_process_src
@@ -103,7 +105,7 @@ module Coverage
         # and collect coverage statistics
         export process_folder
         function process_folder(folder="src")
-            source_files={}
+            source_files=Any[]
             filelist = readdir(folder)
             for file in filelist
                 fullfile = joinpath(folder,file)
@@ -147,17 +149,17 @@ module Coverage
         # }
         export submit, submit_token
         function submit(source_files)
-            data = ["service_job_id" => ENV["TRAVIS_JOB_ID"],
+            data = @compat Dict("service_job_id" => ENV["TRAVIS_JOB_ID"],
                     "service_name" => "travis-ci",
-                    "source_files" => source_files]
+                    "source_files" => source_files)
             r = Requests.post(URI("https://coveralls.io/api/v1/jobs"), files =
                 [FileParam(JSON.json(data),"application/json","json_file","coverage.json")])
             dump(r.data)
         end
 
         function submit_token(source_files)
-            data = ["repo_token" => ENV["REPO_TOKEN"],
-                    "source_files" => source_files]
+            data = @compat Dict("repo_token" => ENV["REPO_TOKEN"],
+                    "source_files" => source_files)
             r = post(URI("https://coveralls.io/api/v1/jobs"), files =
                 [FileParam(JSON.json(data),"application/json","json_file","coverage.json")])
             dump(r.data)
