@@ -40,7 +40,7 @@ module Coverage
                 linestart = minimum(searchsorted(linepos, pos))
                 ast = Parser.parse(io)
                 isa(ast, Expr) || (warn("Non-expression found at position $pos:$(position(io)), starting line $linestart"); continue)
-                flines, maxline = function_body_lines(ast)
+                flines = function_body_lines(ast)
                 if !isempty(flines)
                     flines += linestart-1
                     for l in flines
@@ -53,27 +53,28 @@ module Coverage
         end
         coverage
     end
-    function_body_lines(ast) = function_body_lines!(Int[], 0, ast, false)
-    function_body_lines!(flines, maxline, arg, infunction) = flines, maxline
-    function function_body_lines!(flines, maxline, node::LineNumberNode, infunction)
+    function_body_lines(ast) = function_body_lines!(Int[], ast, false)
+    function_body_lines!(flines, arg, infunction) = flines
+    function function_body_lines!(flines, node::LineNumberNode, infunction)
+        line = node.line
         if infunction
-            push!(flines, node.line)
+            push!(flines, line)
         end
-        flines, max(maxline, node.line)
+        flines
     end
-    function function_body_lines!(flines, maxline, ast::Expr, infunction)
+    function function_body_lines!(flines, ast::Expr, infunction)
         if ast.head == :line
-            ln = ast.args[1]
+            line = ast.args[1]
             if infunction
-                push!(flines, ln)
+                push!(flines, line)
             end
-            return flines, max(maxline, ln)
+            return flines
         end
         infunction |= Base.Cartesian.isfuncexpr(ast)
         for arg in ast.args
-            flines, maxline = function_body_lines!(flines, maxline, arg, infunction)
+            flines = function_body_lines!(flines, arg, infunction)
         end
-        flines, maxline
+        flines
     end
 
     export Coveralls
