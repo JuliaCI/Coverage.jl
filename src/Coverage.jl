@@ -11,7 +11,7 @@ module Coverage
     # process_cov
     # Given a .cov file, return the counts for each line, where the
     # lines that can't be counted are denoted with a -1
-    export process_cov, amend_coverage_from_src!
+    export process_cov, amend_coverage_from_src!, coverage_folder
     function process_cov(filename)
         if !isfile(filename)
             srcname, ext = splitext(filename)
@@ -61,6 +61,17 @@ module Coverage
         end
         coverage
     end
+    function coverage_folder(folder="src")
+        results = Coveralls.process_folder(folder)
+        tot = covered = 0
+        for item in results
+            coverage = item["coverage"]
+            tot += sum(x->x!=nothing, coverage)
+            covered += sum(x->x!=nothing && x>0, coverage)
+        end
+       covered, tot
+    end
+
     function_body_lines(ast) = function_body_lines!(Int[], ast, false)
     function_body_lines!(flines, arg, infunction) = flines
     function function_body_lines!(flines, node::LineNumberNode, infunction)
