@@ -17,6 +17,7 @@ cmdstr = "include(\"$srcname\"); using Base.Test; @test f2(2) == 4"
 run(`julia --code-coverage=user -e $cmdstr`)
 r = Coveralls.process_file(srcname)
 # The next one is the correct one, but julia & JuliaParser don't insert a line number after the 1-line @doc -> test
+# See https://github.com/JuliaLang/julia/issues/9663 (when this is fixed, can uncomment the next line on julia 0.4)
 # target = [nothing, nothing, nothing, nothing, 1, nothing, 0, nothing, 0, nothing, nothing, nothing, nothing, 0, nothing, nothing, nothing, nothing, nothing, 0, nothing, nothing, 0]
 target = [nothing, nothing, nothing, nothing, 1, nothing, 0, nothing, 0, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, 0, nothing, nothing, 0]
 @test r["coverage"][1:length(target)] == target
