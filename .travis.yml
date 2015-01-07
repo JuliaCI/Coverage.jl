@@ -1,20 +1,6 @@
-language: cpp
-compiler:
-    - gcc
+language: julia
+julia:
+  - release
+  - nightly
 notifications:
     email: false
-env:
-    - JULIAVERSION="julianightlies"
-before_install:
-    - sudo add-apt-repository ppa:staticfloat/julia-deps -y
-    - sudo add-apt-repository ppa:staticfloat/${JULIAVERSION} -y
-    - sudo apt-get update -qq -y
-    - sudo apt-get install julia -y
-    - sudo apt-get install gfortran liblapack-dev
-    - sudo apt-get install libgmp-dev -y
-    - git config --global user.name "Travis User"
-    - git config --global user.email "travis@example.net"
-script:
-    - julia -e 'Pkg.init(); Pkg.add("Requests"); Pkg.add("JSON"); Pkg.add("HTTPClient")'
-    - julia -e 'run(`ln -s $(pwd()) $(Pkg.dir("Coverage"))`); cd(Pkg.dir("Coverage"))'
-    - julia test/runtests.jl
