@@ -128,10 +128,6 @@ module Coverage
             source_files=Any[]
             filelist = readdir(folder)
             for file in filelist
-                _, ext = splitext(file)
-                if ext != ".jl"
-                    continue
-                end
                 fullfile = joinpath(folder,file)
                 println(fullfile)
                 if isfile(fullfile)
