@@ -76,6 +76,7 @@ If you make it through that, consider adding your package to the list below. Alt
 
 * [ArgParse.jl](https://github.com/carlobaldassi/ArgParse.jl/blob/master/.travis.yml)
 * [AudioIO.jl](https://github.com/ssfrr/AudioIO.jl/blob/master/.travis.yml)
+* [Bootstrap.jl](https://github.com/julian-gehring/Bootstrap.jl/blob/master/.travis.yml)
 * [CAIRS.jl](https://github.com/scheidan/CAIRS.jl/blob/master/.travis.yml)
 * [DASSL.jl](https://github.com/pwl/DASSL.jl/blob/master/.travis.yml)
 * [DataFrames.jl](https://github.com/JuliaStats/DataFrames.jl/blob/master/.travis.yml)
