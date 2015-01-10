@@ -8,6 +8,7 @@ using Coverage, Base.Test
 
 cd(Pkg.dir("Coverage")) do
     j = Coveralls.process_file(joinpath("test","data","Coverage.jl"))
+    analyze_malloc(joinpath("test","data"))
 end
 
 srcname = joinpath("data","testparser.jl")
@@ -21,3 +22,7 @@ r = Coveralls.process_file(srcname)
 # target = [nothing, nothing, nothing, nothing, 1, nothing, 0, nothing, 0, nothing, nothing, nothing, nothing, 0, nothing, nothing, nothing, nothing, nothing, 0, nothing, nothing, 0]
 target = [nothing, nothing, nothing, nothing, 1, nothing, 0, nothing, 0, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, 0, nothing, nothing, 0]
 @test r["coverage"][1:length(target)] == target
+
+covtarget = (sum(x->x != nothing && x > 0, target), sum(x->x != nothing, target))
+@test coverage_file(srcname) == covtarget
+@test coverage_folder("data") != covtarget
