@@ -174,19 +174,65 @@ module Coverage
         #     }
         #   ]
         # }
+
+        import Base.Git
+        function query_git_info(dir="")
+            commit_sha = Git.readchomp(`rev-parse HEAD`, dir=dir)
+            author_name = Git.readchomp(`log -1 --pretty=format:"%aN"`, dir=dir)
+            author_email = Git.readchomp(`log -1 --pretty=format:"%aE"`, dir=dir)
+            committer_name = Git.readchomp(`log -1 --pretty=format:"%cN"`, dir=dir)
+            committer_email = Git.readchomp(`log -1 --pretty=format:"%cE"`, dir=dir)
+            branch = Git.branch(dir=dir)
+            message = Git.readchomp(`log -1 --pretty=format:"%s"`, dir=dir)
+            remote = Git.readchomp(`config --get remote.origin.url`, dir=dir)
+
+            # Normalize remote url to https
+            remote = "https" * Git.normalize_url(remote)[4:end]
+
+            return @compat Dict(
+                "branch" => branch,
+                "remotes" => [
+                    @compat Dict(
+                        "name" => "origin",
+                        "url" => remote
+                    )
+                ],
+                "head" => @compat Dict(
+                    "id" => commit_sha,
+                    "author_name" => author_name,
+                    "author_email" => author_email,
+                    "committer_name" => committer_email,
+                    "committer_email" => committer_email,
+                    "message" => message
+                )
+            )
+        end
+
         export submit, submit_token
         function submit(source_files)
             data = @compat Dict("service_job_id" => ENV["TRAVIS_JOB_ID"],
                     "service_name" => "travis-ci",
                     "source_files" => source_files)
+
             r = Requests.post(URI("https://coveralls.io/api/v1/jobs"), files =
                 [FileParam(JSON.json(data),"application/json","json_file","coverage.json")])
             dump(r.data)
         end
 
-        function submit_token(source_files)
+        # git_info can be either a dict or a function that returns a dict
+        function submit_token(source_files, git_info=query_git_info)
             data = @compat Dict("repo_token" => ENV["REPO_TOKEN"],
                     "source_files" => source_files)
+
+            # Attempt to parse git info via git_info, unless the user explicitly disables it by setting git_info to nothing
+            try
+                if typeof(git_info) == Function
+                    data["git"] = git_info()
+                elseif typeof(git_info) == Dict
+                    data["git"] = git_info
+                end
+            end
+
             r = post(URI("https://coveralls.io/api/v1/jobs"), files =
                 [FileParam(JSON.json(data),"application/json","json_file","coverage.json")])
             dump(r.data)
