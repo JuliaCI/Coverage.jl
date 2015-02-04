@@ -3,33 +3,36 @@ Coverage.jl
 
 [![Build Status](https://travis-ci.org/IainNZ/Coverage.jl.svg)](https://travis-ci.org/IainNZ/Coverage.jl)
 [![Coverage Status](https://coveralls.io/repos/IainNZ/Coverage.jl/badge.png)](https://coveralls.io/r/IainNZ/Coverage.jl)
+[![Coverage](http://pkg.julialang.org/badges/Coverage_release.svg)](http://pkg.julialang.org/?pkg=Coverage&ver=release)
 
-**"Take Julia test coverage results and do useful things with them."**
+**"Take Julia code coverage and memory allocation results, do useful things with them"**
+
+**Code coverage**: Julia can track how many times, if any, each line of your code is run. This is useful for measuring how much of your code base your tests actually test, and can reveal the parts of your code that are not tested and might be hiding a bug.
+
+**Memory allocation**: Julia can track how much memory is allocated by each line of your code. This can reveal problems like type instability, or operations that you might have thought were cheap (in terms of memory allocated) but aren't (i.e. accidental copying).
 
 ## Working locally
 
 ### Code coverage
 
-Navigate to your test directory, and start julia like this:
+1. Navigate to your test directory, and start julia like this:
 ```sh
 julia --code-coverage=user
 ```
-or, if you're running julia 0.4 or higher,
+or, if you're running Julia 0.4 or higher,
 ```sh
 julia --code-coverage=user --inline=no
 ```
-(Turning off inlining gives substantially more accurate results.)
-
-Then, run your tests (e.g., `include("runtests.jl")`) and quit julia.
-
-Finally, navigate to the top-level directory of your package, restart julia (with no special flags this time), and analyze coverage using
+(Turning off inlining gives substantially more accurate results, but may slow down your tests.)
+2. Run your tests (e.g., `include("runtests.jl")`) and quit Julia.
+3. Navigate to the top-level directory of your package, restart Julia (with no special flags) and analyze your code coverage:
 ```julia
 using Coverage
-covered, tot = coverage_folder()  # defaults to src/; alternatively, supply the folder name as a string
+covered_lines, total_lines = coverage_folder()  # defaults to src/; alternatively, supply the folder name as a string
 ```
-The fraction of total coverage is equal to `covered/tot`.
+The fraction of total coverage is equal to `covered_lines/total_lines`.
 
-**To discover which functions lack testing, browse through the `*.cov` files in your source directory and look for lines starting with `-` or `0` (meaning that those lines never executed; numbers bigger than 0 are counts of the number of times the line executed).**
+> To discover which functions lack testing, browse through the `*.cov` files in your `src/` directory and look for lines starting with `-` or `0` (meaning that those lines never executed; numbers bigger than 0 are counts of the number of times the line executed).
 
 ### Memory allocation
 
