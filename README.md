@@ -15,7 +15,7 @@ Coverage.jl
 
 ### Code coverage
 
-1. Navigate to your test directory, and start julia like this:
+*Step 1:* Navigate to your test directory, and start julia like this:
 ```sh
 julia --code-coverage=user
 ```
@@ -24,8 +24,10 @@ or, if you're running Julia 0.4 or higher,
 julia --code-coverage=user --inline=no
 ```
 (Turning off inlining gives substantially more accurate results, but may slow down your tests.)
-2. Run your tests (e.g., `include("runtests.jl")`) and quit Julia.
-3. Navigate to the top-level directory of your package, restart Julia (with no special flags) and analyze your code coverage:
+
+*Step 2:* Run your tests (e.g., `include("runtests.jl")`) and quit Julia.
+
+*Step 3:* Navigate to the top-level directory of your package, restart Julia (with no special flags) and analyze your code coverage:
 ```julia
 using Coverage
 covered_lines, total_lines = coverage_folder()  # defaults to src/; alternatively, supply the folder name as a string
