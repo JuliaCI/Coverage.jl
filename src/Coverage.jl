@@ -96,7 +96,7 @@ module Coverage
             end
             return flines
         end
-        infunction |= Base.Cartesian.isfuncexpr(ast)
+        infunction |= isfuncexpr(ast)
         for arg in ast.args
             flines = function_body_lines!(flines, arg, infunction)
         end
@@ -285,6 +285,10 @@ module Coverage
 
     analyze_malloc(dirs) = analyze_malloc_files(find_malloc_files(dirs))
     analyze_malloc(dir::ByteString) = analyze_malloc([dir])
+
+    isfuncexpr(ex::Expr) =
+        ex.head == :function || (ex.head == :(=) && typeof(ex.args[1]) == Expr && ex.args[1].head == :call)
+    isfuncexpr(arg) = false
 
     # Support Unix command line usage like `julia Coverage.jl $(find ~/.julia/v0.3 -name "*.jl.mem")`
     if !isinteractive()
