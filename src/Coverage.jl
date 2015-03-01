@@ -226,9 +226,9 @@ module Coverage
 
             # Attempt to parse git info via git_info, unless the user explicitly disables it by setting git_info to nothing
             try
-                if typeof(git_info) == Function
+                if isa(git_info, Function)
                     data["git"] = git_info()
-                elseif typeof(git_info) == Dict
+                elseif isa(git_info, Dict)
                     data["git"] = git_info
                 end
             end
