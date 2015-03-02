@@ -114,6 +114,7 @@ If you make it through that, consider adding your package to the list below. Alt
 * [RDF.jl](https://github.com/joejimbo/RDF.jl/blob/master/.travis.yml)
 * [Requests.jl](https://github.com/loladiro/Requests.jl/blob/master/.travis.yml)
 * [Robotics.jl](https://github.com/cdsousa/Robotics.jl/blob/master/.travis.yml)
+* [Simulator.jl](https://github.com/AugurProject/Simulator.jl/blob/master/.travis.yml)
 * [SIUnits.jl](https://github.com/loladiro/SIUnits.jl/blob/master/.travis.yml)
 * [StatsBase.jl](https://github.com/JuliaStats/StatsBase.jl/blob/master/.travis.yml)
 * [TextWrap.jl](https://github.com/carlobaldassi/TextWrap.jl/blob/master/.travis.yml)
