@@ -12,7 +12,7 @@ module Coverage
     # Given a .cov file, return the counts for each line, where the
     # lines that can't be counted are denoted with a -1
     export process_cov, amend_coverage_from_src!, coverage_file, coverage_folder, analyze_malloc
-    function process_cov(filename)
+    function process_cov(filename, excluded_line_patterns::Vector{Regex}=Regex[])
         if !isfile(filename)
             srcname, ext = splitext(filename)
             lines = open(srcname) do fp
@@ -28,6 +28,12 @@ module Coverage
         for i = 1:num_lines
             cov_segment = lines[i][1:9]
             coverage[i] = cov_segment[9] == '-' ? nothing : int(cov_segment)
+            for pattern in excluded_line_patterns
+                if match(pattern, lines[i][10:end]) != nothing
+                    coverage[i] = nothing
+                    break
+                end
+            end
         end
         close(fp)
         return coverage
@@ -109,6 +115,7 @@ module Coverage
         using Coverage
         using JSON
         using Compat
+        using YAML
 
         # coveralls_process_file
         # Given a .jl file, return the Coveralls.io dictionary for this
@@ -121,10 +128,11 @@ module Coverage
         #   "coverage": [null, 1, null]
         # }
         export process_file
-        function process_file(filename)
+        function process_file(filename, excluded_line_patterns::Vector{Regex}=Regex[])
             return @compat Dict("name" => filename,
                     "source" => readall(filename),
-                    "coverage" => amend_coverage_from_src!(process_cov(filename*".cov"), filename))
+                    "coverage" => amend_coverage_from_src!(
+                        process_cov(filename*".cov", excluded_line_patterns), filename))
         end
 
         # coveralls_process_src
@@ -132,14 +140,48 @@ module Coverage
         # and collect coverage statistics
         export process_folder
         function process_folder(folder="src")
+            config_filename = joinpath(folder, ".coverage.yml")
+            excluded_files = Set{String}()
+            excluded_line_patterns = Regex[]
+            if isfile(config_filename)
+                config = YAML.load_file(config_filename)
+                if haskey(config, "exclude_files")
+                    if !isa(config["exclude_files"], Array)
+                        error("'exclude_files' in .coverage.yml must be a list")
+                    end
+                    for filename in config["exclude_files"]
+                        if !isa(filename, String)
+                            error("'exclude_files' in .coverage.yml must be a list of strings")
+                        end
+                        push!(excluded_files, filename)
+                    end
+                end
+
+                if haskey(config, "exclude_patterns")
+                    if !isa(config["exclude_patterns"], Array)
+                        error("'exclude_patterns' in .coverage.yml must be a list")
+                    end
+                    for pattern in config["exclude_patterns"]
+                        if !isa(pattern, String)
+                            error("'excluded_patterns' in .coverage.yml must be a list of strings")
+                        end
+                        push!(excluded_line_patterns, Regex(pattern))
+                    end
+                end
+            end
+
             source_files=Any[]
             filelist = readdir(folder)
             for file in filelist
+                if file in excluded_files
+                    continue
+                end
+
                 fullfile = joinpath(folder,file)
                 println(fullfile)
                 if isfile(fullfile)
                     try
-                        new_sf = process_file(fullfile)
+                        new_sf = process_file(fullfile, excluded_line_patterns)
                         push!(source_files, new_sf)
                     catch e
 #                         if !isa(e,SystemError)
