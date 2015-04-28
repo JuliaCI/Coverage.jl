@@ -110,6 +110,7 @@ If you make it through that, consider adding your package to the list below. Alt
 * [OpenStreetMap.jl](https://github.com/tedsteiner/OpenStreetMap.jl/blob/master/.travis.yml)
 * [PValueAdjust.jl](https://github.com/dirkschumacher/PValueAdjust.jl/blob/master/.travis.yml)
 * [QuantEcon.jl](https://github.com/spencerlyon2/QuantEcon.jl/blob/master/.travis.yml)
+* [QuantileRegression.jl](https://github.com/vincentarelbundock/QuantileRegression.jl/blob/master/.travis.yml)
 * [RationalSimplex.jl](https://github.com/IainNZ/RationalSimplex.jl/blob/master/.travis.yml)
 * [RDF.jl](https://github.com/joejimbo/RDF.jl/blob/master/.travis.yml)
 * [Requests.jl](https://github.com/loladiro/Requests.jl/blob/master/.travis.yml)
