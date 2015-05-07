@@ -8,10 +8,19 @@ module Coverage
     import JuliaParser.Parser
     using Compat
 
+    export process_cov, amend_coverage_from_src!
+    export coverage_file, coverage_folder
+    export analyze_malloc
+
     # process_cov
-    # Given a .cov file, return the counts for each line, where the
-    # lines that can't be counted are denoted with a -1
-    export process_cov, amend_coverage_from_src!, coverage_file, coverage_folder, analyze_malloc
+    # Convert a Julia .cov file into an array of (counts, lines)
+    #
+    # Input:
+    # filename          Coverage file to open
+    #
+    # Output:
+    # coverage          Array of coverage counts by line. Count
+    #                   will be `nothing` if no count possible
     function process_cov(filename)
         if !isfile(filename)
             srcname, ext = splitext(filename)
@@ -32,8 +41,18 @@ module Coverage
         close(fp)
         return coverage
     end
+
+
+    # amend_coverage_from_src!
+    # The code coverage functionality in Julia can miss code lines, which
+    # will be incorrectly recorded as `nothing` but should instead be 0
+    #
+    # Input:
+    # coverage          Array of coverage counts by line (from process_cov)
+    # srcname           File name for a .jl file
     function amend_coverage_from_src!(coverage, srcname)
-        # To make sure things stay in sync, parse the file position corresonding to each new line
+        # To make sure things stay in sync, parse the file position
+        # corresonding to each new line
         linepos = Int[]
         open(srcname) do io
             while !eof(io)
@@ -61,6 +80,8 @@ module Coverage
         end
         coverage
     end
+
+
     function coverage_file(filename)
         results = Coveralls.process_file(filename)
         coverage = results["coverage"]
@@ -239,6 +260,7 @@ module Coverage
         end
     end  # module Coveralls
 
+    include("codecovio.jl")
 
     ## Analyzing memory allocation
     immutable MallocInfo
