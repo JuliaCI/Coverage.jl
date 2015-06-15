@@ -103,6 +103,7 @@ If you make it through that, consider adding your package to the list below. Alt
 * [JointMoments.jl](https://github.com/tensorjack/JointMoments.jl/blob/master/.travis.yml)
 * [JuMP.jl](https://github.com/JuliaOpt/JuMP.jl/blob/master/.travis.yml)
 * [LibGit2.jl](https://github.com/jakebolewski/LibGit2.jl/blob/master/.travis.yml)
+* [LightGraphs.jl](https://github.com/JuliaGraphs/LightGraphs.jl/blob/master/.travis.yml)
 * [LinearExpressions.jl](https://github.com/cdsousa/LinearExpressions.jl/blob/master/.travis.yml)
 * [Orchestra.jl](https://github.com/svs14/Orchestra.jl/blob/master/.travis.yml)
 * [ODE.jl](https://github.com/JuliaLang/ODE.jl/blob/master/.travis.yml)
