@@ -82,6 +82,7 @@ If you make it through that, consider adding your package to the list below. Alt
 
 * [ArgParse.jl](https://github.com/carlobaldassi/ArgParse.jl/blob/master/.travis.yml)
 * [AudioIO.jl](https://github.com/ssfrr/AudioIO.jl/blob/master/.travis.yml)
+* [Augur.jl](https://github.com/AugurProject/Augur.jl/blob/master/.travis.yml)
 * [Bootstrap.jl](https://github.com/julian-gehring/Bootstrap.jl/blob/master/.travis.yml)
 * [CAIRS.jl](https://github.com/scheidan/CAIRS.jl/blob/master/.travis.yml)
 * [DASSL.jl](https://github.com/pwl/DASSL.jl/blob/master/.travis.yml)
@@ -117,7 +118,6 @@ If you make it through that, consider adding your package to the list below. Alt
 * [RDF.jl](https://github.com/joejimbo/RDF.jl/blob/master/.travis.yml)
 * [Requests.jl](https://github.com/loladiro/Requests.jl/blob/master/.travis.yml)
 * [Robotics.jl](https://github.com/cdsousa/Robotics.jl/blob/master/.travis.yml)
-* [Simulator.jl](https://github.com/AugurProject/Simulator.jl/blob/master/.travis.yml)
 * [SIUnits.jl](https://github.com/loladiro/SIUnits.jl/blob/master/.travis.yml)
 * [StatsBase.jl](https://github.com/JuliaStats/StatsBase.jl/blob/master/.travis.yml)
 * [TextWrap.jl](https://github.com/carlobaldassi/TextWrap.jl/blob/master/.travis.yml)
