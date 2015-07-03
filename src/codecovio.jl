@@ -60,6 +60,7 @@ module Codecov
     # Submit coverage to Codecov.io
     # https://codecov.io/api#post-json-report
     export submit, submit_token
+    import Base.Git
     function submit(source_files)
         # Turn vector of filename : coverage pairs into a dictionary
         cov = Dict()
@@ -67,17 +68,30 @@ module Codecov
             cov[file[1]] = file[2]
         end
         data = @compat Dict("coverage" => cov)
-        println(data)
 
         commit = ENV["TRAVIS_COMMIT"]
         branch = ENV["TRAVIS_BRANCH"]
         travis = ENV["TRAVIS_JOB_ID"]
         heads  = @compat Dict("Content-Type" => "application/json")
-        println(heads)
         r = Requests.post(
                 URI("https://codecov.io/upload/v1?&commit=$(commit)&branch=$(branch)&travis_job_id=$(travis)");
                 json = data, headers = heads)
         dump(r)
     end
 
+    function submit_token(source_files)
+        repo_token = ENV["REPO_TOKEN"]
+        commit = Git.readchomp(`rev-parse HEAD`, dir="")
+        branch = Git.branch(dir="")
+        cov = Dict()
+        for file in source_files
+            cov[file[1]] = file[2]
+        end
+        data = @compat Dict("coverage" => cov)
+        heads  = @compat Dict("Content-Type" => "application/json")
+        r = Requests.post(
+                URI("https://codecov.io/upload/v2?&token=$(repo_token)&commit=$(commit)&branch=$(branch)");
+                json = data, headers = heads)
+        dump(r)
+    end
 end  # module Codecov
