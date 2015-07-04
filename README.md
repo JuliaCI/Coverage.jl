@@ -93,7 +93,7 @@ after_success:
 If you're running coverage at home and want to upload results to Codecov, make a bash script like the following:
 ```bash
 #!/bin/bash
-REPO_TOKEN=$YOUR_TOKEN_HERE julia -e 'cd(Pkg.dir("MyPkg")); using Coverage;  Codecov.submit_token(Codedov.process_folder())'
+REPO_TOKEN=$YOUR_TOKEN_HERE julia -e 'cd(Pkg.dir("MyPkg")); using Coverage;  Codecov.submit_token(Codecov.process_folder())'
 ```
 
 If you make it through that, consider adding your package to the list below. Alternatively, if you get stuck see on the examples below or checkout [Coveralls troubleshooting page](https://coveralls.io/docs/troubleshooting).
