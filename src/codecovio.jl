@@ -30,6 +30,41 @@ module Codecov
         cov = vcat(nothing, amend_coverage_from_src!(process_cov(filename*".cov"), filename))
         return (filename, cov)
     end
+    function process_file(filename,folder)
+        cov = vcat(nothing, amend_coverage_from_src!(process_cov_with_pids(filename,folder), filename))
+        return (filename, cov)
+    end
+    
+    # process_cov_with_pids
+    # Given a .jl file, return the Codecov.io dictionary for this
+    # file by reading in the correct file and its matching .{pid}.covs 
+    function process_cov_with_pids(filename,folder)
+        files = readdir(folder)
+        files = map!( file -> joinpath(folder,file),files)
+        filter!( file -> contains(file,filename) && contains(file,".cov"),files)
+        if isempty(files)
+            srcname, ext = splitext(filename)
+            lines = open(srcname) do fp
+                readlines(fp)
+            end
+            coverage = Array(Union(Nothing,Int), length(lines))
+            return fill!(coverage, nothing)
+        end
+        full_coverage = Array(Union(Nothing,Int), 0)
+        for file in files
+            fp = open(file, "r")
+            lines = readlines(fp)
+            num_lines = length(lines)
+            coverage = Array(Union(Nothing,Int), num_lines)
+            for i = 1:num_lines
+                cov_segment = lines[i][1:9]
+                coverage[i] = cov_segment[9] == '-' ? nothing : int(cov_segment)
+            end
+            close(fp)
+            full_coverage = merge_coverage_counts(full_coverage,coverage)
+        end
+        return full_coverage
+    end
 
     # process_folder
     # Recursively walk through a Julia package's src/ folder and collect
@@ -40,10 +75,9 @@ module Codecov
         filelist = readdir(folder)
         for file in filelist
             fullfile = joinpath(folder,file)
-            println(fullfile)
             if isfile(fullfile)
                 try
-                    new_sf = process_file(fullfile)
+                    new_sf = process_file(fullfile,folder)
                     push!(source_files, new_sf)
                 catch e
                     # Skip, probably a .cov file...
