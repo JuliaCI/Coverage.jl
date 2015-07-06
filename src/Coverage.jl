@@ -9,14 +9,26 @@ module Coverage
     using Compat
 
     export process_cov, amend_coverage_from_src!
+    export process_cov_with_pids
     export coverage_file, coverage_folder
-    export analyze_malloc
+    export analyze_malloc, merge_coverage_counts
 
+    function merge_coverage_counts(a1, a2)
+        n = max(length(a1),length(a2))
+        a = Array(Union(Void,Int), n)
+        for i = 1:n
+            a1v = isdefined(a1, i) ? a1[i] : nothing
+            a2v = isdefined(a2, i) ? a2[i] : nothing
+            a[i] = a1v == nothing ? a2v :
+                   a2v == nothing ? a1v : max(a1v, a2v)
+        end
+        a
+    end
     # process_cov
     # Convert a Julia .cov file into an array of (counts, lines)
     #
     # Input:
-    # filename          Coverage file to open
+    # filename          Coverage files to open
     #
     # Output:
     # coverage          Array of coverage counts by line. Count
@@ -40,6 +52,37 @@ module Coverage
         end
         close(fp)
         return coverage
+    end
+    
+    # process_cov_with_pids
+    # Given a .jl file, return the Codecov.io dictionary for this
+    # file by reading in the correct file and its matching .{pid}.covs 
+    function process_cov_with_pids(filename,folder)
+        files = readdir(folder)
+        files = map!( file -> joinpath(folder,file),files)
+        filter!( file -> contains(file,filename) && contains(file,".cov"),files)
+        if isempty(files)
+            srcname, ext = splitext(filename)
+            lines = open(srcname) do fp
+                readlines(fp)
+            end
+            coverage = Array(Union(Nothing,Int), length(lines))
+            return fill!(coverage, nothing)
+        end
+        full_coverage = Array(Union(Nothing,Int), 0)
+        for file in files
+            fp = open(file, "r")
+            lines = readlines(fp)
+            num_lines = length(lines)
+            coverage = Array(Union(Nothing,Int), num_lines)
+            for i = 1:num_lines
+                cov_segment = lines[i][1:9]
+                coverage[i] = cov_segment[9] == '-' ? nothing : int(cov_segment)
+            end
+            close(fp)
+            full_coverage = merge_coverage_counts(full_coverage,coverage)
+        end
+        return full_coverage
     end
 
 
@@ -147,6 +190,11 @@ module Coverage
                     "source" => readall(filename),
                     "coverage" => amend_coverage_from_src!(process_cov(filename*".cov"), filename))
         end
+        function process_file(filename, folder)
+            return @compat Dict("name" => filename,
+                    "source" => readall(filename),
+                    "coverage" => amend_coverage_from_src!(process_cov_with_pids(filename,folder), filename))
+        end
 
         # coveralls_process_src
         # Recursively walk through a Julia package's src/ folder
@@ -160,7 +208,7 @@ module Coverage
                 println(fullfile)
                 if isfile(fullfile)
                     try
-                        new_sf = process_file(fullfile)
+                        new_sf = process_file(fullfile,folder)
                         push!(source_files, new_sf)
                     catch e
 #                         if !isa(e,SystemError)
