@@ -48,5 +48,8 @@ else
     covtarget = (sum(x->x != nothing && x > 0, target), sum(x->x != nothing, target))
     @test coverage_file(srcname, "data") == covtarget
     @test coverage_folder("data") != covtarget
-end
 
+    json_data = Codecov.build_json_data(Codecov.process_folder("data"))
+    @test typeof(json_data["coverage"]["data/Coverage.jl"]) == Array{Union{Int64,Void},1}
+
+end
