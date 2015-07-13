@@ -53,10 +53,10 @@ module Coverage
         close(fp)
         return coverage
     end
-    
+
     # process_cov_with_pids
     # Given a .jl file, return the Codecov.io dictionary for this
-    # file by reading in the correct file and its matching .{pid}.covs 
+    # file by reading in the correct file and its matching .{pid}.covs
     function process_cov_with_pids(filename,folder)
         files = readdir(folder)
         files = map!( file -> joinpath(folder,file),files)
@@ -132,6 +132,15 @@ module Coverage
         covered = sum(x->x!=nothing && x>0, coverage)
         covered, tot
     end
+
+    function coverage_file(filename, folder)
+        results = Coveralls.process_file(filename, folder)
+        coverage = results["coverage"]
+        tot = sum(x->x!=nothing, coverage)
+        covered = sum(x->x!=nothing && x>0, coverage)
+        covered, tot
+    end
+
     function coverage_folder(folder="src")
         results = Coveralls.process_folder(folder)
         tot = covered = 0
