@@ -106,12 +106,18 @@ module Codecov
     import Base.Git
     function submit(source_files)        
         data = build_json_data(source_files)
-        commit = ENV["TRAVIS_COMMIT"]
         branch = ENV["TRAVIS_BRANCH"]
-        travis = ENV["TRAVIS_JOB_ID"]
+        pull_request = ENV["TRAVIS_PULL_REQUEST"]
+        job = ENV["TRAVIS_JOB_ID"]
+        slug = ENV["TRAVIS_REPO_SLUG"]
+        build = ENV["TRAVIS_JOB_NUMBER"]
+        commit = ENV["TRAVIS_COMMIT"]
+        uri_str = "https://codecov.io/upload/v2?service=travis-org&branch=$(branch)&commit=$(commit)&build=$(build)&pull_request=$(pull_request)&job=$(job)&slug=$(slug)"
+        println("$uri_str")
+
         heads  = @compat Dict("Content-Type" => "application/json")
         r = Requests.post(
-                URI("https://codecov.io/upload/v1?&commit=$(commit)&branch=$(branch)&travis_job_id=$(travis)");
+                URI(uri_str);
                 json = data, headers = heads)
         dump(r)
     end
