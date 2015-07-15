@@ -90,38 +90,43 @@ module Codecov
         return source_files
     end
 
+    # Turn vector of filename : coverage pairs into a dictionary
+    function build_json_data(source_files)
+        cov = Dict()
+        for file in source_files
+            cov[file[1]] = file[2]
+        end
+        return @compat Dict("coverage" => cov)
+    end
+
     # submit
     # Submit coverage to Codecov.io
     # https://codecov.io/api#post-json-report
     export submit, submit_token
     import Base.Git
-    function submit(source_files)
-        # Turn vector of filename : coverage pairs into a dictionary
-        cov = Dict()
-        for file in source_files
-            cov[file[1]] = file[2]
-        end
-        data = @compat Dict("coverage" => cov)
-
-        commit = ENV["TRAVIS_COMMIT"]
+    function submit(source_files)        
+        data = build_json_data(source_files)
         branch = ENV["TRAVIS_BRANCH"]
-        travis = ENV["TRAVIS_JOB_ID"]
+        pull_request = ENV["TRAVIS_PULL_REQUEST"]
+        job = ENV["TRAVIS_JOB_ID"]
+        slug = ENV["TRAVIS_REPO_SLUG"]
+        build = ENV["TRAVIS_JOB_NUMBER"]
+        commit = ENV["TRAVIS_COMMIT"]
+        uri_str = "https://codecov.io/upload/v2?service=travis-org&branch=$(branch)&commit=$(commit)&build=$(build)&pull_request=$(pull_request)&job=$(job)&slug=$(slug)"
+        println("$uri_str")
+
         heads  = @compat Dict("Content-Type" => "application/json")
         r = Requests.post(
-                URI("https://codecov.io/upload/v1?&commit=$(commit)&branch=$(branch)&travis_job_id=$(travis)");
+                URI(uri_str);
                 json = data, headers = heads)
         dump(r)
     end
 
     function submit_token(source_files)
         repo_token = ENV["REPO_TOKEN"]
+        data = build_json_data(source_files)
         commit = Git.readchomp(`rev-parse HEAD`, dir="")
         branch = Git.branch(dir="")
-        cov = Dict()
-        for file in source_files
-            cov[file[1]] = file[2]
-        end
-        data = @compat Dict("coverage" => cov)
         heads  = @compat Dict("Content-Type" => "application/json")
         r = Requests.post(
                 URI("https://codecov.io/upload/v2?&token=$(repo_token)&commit=$(commit)&branch=$(branch)");
