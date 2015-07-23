@@ -122,11 +122,9 @@ module Codecov
         dump(r)
     end
 
-    function submit_token(source_files)
+    function submit_token(source_files,commit=Git.readchomp(`rev-parse HEAD`, dir=""),branch=Git.branch(dir=""))
         repo_token = ENV["REPO_TOKEN"]
         data = build_json_data(source_files)
-        commit = Git.readchomp(`rev-parse HEAD`, dir="")
-        branch = Git.branch(dir="")
         heads  = @compat Dict("Content-Type" => "application/json")
         r = Requests.post(
                 URI("https://codecov.io/upload/v2?&token=$(repo_token)&commit=$(commit)&branch=$(branch)");
