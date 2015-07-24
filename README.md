@@ -131,6 +131,7 @@ If you make it through that, consider adding your package to the list below. Alt
 * [LinearExpressions.jl](https://github.com/cdsousa/LinearExpressions.jl/blob/master/.travis.yml)
 * [Orchestra.jl](https://github.com/svs14/Orchestra.jl/blob/master/.travis.yml)
 * [ODE.jl](https://github.com/JuliaLang/ODE.jl/blob/master/.travis.yml)
+* [OnlineStats.jl](https://github.com/joshday/OnlineStats.jl/blob/master/.travis.yml)
 * [OpenCL.jl](https://github.com/JuliaGPU/OpenCL.jl/blob/master/.travis.yml)
 * [OpenStreetMap.jl](https://github.com/tedsteiner/OpenStreetMap.jl/blob/master/.travis.yml)
 * [PValueAdjust.jl](https://github.com/dirkschumacher/PValueAdjust.jl/blob/master/.travis.yml)
