@@ -1,56 +1,74 @@
 #######################################################################
 # Coverage.jl
-# Take Julia test coverage results and bundle them up in JSONs
+# Input: Code coverage and memory allocations
+# Output: Useful things
 # https://github.com/IainNZ/Coverage.jl
 #######################################################################
 module Coverage
 
-    import JuliaParser.Parser
     using Compat
-
+    
+    # The code coverage results produced by Julia itself report some
+    # lines as "null" (cannot be run), when they could have been run
+    # but were not (should be 0). We use JuliaParser to augment the
+    # coverage results by identifying this code.
+    import JuliaParser.Parser
+    
     export process_cov, amend_coverage_from_src!
     export process_cov_with_pids
     export coverage_file, coverage_folder
     export analyze_malloc, merge_coverage_counts
 
-    function merge_coverage_counts(a1, a2)
+    # The unit for line counts. Counts can be >= 0 or nothing, where
+    # the nothing means it doesn't make sense to have a count for this
+    # line (e.g. a comment), but 0 means it could have run but didn't.
+    typealias CovCount Union(Nothing,Int)
+
+    # merge_coverage_counts
+    # Given two vectors of line coverage counts, take the pairwise
+    # maximum of both vectors, preseving null counts if both are null.
+    function merge_coverage_counts(a1::Vector{CovCount},
+                                   a2::Vector{CovCount})
         n = max(length(a1),length(a2))
-        a = Array(Union(Void,Int), n)
-        for i = 1:n
+        a = Array(CovCount, n)
+        for i in 1:n
             a1v = isdefined(a1, i) ? a1[i] : nothing
             a2v = isdefined(a2, i) ? a2[i] : nothing
             a[i] = a1v == nothing ? a2v :
                    a2v == nothing ? a1v : max(a1v, a2v)
         end
-        a
+        return a
     end
+
     # process_cov
-    # Convert a Julia .cov file into an array of (counts, lines)
-    #
-    # Input:
-    # filename          Coverage files to open
-    #
-    # Output:
-    # coverage          Array of coverage counts by line. Count
-    #                   will be `nothing` if no count possible
+    # Given a filename for a Julia .cov file, produce an array of
+    # line coverage counts.
     function process_cov(filename)
         if !isfile(filename)
+            # The file doesn't exist. We will assume that there does
+            # exist a corresponding .jl file that was just never run.
+            # We'll report the coverage for that file as all null.
+            println( """Coverage.process_cov: coverage file $filename does not exist.
+                        Assuming that matching Julia file exists but uncovered.""")
             srcname, ext = splitext(filename)
             lines = open(srcname) do fp
                 readlines(fp)
             end
-            coverage = Array(Union(Nothing,Int), length(lines))
+            coverage = Array(CovCount, length(lines))
             return fill!(coverage, nothing)
         end
-        fp = open(filename, "r")
-        lines = readlines(fp)
+        # Read in entire file
+        lines = open(filename, "r") do fp
+            readlines(fp)
+        end
         num_lines = length(lines)
-        coverage = Array(Union(Nothing,Int), num_lines)
-        for i = 1:num_lines
+        coverage = Array(CovCount, num_lines)
+        for i in 1:num_lines
+            # Columns 1:9 contain the coverage count
             cov_segment = lines[i][1:9]
+            # If coverage is NA, there will be a dash
             coverage[i] = cov_segment[9] == '-' ? nothing : int(cov_segment)
         end
-        close(fp)
         return coverage
     end
 
