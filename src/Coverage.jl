@@ -7,22 +7,45 @@
 module Coverage
 
     using Compat
-    
+
     # The code coverage results produced by Julia itself report some
     # lines as "null" (cannot be run), when they could have been run
     # but were not (should be 0). We use JuliaParser to augment the
     # coverage results by identifying this code.
     import JuliaParser.Parser
-    
+
+    export process_folder, process_file 
     export process_cov, amend_coverage_from_src!
-    export process_cov_with_pids
-    export coverage_file, coverage_folder
+    export get_summary
     export analyze_malloc, merge_coverage_counts
 
     # The unit for line counts. Counts can be >= 0 or nothing, where
     # the nothing means it doesn't make sense to have a count for this
     # line (e.g. a comment), but 0 means it could have run but didn't.
     typealias CovCount Union(Nothing,Int)
+
+    # The coverage data for a given file. Not all fields will be used
+    # for all reporting methods.
+    export FileCoverage
+    type FileCoverage
+        filename::String
+        source::String
+        coverage::Vector{CovCount}
+    end
+    function get_summary(fc::FileCoverage)
+        cov_lines = sum(x -> x!=nothing && x > 0, fc.coverage)
+        tot_lines = sum(x -> x!=nothing, fc.coverage)
+        return cov_lines, tot_lines
+    end
+    function get_summary(fcs::Vector{FileCoverage})
+        cov_lines, tot_lines = 0, 0
+        for fc in fcs
+            c, t = get_summary(fc)
+            cov_lines += c
+            tot_lines += t
+        end
+        return cov_lines, tot_lines
+    end
 
     # merge_coverage_counts
     # Given two vectors of line coverage counts, take the pairwise
@@ -41,77 +64,52 @@ module Coverage
     end
 
     # process_cov
-    # Given a filename for a Julia .cov file, produce an array of
-    # line coverage counts.
-    function process_cov(filename)
-        if !isfile(filename)
-            # The file doesn't exist. We will assume that there does
-            # exist a corresponding .jl file that was just never run.
-            # We'll report the coverage for that file as all null.
-            println( """Coverage.process_cov: coverage file $filename does not exist.
-                        Assuming that matching Julia file exists but uncovered.""")
-            srcname, ext = splitext(filename)
-            lines = open(srcname) do fp
+    # Given a filename for a Julia source file, produce an array of
+    # line coverage counts by reading in all matching .{pid}.cov files.
+    # On Julia 0.3 there was just a .cov file, but this code works fine.
+    function process_cov(filename,folder)
+        # Find all coverage files in the folder that match the file we
+        # are currently working on
+        files = readdir(folder)
+        files = map!(file -> joinpath(folder,file), files)
+        filter!(file -> contains(file,filename) && contains(file,".cov"), files)
+        # If there are no coverage files...
+        if isempty(files)
+            # ... we will assume that, as there is a .jl file, it was
+            # just never run. We'll report the coverage as all null.
+            println( """Coverage.process_cov: Coverage file(s) for $filename do not exist.
+                                              Assuming file has no coverage.""")
+            lines = open(filename) do fp
                 readlines(fp)
             end
             coverage = Array(CovCount, length(lines))
             return fill!(coverage, nothing)
         end
-        # Read in entire file
-        lines = open(filename, "r") do fp
-            readlines(fp)
-        end
-        num_lines = length(lines)
-        coverage = Array(CovCount, num_lines)
-        for i in 1:num_lines
-            # Columns 1:9 contain the coverage count
-            cov_segment = lines[i][1:9]
-            # If coverage is NA, there will be a dash
-            coverage[i] = cov_segment[9] == '-' ? nothing : int(cov_segment)
-        end
-        return coverage
-    end
-
-    # process_cov_with_pids
-    # Given a .jl file, return the Codecov.io dictionary for this
-    # file by reading in the correct file and its matching .{pid}.covs
-    function process_cov_with_pids(filename,folder)
-        files = readdir(folder)
-        files = map!( file -> joinpath(folder,file),files)
-        filter!( file -> contains(file,filename) && contains(file,".cov"),files)
-        if isempty(files)
-            srcname, ext = splitext(filename)
-            lines = open(srcname) do fp
+        # Keep track of the combined coverage
+        full_coverage = Array(CovCount, 0)
+        for file in files
+            lines = open(file, "r") do fp
                 readlines(fp)
             end
-            coverage = Array(Union(Nothing,Int), length(lines))
-            return fill!(coverage, nothing)
-        end
-        full_coverage = Array(Union(Nothing,Int), 0)
-        for file in files
-            fp = open(file, "r")
-            lines = readlines(fp)
             num_lines = length(lines)
-            coverage = Array(Union(Nothing,Int), num_lines)
-            for i = 1:num_lines
+            coverage = Array(CovCount, num_lines)
+            for i in 1:num_lines
+                # Columns 1:9 contain the coverage count
                 cov_segment = lines[i][1:9]
+                # If coverage is NA, there will be a dash
                 coverage[i] = cov_segment[9] == '-' ? nothing : int(cov_segment)
             end
-            close(fp)
-            full_coverage = merge_coverage_counts(full_coverage,coverage)
+            full_coverage = merge_coverage_counts(full_coverage, coverage)
         end
         return full_coverage
     end
 
-
     # amend_coverage_from_src!
     # The code coverage functionality in Julia can miss code lines, which
     # will be incorrectly recorded as `nothing` but should instead be 0
-    #
-    # Input:
-    # coverage          Array of coverage counts by line (from process_cov)
-    # srcname           File name for a .jl file
-    function amend_coverage_from_src!(coverage, srcname)
+    # This function takes a coverage count vector and a the filename for
+    # a Julia code file, and updates the coverage vector in place.
+    function amend_coverage_from_src!(coverage::Vector{CovCount}, srcname)
         # To make sure things stay in sync, parse the file position
         # corresonding to each new line
         linepos = Int[]
@@ -139,257 +137,50 @@ module Coverage
                 end
             end
         end
-        coverage
+        nothing
     end
+    # function_body_lines is located in parser.jl
+    include("parser.jl")
 
-
-    function coverage_file(filename)
-        results = Coveralls.process_file(filename)
-        coverage = results["coverage"]
-        tot = sum(x->x!=nothing, coverage)
-        covered = sum(x->x!=nothing && x>0, coverage)
-        covered, tot
+    # process_file
+    # Given a .jl file and its containing folder, produce a corresponding
+    # FileCoverage instance from the source and matching coverage files
+    function process_file(filename, folder)
+        println("Coverage.process_file: Detecting coverage for $filename")
+        coverage = process_cov(filename,folder)
+        amend_coverage_from_src!(coverage, filename)
+        return FileCoverage(filename, readall(filename), coverage)
     end
+    process_file(filename) = process_file(filename,splitdir(filename)[1])
 
-    function coverage_file(filename, folder)
-        results = Coveralls.process_file(filename, folder)
-        coverage = results["coverage"]
-        tot = sum(x->x!=nothing, coverage)
-        covered = sum(x->x!=nothing && x>0, coverage)
-        covered, tot
-    end
-
-    function coverage_folder(folder="src")
-        results = Coveralls.process_folder(folder)
-        tot = covered = 0
-        for item in results
-            coverage = item["coverage"]
-            tot += sum(x->x!=nothing, coverage)
-            covered += sum(x->x!=nothing && x>0, coverage)
-        end
-        covered, tot
-    end
-
-    function_body_lines(ast) = function_body_lines!(Int[], ast, false)
-    function_body_lines!(flines, arg, infunction) = flines
-    function function_body_lines!(flines, node::LineNumberNode, infunction)
-        line = node.line
-        if infunction
-            push!(flines, line)
-        end
-        flines
-    end
-    function function_body_lines!(flines, ast::Expr, infunction)
-        if ast.head == :line
-            line = ast.args[1]
-            if infunction
-                push!(flines, line)
-            end
-            return flines
-        end
-        infunction |= isfuncexpr(ast)
-        for arg in ast.args
-            flines = function_body_lines!(flines, arg, infunction)
-        end
-        flines
-    end
-
-    export Coveralls
-    module Coveralls
-        using Requests
-        using Coverage
-        using JSON
-        using Compat
-
-        # coveralls_process_file
-        # Given a .jl file, return the Coveralls.io dictionary for this
-        # file by reading in the file and its matching .cov. Don't convert
-        # to JSON yet, just return dictionary.
-        # https://coveralls.io/docs/api
-        # {
-        #   "name" : "$filename"
-        #   "source": "...\n....\n...."
-        #   "coverage": [null, 1, null]
-        # }
-        export process_file
-        function process_file(filename)
-            return @compat Dict("name" => filename,
-                    "source" => readall(filename),
-                    "coverage" => amend_coverage_from_src!(process_cov(filename*".cov"), filename))
-        end
-        function process_file(filename, folder)
-            return @compat Dict("name" => filename,
-                    "source" => readall(filename),
-                    "coverage" => amend_coverage_from_src!(process_cov_with_pids(filename,folder), filename))
-        end
-
-        # coveralls_process_src
-        # Recursively walk through a Julia package's src/ folder
-        # and collect coverage statistics
-        export process_folder
-        function process_folder(folder="src")
-            source_files=Any[]
-            filelist = readdir(folder)
-            for file in filelist
-                fullfile = joinpath(folder,file)
-                println(fullfile)
-                if isfile(fullfile)
-                    try
-                        new_sf = process_file(fullfile,folder)
-                        push!(source_files, new_sf)
-                    catch e
-#                         if !isa(e,SystemError)
-#                             rethrow(e)
-#                         end
-                        # Skip
-                        println("Skipped $fullfile")
-                    end
-                else isdir(fullfile)
-                    append!(source_files, process_folder(fullfile))
+    # process_folder
+    # Process the contents of a folder of Julia source code to collect
+    # coverage statistics for all the files contained within.
+    # Will recursively traverse child folders.
+    # Default folder is "src", which is useful for the primary case
+    # where Coverage is called from the root directory of a package.
+    function process_folder(folder="src")
+        println("""Coverage.process_folder: Searching $folder for .jl files...""")
+        source_files = FileCoverage[]
+        files = readdir(folder)
+        for file in files
+            fullfile = joinpath(folder,file)
+            if isfile(fullfile)
+                # Is it a Julia file?
+                if splitext(fullfile)[2] == ".jl"
+                    push!(source_files, process_file(fullfile,folder))
+                else
+                    println("Coverage.process_folder: Skipping $file, not a .jl file")
                 end
+            else isdir(fullfile)
+                # If it is a folder, recursively traverse
+                append!(source_files, process_folder(fullfile))
             end
-            return source_files
         end
+        return source_files
+    end
 
-        # submit
-        # Submit coverage to Coveralls.io
-        # https://coveralls.io/docs/api
-        # {
-        #   "service_job_id": "1234567890",
-        #   "service_name": "travis-ci",
-        #   "source_files": [
-        #     {
-        #       "name": "example.rb",
-        #       "source": "def four\n  4\nend",
-        #       "coverage": [null, 1, null]
-        #     },
-        #     {
-        #       "name": "lib/two.rb",
-        #       "source": "def seven\n  eight\n  nine\nend",
-        #       "coverage": [null, 1, 0, null]
-        #     }
-        #   ]
-        # }
-
-        import Base.Git
-        function query_git_info(dir="")
-            commit_sha = Git.readchomp(`rev-parse HEAD`, dir=dir)
-            author_name = Git.readchomp(`log -1 --pretty=format:"%aN"`, dir=dir)
-            author_email = Git.readchomp(`log -1 --pretty=format:"%aE"`, dir=dir)
-            committer_name = Git.readchomp(`log -1 --pretty=format:"%cN"`, dir=dir)
-            committer_email = Git.readchomp(`log -1 --pretty=format:"%cE"`, dir=dir)
-            branch = Git.branch(dir=dir)
-            message = Git.readchomp(`log -1 --pretty=format:"%s"`, dir=dir)
-            remote = Git.readchomp(`config --get remote.origin.url`, dir=dir)
-
-            # Normalize remote url to https
-            remote = "https" * Git.normalize_url(remote)[4:end]
-
-            return @compat Dict(
-                "branch" => branch,
-                "remotes" => [
-                    @compat Dict(
-                        "name" => "origin",
-                        "url" => remote
-                    )
-                ],
-                "head" => @compat Dict(
-                    "id" => commit_sha,
-                    "author_name" => author_name,
-                    "author_email" => author_email,
-                    "committer_name" => committer_email,
-                    "committer_email" => committer_email,
-                    "message" => message
-                )
-            )
-        end
-
-        export submit, submit_token
-        function submit(source_files)
-            data = @compat Dict("service_job_id" => ENV["TRAVIS_JOB_ID"],
-                    "service_name" => "travis-ci",
-                    "source_files" => source_files)
-
-            r = Requests.post(URI("https://coveralls.io/api/v1/jobs"), files =
-                [FileParam(JSON.json(data),"application/json","json_file","coverage.json")])
-            dump(r.data)
-        end
-
-        # git_info can be either a dict or a function that returns a dict
-        function submit_token(source_files, git_info=query_git_info)
-            data = @compat Dict("repo_token" => ENV["REPO_TOKEN"],
-                    "source_files" => source_files)
-
-            # Attempt to parse git info via git_info, unless the user explicitly disables it by setting git_info to nothing
-            try
-                if isa(git_info, Function)
-                    data["git"] = git_info()
-                elseif isa(git_info, Dict)
-                    data["git"] = git_info
-                end
-            end
-
-            r = post(URI("https://coveralls.io/api/v1/jobs"), files =
-                [FileParam(JSON.json(data),"application/json","json_file","coverage.json")])
-            dump(r.data)
-        end
-    end  # module Coveralls
-
+    include("coveralls.jl")
     include("codecovio.jl")
-
-    ## Analyzing memory allocation
-    immutable MallocInfo
-        bytes::Int
-        filename::UTF8String
-        linenumber::Int
-    end
-
-    sortbybytes(a::MallocInfo, b::MallocInfo) = a.bytes < b.bytes
-
-    function analyze_malloc_files(files)
-        bc = MallocInfo[]
-        for filename in files
-            open(filename) do file
-                for (i,ln) in enumerate(eachline(file))
-                    tln = strip(ln)
-                    if !isempty(tln) && isdigit(tln[1])
-                        s = split(tln)
-                        b = parseint(s[1])
-                        push!(bc, MallocInfo(b, filename, i))
-                    end
-                end
-            end
-        end
-        sort(bc, lt=sortbybytes)
-    end
-
-    function find_malloc_files(dirs)
-        files = ByteString[]
-        for dir in dirs
-            filelist = readdir(dir)
-            for file in filelist
-                file = joinpath(dir, file)
-                if isdir(file)
-                    append!(files, find_malloc_files(file))
-                elseif endswith(file, "jl.mem")
-                    push!(files, file)
-                end
-            end
-        end
-        files
-    end
-    find_malloc_files(file::ByteString) = find_malloc_files([file])
-
-    analyze_malloc(dirs) = analyze_malloc_files(find_malloc_files(dirs))
-    analyze_malloc(dir::ByteString) = analyze_malloc([dir])
-
-    isfuncexpr(ex::Expr) =
-        ex.head == :function || (ex.head == :(=) && typeof(ex.args[1]) == Expr && ex.args[1].head == :call)
-    isfuncexpr(arg) = false
-
-    # Support Unix command line usage like `julia Coverage.jl $(find ~/.julia/v0.3 -name "*.jl.mem")`
-    if !isinteractive()
-        bc = analyze_malloc_files(ARGS)
-        println(bc)
-    end
+    include("memalloc.jl")
 end

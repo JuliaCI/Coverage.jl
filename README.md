@@ -29,13 +29,22 @@ julia --code-coverage=user --inline=no
 *Step 2:* Run your tests (e.g., `include("runtests.jl")`) and quit Julia.
 
 *Step 3:* Navigate to the top-level directory of your package, restart Julia (with no special flags) and analyze your code coverage:
+
 ```julia
 using Coverage
-covered_lines, total_lines = coverage_folder()  # defaults to src/; alternatively, supply the folder name as a string
+# defaults to src/; alternatively, supply the folder name as argument
+coverage = process_folder()
+# Get total coverage for all Julia files
+covered_lines, total_lines = get_summary(coverage)
+# Or process a single file
+@show get_summary(process_file("src/MyPkg.jl"))
 ```
 The fraction of total coverage is equal to `covered_lines/total_lines`.
 
-> To discover which functions lack testing, browse through the `*.cov` files in your `src/` directory and look for lines starting with `-` or `0` (meaning that those lines never executed; numbers bigger than 0 are counts of the number of times the line executed).
+To discover which functions lack testing, browse through the `*.cov` files in your `src/`
+directory and look for lines starting with `-` or `0` - those lines were never executed.
+Numbers larger than 0 are counts of the number of times the respective line was executed.
+
 
 ### Memory allocation
 
@@ -71,7 +80,7 @@ These are sorted in increasing order of allocation size.
 4. Add the following to the end of your `.travis.yml` file. This line downloads this package, collects the per-file coverage data, then bundles it up and submits to Coveralls. Coverage.jl assumes that the working directory is the package directory, so it changes to that first (so don't forget to replace `MyPkg` with your package's name!
 ```yml
 after_success:
-- julia -e 'cd(Pkg.dir("MyPkg")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'
+- julia -e 'cd(Pkg.dir("MyPkg")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(process_folder())'
 ```
 
 ## Using Codecov
@@ -88,12 +97,12 @@ after_success:
 4. Add the following to the end of your `.travis.yml` file. This line downloads this package, collects the per-file coverage data, then bundles it up and submits to Codecov. Coverage.jl assumes that the working directory is the package directory, so it changes to that first (so don't forget to replace `MyPkg` with your package's name!
 ```yml
 after_success:
-- julia -e 'cd(Pkg.dir("MyPkg")); Pkg.add("Coverage"); using Coverage; Codecov.submit(Codecov.process_folder())'
+- julia -e 'cd(Pkg.dir("MyPkg")); Pkg.add("Coverage"); using Coverage; Codecov.submit(process_folder())'
 ```
 If you're running coverage at home and want to upload results to Codecov, make a bash script like the following:
 ```bash
 #!/bin/bash
-REPO_TOKEN=$YOUR_TOKEN_HERE julia -e 'cd(Pkg.dir("MyPkg")); using Coverage;  Codecov.submit_token(Codecov.process_folder())'
+REPO_TOKEN=$YOUR_TOKEN_HERE julia -e 'cd(Pkg.dir("MyPkg")); using Coverage; Codecov.submit_token(process_folder())'
 ```
 
 If you make it through that, consider adding your package to the list below. Alternatively, if you get stuck see on the examples below or checkout [Coveralls troubleshooting page](https://coveralls.io/docs/troubleshooting).
