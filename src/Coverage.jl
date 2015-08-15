@@ -12,7 +12,6 @@ module Coverage
     # lines as "null" (cannot be run), when they could have been run
     # but were not (should be 0). We use JuliaParser to augment the
     # coverage results by identifying this code.
-    import JuliaParser.Parser
 
     export process_folder, process_file 
     export process_cov, amend_coverage_from_src!
@@ -124,7 +123,7 @@ module Coverage
             while !eof(io)
                 pos = position(io)
                 linestart = minimum(searchsorted(linepos, pos))
-                ast = Parser.parse(io)
+                ast = Base.parse(io)
                 isa(ast, Expr) || continue
                 flines = function_body_lines(ast)
                 if !isempty(flines)
