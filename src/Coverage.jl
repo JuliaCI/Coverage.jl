@@ -13,7 +13,7 @@ module Coverage
     # but were not (should be 0). We use JuliaParser to augment the
     # coverage results by identifying this code.
 
-    export process_folder, process_file 
+    export process_folder, process_file
     export process_cov, amend_coverage_from_src!
     export get_summary
     export analyze_malloc, merge_coverage_counts
@@ -129,6 +129,9 @@ module Coverage
                 if !isempty(flines)
                     flines += linestart-1
                     for l in flines
+                        if l > length(coverage)
+                            error("source file is longer than .cov file; source might have changed")
+                        end
                         if coverage[l] == nothing
                             coverage[l] = 0
                         end
