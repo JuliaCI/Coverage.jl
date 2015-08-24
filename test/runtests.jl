@@ -22,8 +22,8 @@ run(`julia --code-coverage=user -e $cmdstr`)
 r = process_file(srcname, "data")
 # The next one is the correct one, but julia & JuliaParser don't insert a line number after the 1-line @doc -> test
 # See https://github.com/JuliaLang/julia/issues/9663 (when this is fixed, can uncomment the next line on julia 0.4)
- target = Union{Int64,Void}[nothing, nothing, nothing, nothing, 1, nothing, 0, nothing, 0, nothing, nothing, nothing, 0, nothing, nothing, nothing, nothing, nothing, nothing, 0, nothing, nothing, 0]
-#target = Union{Int64,Void}[nothing, nothing, nothing, nothing, 1, nothing, 0, nothing, 0, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, 0, nothing, nothing, 0]
+target = Union{Int64,Void}[nothing, nothing, nothing, nothing, 1, nothing, 0, nothing, 0, nothing, nothing, nothing, 0, nothing, nothing, nothing, nothing, nothing, nothing, 0, nothing, nothing, 0, nothing, nothing, nothing, nothing]
+#target = Union{Int64,Void}[nothing, nothing, nothing, nothing, 1, nothing, 0, nothing, 0, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, 0, nothing, nothing, 0, nothing, nothing, nothing, nothing]
 @test r.coverage[1:length(target)] == target
 
 covtarget = (sum(x->x != nothing && x > 0, target), sum(x->x != nothing, target))
