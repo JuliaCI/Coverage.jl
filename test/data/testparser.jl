@@ -21,3 +21,7 @@ function f7(x)
 end
 
 f8(x) = 8x
+
+# This line should have no code
+module TestModule
+end
