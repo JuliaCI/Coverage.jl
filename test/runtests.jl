@@ -6,6 +6,23 @@
 
 using Coverage, Base.Test
 
+# test our filename matching. These aren't exported functions but it's probably
+# a good idea to have explicit tests for them, as they're used to match files
+# that get deleted
+
+@test Coverage.iscovfile("test.jl.cov")
+@test Coverage.iscovfile("test.jl.2934.cov")
+@test Coverage.iscovfile("/home/somebody/test.jl.2934.cov")
+@test !Coverage.iscovfile("test.ji.2934.cov")
+@test !Coverage.iscovfile("test.ji.2934.cove")
+@test !Coverage.iscovfile("test.jicov")
+@test !Coverage.iscovfile("test.c.cov")
+@test Coverage.iscovfile("test.jl.cov", "test.jl")
+@test !Coverage.iscovfile("test.jl.cov", "other.jl")
+@test Coverage.iscovfile("test.jl.8392.cov", "test.jl")
+@test Coverage.iscovfile("/somedir/test.jl.8392.cov", "/somedir/test.jl")
+@test !Coverage.iscovfile("/otherdir/test.jl.cov", "/somedir/test.jl")
+
 cd(Pkg.dir("Coverage")) do
     datadir = joinpath("test", "data")
     # Process a saved set of coverage data...
@@ -22,7 +39,9 @@ cd(Pkg.dir("Coverage")) do
     # Test a file from scratch
     srcname = joinpath("test", "data","testparser.jl")
     covname = srcname*".cov"
-    isfile(covname) && rm(covname)
+    # clean out any previous coverage files. Don't use clean_folder because we
+    # need to preserve the pre-baked coverage file Coverage.jl.cov
+    clean_file(srcname)
     cmdstr = "include(\"$srcname\"); using Base.Test; @test f2(2) == 4"
     run(`julia --code-coverage=user -e $cmdstr`)
     r = process_file(srcname, datadir)

@@ -14,6 +14,7 @@ module Coverage
     # coverage results by identifying this code.
 
     export process_folder, process_file
+    export clean_folder, clean_file
     export process_cov, amend_coverage_from_src!
     export get_summary
     export analyze_malloc, merge_coverage_counts
@@ -180,6 +181,46 @@ module Coverage
             end
         end
         return source_files
+    end
+
+    # matches julia coverage files with and without the PID
+    iscovfile(filename) = ismatch(r"\.jl\.?[0-9]*\.cov$", filename)
+    # matches a coverage file for the given sourcefile. They can be full paths
+    # with directories, but the directories must match
+    function iscovfile(filename, sourcefile)
+        startswith(filename, sourcefile) || return false
+        ismatch(r"\.jl\.?[0-9]*\.cov$", filename)
+    end
+
+    # cleans up all the .cov files in the given directory and subdirectories
+    # no default folder, because we're deleting stuff
+    function clean_folder(folder)
+        files = readdir(folder)
+        for file in files
+            fullfile = joinpath(folder, file)
+            if isfile(fullfile) && iscovfile(file)
+                # we have ourselves a coverage file. eliminate it
+                println("Removing $fullfile")
+                rm(fullfile)
+            elseif isdir(fullfile)
+                clean_folder(fullfile)
+            end
+        end
+        nothing
+    end
+
+    # cleans up all .cov files associated with a given source file. Only looks
+    # in the same directory as the given file.
+    function clean_file(filename)
+        folder = splitdir(filename)[1]
+        files = readdir(folder)
+        for file in files
+            fullfile = joinpath(folder, file)
+            if isfile(fullfile) && iscovfile(fullfile, filename)
+                println("Removing $fullfile")
+                rm(fullfile)
+            end
+        end
     end
 
     include("coveralls.jl")

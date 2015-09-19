@@ -77,6 +77,10 @@ coverage = process_folder()
 LCOV.writefile("coverage/lcov.info", coverage)
 ```
 
+### Cleaning up .cov files
+
+When using Coverage.jl locally, over time a lot of `.cov` files can accumulate. Coverage.jl provides the `clean_folder` and `clean_file` methods to either clean up all `.cov` files in a directory (and subdirectories) or only clean the `.cov` files associated with a specific source file.
+
 ## Tracking Coverage with [Codecov.io](https://codecov.io)
 
 [Codecov.io](https://codecov.io) is a test coverage tracking tool that integrates with your continuous integration servers (e.g. [TravisCI](https://travis-ci.org/)) or with HTTP POSTs from your very own computer at home.
