@@ -21,14 +21,14 @@ module Coverage
     # The unit for line counts. Counts can be >= 0 or nothing, where
     # the nothing means it doesn't make sense to have a count for this
     # line (e.g. a comment), but 0 means it could have run but didn't.
-    typealias CovCount Union(Nothing,Int)
+    typealias CovCount Union{Void,Int}
 
     # The coverage data for a given file. Not all fields will be used
     # for all reporting methods.
     export FileCoverage
     type FileCoverage
-        filename::String
-        source::String
+        filename::AbstractString
+        source::AbstractString
         coverage::Vector{CovCount}
     end
     function get_summary(fc::FileCoverage)
@@ -96,7 +96,7 @@ module Coverage
                 # Columns 1:9 contain the coverage count
                 cov_segment = lines[i][1:9]
                 # If coverage is NA, there will be a dash
-                coverage[i] = cov_segment[9] == '-' ? nothing : int(cov_segment)
+                coverage[i] = cov_segment[9] == '-' ? nothing : parse(Int, cov_segment)
             end
             full_coverage = merge_coverage_counts(full_coverage, coverage)
         end
@@ -184,5 +184,6 @@ module Coverage
 
     include("coveralls.jl")
     include("codecovio.jl")
+    include("lcov.jl")
     include("memalloc.jl")
 end
