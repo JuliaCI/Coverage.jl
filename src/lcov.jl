@@ -24,7 +24,7 @@ function write(io::IO, fc::FileCoverage)
     covered = 0
     println(io, "SF:$(fc.filename)")
     for (line, cov) in enumerate(fc.coverage)
-        (linecov, lineinst) = write(io, line, cov)
+        (lineinst, linecov) = write(io, line, cov)
         instrumented += lineinst
         covered += linecov > 0 ? 1 : 0
     end

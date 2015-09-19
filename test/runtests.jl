@@ -13,10 +13,11 @@ cd(Pkg.dir("Coverage")) do
     # ... and memory data
     analyze_malloc(datadir)
     lcov = IOBuffer()
-    LCOV.write(lcov, r)
-    @test takebuf_string(lcov) ==
-    """
-    """
+    # we only have a single file, but we want to test on the Vector of file results
+    LCOV.write(lcov, FileCoverage[r])
+    open(joinpath(datadir, "expected.info")) do f
+        @test takebuf_string(lcov) == readall(f)
+    end
 
     # Test a file from scratch
     srcname = joinpath("test", "data","testparser.jl")
