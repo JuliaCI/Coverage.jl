@@ -14,7 +14,7 @@ using Coverage, Base.Test
 @test Coverage.iscovfile("test.jl.2934.cov")
 @test Coverage.iscovfile("/home/somebody/test.jl.2934.cov")
 @test !Coverage.iscovfile("test.ji.2934.cov")
-@test !Coverage.iscovfile("test.ji.2934.cove")
+@test !Coverage.iscovfile("test.jl.2934.cove")
 @test !Coverage.iscovfile("test.jicov")
 @test !Coverage.iscovfile("test.c.cov")
 @test Coverage.iscovfile("test.jl.cov", "test.jl")
