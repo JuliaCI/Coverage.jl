@@ -24,14 +24,29 @@ module Coverage
     # line (e.g. a comment), but 0 means it could have run but didn't.
     typealias CovCount Union{Void,Int}
 
-    # The coverage data for a given file. Not all fields will be used
-    # for all reporting methods.
     export FileCoverage
+    """
+    FileCoverage
+
+    Represents coverage info about a file, including the filename, the source
+    code itself, and a `Vector` of run counts for each line. If the
+    line was expected to be run the count will be an `Int` >= 0. Other lines
+    such as comments will have a count of `nothing`.
+    """
     type FileCoverage
         filename::AbstractString
         source::AbstractString
         coverage::Vector{CovCount}
     end
+
+    """
+        get_summary(fcs)
+
+    Summarize results from a single `FileCoverage` instance or a `Vector` of
+    them, returning a 2-tuple with the covered lines and total lines.
+    """
+    function get_summary end
+
     function get_summary(fc::FileCoverage)
         cov_lines = sum(x -> x!=nothing && x > 0, fc.coverage)
         tot_lines = sum(x -> x!=nothing, fc.coverage)
@@ -47,9 +62,12 @@ module Coverage
         return cov_lines, tot_lines
     end
 
-    # merge_coverage_counts
-    # Given two vectors of line coverage counts, take the pairwise
-    # maximum of both vectors, preseving null counts if both are null.
+    """
+        merge_coverage_counts(a1::Vector{CovCount}, a2::Vector{CovCount})
+
+    Given two vectors of line coverage counts, take the pairwise
+    maximum of both vectors, preseving null counts if both are null.
+    """
     function merge_coverage_counts(a1::Vector{CovCount},
                                    a2::Vector{CovCount})
         n = max(length(a1),length(a2))
@@ -63,11 +81,14 @@ module Coverage
         return a
     end
 
-    # process_cov
-    # Given a filename for a Julia source file, produce an array of
-    # line coverage counts by reading in all matching .{pid}.cov files.
-    # On Julia 0.3 there was just a .cov file, but this code works fine.
-    function process_cov(filename,folder)
+    """
+        process_cov(filename, folder)
+
+    Given a filename for a Julia source file, produce an array of
+    line coverage counts by reading in all matching .{pid}.cov files.
+    On Julia 0.3 there was just a .cov file, but this code works fine.
+    """
+    function process_cov(filename, folder)
         # Find all coverage files in the folder that match the file we
         # are currently working on
         files = readdir(folder)
@@ -104,11 +125,14 @@ module Coverage
         return full_coverage
     end
 
-    # amend_coverage_from_src!
-    # The code coverage functionality in Julia can miss code lines, which
-    # will be incorrectly recorded as `nothing` but should instead be 0
-    # This function takes a coverage count vector and a the filename for
-    # a Julia code file, and updates the coverage vector in place.
+    """
+        amend_coverage_from_src!(coverage::Vector{CovCount}, srcname)
+
+    The code coverage functionality in Julia can miss code lines, which
+    will be incorrectly recorded as `nothing` but should instead be 0
+    This function takes a coverage count vector and a the filename for
+    a Julia code file, and updates the coverage vector in place.
+    """
     function amend_coverage_from_src!(coverage::Vector{CovCount}, srcname)
         # To make sure things stay in sync, parse the file position
         # corresonding to each new line
@@ -145,9 +169,15 @@ module Coverage
     # function_body_lines is located in parser.jl
     include("parser.jl")
 
-    # process_file
-    # Given a .jl file and its containing folder, produce a corresponding
-    # FileCoverage instance from the source and matching coverage files
+    """
+        process_file(filename[, folder]) -> FileCoverage
+
+    Given a .jl file and its containing folder, produce a corresponding
+    `FileCoverage` instance from the source and matching coverage files. If the
+    folder is not given it is extracted from the filename.
+    """
+    function process_file end
+
     function process_file(filename, folder)
         println("Coverage.process_file: Detecting coverage for $filename")
         coverage = process_cov(filename,folder)
@@ -156,12 +186,14 @@ module Coverage
     end
     process_file(filename) = process_file(filename,splitdir(filename)[1])
 
-    # process_folder
-    # Process the contents of a folder of Julia source code to collect
-    # coverage statistics for all the files contained within.
-    # Will recursively traverse child folders.
-    # Default folder is "src", which is useful for the primary case
-    # where Coverage is called from the root directory of a package.
+    """
+        process_folder(folder="src") -> Vector{FileCoverage}
+
+    Process the contents of a folder of Julia source code to collect coverage
+    statistics for all the files contained within. Will recursively traverse
+    child folders. Default folder is "src", which is useful for the primary case
+    where Coverage is called from the root directory of a package.
+    """
     function process_folder(folder="src")
         println("""Coverage.process_folder: Searching $folder for .jl files...""")
         source_files = FileCoverage[]
@@ -192,9 +224,15 @@ module Coverage
         ismatch(r"\.jl\.?[0-9]*\.cov$", filename)
     end
 
-    # cleans up all the .cov files in the given directory and subdirectories
-    # no default folder, because we're deleting stuff
-    function clean_folder(folder)
+    """
+        clean_folder(folder::AbstractString)
+
+    Cleans up all the `.cov` files in the given directory and subdirectories.
+    Unlike `process_folder` this does not include a default value
+    for the root folder, requiring the calling code to be more explicit about
+    which files will be deleted.
+    """
+    function clean_folder(folder::AbstractString)
         files = readdir(folder)
         for file in files
             fullfile = joinpath(folder, file)
@@ -209,9 +247,14 @@ module Coverage
         nothing
     end
 
-    # cleans up all .cov files associated with a given source file. Only looks
-    # in the same directory as the given file.
-    function clean_file(filename)
+    """
+        clean_file(filename::AbstractString)
+
+    Cleans up all `.cov` files associated with a given source file. This only
+    looks in the directory of the given file, i.e. the `.cov` files should be
+    siblings of the source file.
+    """
+    function clean_file(filename::AbstractString)
         folder = splitdir(filename)[1]
         files = readdir(folder)
         for file in files

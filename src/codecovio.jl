@@ -1,4 +1,12 @@
 export Codecov
+
+"""
+Coverage.Codecov Module
+
+This module provides functionality to push coverage information to the CodeCov.io
+web service. It exports the `submit` and `submit_token` methods.
+"""
+
 module Codecov
     using Requests
     using Coverage
@@ -33,11 +41,14 @@ module Codecov
         return @compat Dict("coverage" => cov)
     end
 
-    # submit
-    # Take a vector of file coverage results (produced by process_folder),
-    # and submits them to Codecov.io. Assumes that this code is being run
-    # on TravisCI. If running locally, use submit_token.
-    function submit(fcs::Vector{FileCoverage}) 
+    """
+        submit(fcs::Vector{FileCoverage})
+
+    Take a vector of file coverage results (produced by `process_folder`),
+    and submits them to Codecov.io. Assumes that this code is being run
+    on TravisCI. If running locally, use `submit_token`.
+    """
+    function submit(fcs::Vector{FileCoverage})
         branch  = ENV["TRAVIS_BRANCH"]
         pr      = ENV["TRAVIS_PULL_REQUEST"]
         job     = ENV["TRAVIS_JOB_ID"]
@@ -58,9 +69,16 @@ module Codecov
         dump(req.data)
     end
 
-    # submit_token
-    # For submissions not from TravisCI.
     import Base.Git
+
+    """
+        submit_token(fcs::Vector{FileCoverage},
+                     commit=Git.readchomp(`rev-parse HEAD`, dir=""),
+                     branch=Git.branch(dir=""))
+
+    Take a `Vector` of file coverage results (produced by `process_folder`),
+    and submits them to Codecov.io. For submissions not from TravisCI.
+    """
     function submit_token(fcs::Vector{FileCoverage},
                             commit=Git.readchomp(`rev-parse HEAD`, dir=""),
                             branch=Git.branch(dir=""))

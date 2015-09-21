@@ -8,6 +8,12 @@ end
 
 sortbybytes(a::MallocInfo, b::MallocInfo) = a.bytes < b.bytes
 
+"""
+    analyze_malloc_files(files) -> Vector{MallocInfo}
+
+Iterates through the given list of filenames and return a `Vector` of
+`MallocInfo`s with allocation information.
+"""
 function analyze_malloc_files(files)
     bc = MallocInfo[]
     for filename in files

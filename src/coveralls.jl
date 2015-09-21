@@ -1,5 +1,11 @@
 # Submit coverage to Coveralls.io
 export Coveralls
+"""
+Coverage.Coveralls Module
+
+This module provides functionality to push coverage information to the Coveralls
+web service. It exports the `submit` and `submit_token` methods.
+"""
 module Coveralls
     using Coverage
     using Requests
@@ -36,10 +42,13 @@ module Coveralls
                                              "source"   => fc.source,
                                              "coverage" => fc.coverage)
 
-    # submit
-    # Take a vector of file coverage results (produced by process_folder),
-    # and submits them to Coveralls. Assumes that this code is being run
-    # on TravisCI. If running locally, use submit_token.
+    """
+        submit(fcs::Vector{FileCoverage})
+
+    Take a vector of file coverage results (produced by `process_folder`),
+    and submits them to Coveralls. Assumes that this code is being run
+    on TravisCI. If running locally, use `submit_token`.
+    """
     function submit(fcs::Vector{FileCoverage})
         data = @compat Dict("service_job_id"    => ENV["TRAVIS_JOB_ID"],
                             "service_name"      => "travis-ci",
@@ -88,10 +97,14 @@ module Coveralls
         )
     end
 
+    """
+        submit_token(fcs::Vector{FileCoverage}, git_info=query_git_info)
 
-    # submit_token
-    # For submissions not from TravisCI.
-    # git_info can be either a dict or a function that returns a dict
+    Take a `Vector` of file coverage results (produced by `process_folder`),
+    and submits them to Coveralls. For submissions not from TravisCI.
+
+    git_info can be either a `Dict` or a function that returns a `Dict`.
+    """
     function submit_token(fcs::Vector{FileCoverage}, git_info=query_git_info)
         data = @compat Dict("repo_token" => ENV["REPO_TOKEN"],
                             "source_files" => map(to_json, fcs))
