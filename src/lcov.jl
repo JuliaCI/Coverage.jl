@@ -69,7 +69,7 @@ function writeline(io::IO, line::Int, count::Int)
     println(io, "DA:$line,$count")
     (1, count)
 end
-function writeline(io::IO, line::Int, count::Nothing)
+function writeline(io::IO, line::Int, count::Void)
     # skipped line, nothing to do here
     (0, 0)
 end
