@@ -2,16 +2,38 @@
 # can be parsed by a variety of useful utilities to display coverage info
 
 export LCOV
+"""
+Coverage.LCOV Module
+
+This module provides functionality to generate LCOV info format files from
+Julia coverage data. It exports the `writefile` function.
+"""
 module LCOV
 
 using Compat
 using Coverage
 
-function writefile(outfile::String, fcs::Vector{FileCoverage})
+export writefile
+
+"""
+    writefile(outfile::AbstractString, fcs)
+
+Write the given coverage data to a file in LCOV info format. The data can either
+be a `FileCoverage` instance or a vector of `FileCoverage` instances.
+"""
+function writefile(outfile::AbstractString, fcs)
     open(outfile, "w") do f
         write(f, fcs)
     end
 end
+
+"""
+    write(io::IO, fcs)
+
+Write the given coverage data to an `IO` stream in LCOV info format. The data
+can either be a `FileCoverage` instance or a vector of `FileCoverage` instances.
+"""
+function write end
 
 function write(io::IO, fcs::Vector{FileCoverage})
     for fc in fcs
@@ -24,7 +46,7 @@ function write(io::IO, fc::FileCoverage)
     covered = 0
     println(io, "SF:$(fc.filename)")
     for (line, cov) in enumerate(fc.coverage)
-        (lineinst, linecov) = write(io, line, cov)
+        (lineinst, linecov) = writeline(io, line, cov)
         instrumented += lineinst
         covered += linecov > 0 ? 1 : 0
     end
@@ -33,12 +55,21 @@ function write(io::IO, fc::FileCoverage)
     println(io, "end_of_record")
 end
 
-# returns a tuple of (instrumented, count)
-function write(io::IO, line::Int, count::Int)
+# document the writeline function instead of individual methods
+"""
+    writeline(io::IO, line::Int, count)
+
+Write LCOV data for a single line to the given `IO` stream. Returns a 2-tuple
+of the number of lines instrumented (0 or 1) and the count for how many times
+the line was executed during testing.
+"""
+function writeline end
+
+function writeline(io::IO, line::Int, count::Int)
     println(io, "DA:$line,$count")
     (1, count)
 end
-function write(io::IO, line::Int, count::Nothing)
+function writeline(io::IO, line::Int, count::Void)
     # skipped line, nothing to do here
     (0, 0)
 end
