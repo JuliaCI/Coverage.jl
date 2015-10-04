@@ -27,7 +27,7 @@ module Coverage
     # process_src_coveralls
     # Given a .jl file, return the Coveralls.io dictionary for this
     # file by reading in the file and its matching .cov. Don't convert
-    # to JSON yet, just return dictionary. 
+    # to JSON yet, just return dictionary.
     # https://coveralls.io/docs/api
     # {
     #   "name" : "$filename"
@@ -36,13 +36,13 @@ module Coverage
     # }
     export process_src_coveralls
     function process_src_coveralls(filename)
-        return ["name" => filename,
-                "source" => readall(filename),
-                "coverage" => process_cov(filename*".cov")]
+        return @compat Dict("name" => filename,
+                            "source" => readall(filename),
+                            "coverage" => process_cov(filename*".cov"))
     end
 
     # create_coveralls_post
-    # Create the request to submit to Coveralls.io (as a dictionary, 
+    # Create the request to submit to Coveralls.io (as a dictionary,
     # not a JSON string)
     # https://coveralls.io/docs/api
     # {
@@ -63,9 +63,9 @@ module Coverage
     # }
     export create_coveralls_travis_post
     function create_coveralls_travis_post(source_files)
-        return ["service_job_id" => ENV["TRAVIS_JOB_ID"],
-                "service_name" => "travis-ci",
-                "source_files" => source_files]
+        return @compat Dict("service_job_id" => ENV["TRAVIS_JOB_ID"],
+                            "service_name" => "travis-ci",
+                            "source_files" => source_files)
     end
 
     # submit_coveralls
@@ -73,7 +73,7 @@ module Coverage
     export submit_coveralls
     function submit_coveralls(data)
         println(JSON.json(data))
-        post("https://coveralls.io/api/v1/jobs"; data = {"json_file" => JSON.json(data)})
+        post("https://coveralls.io/api/v1/jobs"; data = @compat Dict("json_file" => JSON.json(data)))
     end
 
 
