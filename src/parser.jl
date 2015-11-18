@@ -22,7 +22,7 @@ function function_body_lines!(flines, ast::Expr, infunction)
     elseif ast.head == :module
         # Ignore automatically added eval definitions
         args = ast.args[end].args
-        if isevaldef(args[1]) && isevaldef(args[2])
+        if length(args) >= 2 && isevaldef(args[1]) && isevaldef(args[2])
             args = args[3:end]
         end
     else

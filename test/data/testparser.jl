@@ -25,3 +25,7 @@ f8(x) = 8x
 # This line should have no code
 module TestModule
 end
+
+# This line should have no code
+baremodule TestBareModule
+end
