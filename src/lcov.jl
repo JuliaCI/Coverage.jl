@@ -10,7 +10,6 @@ Julia coverage data. It exports the `writefile` function.
 """
 module LCOV
 
-using Compat
 using Coverage
 
 export writefile
