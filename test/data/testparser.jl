@@ -1,6 +1,3 @@
-if VERSION < v"0.4.0-dev"
-    using Docile
-end
 # This line should have no code
 f2(x) = 2x
 if true

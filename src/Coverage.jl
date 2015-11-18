@@ -6,8 +6,6 @@
 #######################################################################
 module Coverage
 
-    using Compat
-
     # The code coverage results produced by Julia itself report some
     # lines as "null" (cannot be run), when they could have been run
     # but were not (should be 0). We use JuliaParser to augment the

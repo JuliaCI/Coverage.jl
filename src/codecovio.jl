@@ -11,7 +11,6 @@ module Codecov
     using Requests
     using Coverage
     using JSON
-    using Compat
 
     export submit, submit_token
 
@@ -38,7 +37,7 @@ module Codecov
         for fc in fcs
             cov[fc.filename] = vcat(nothing, fc.coverage)
         end
-        return @compat Dict("coverage" => cov)
+        return Dict("coverage" => cov)
     end
 
     """
@@ -62,7 +61,7 @@ module Codecov
         println("Codecov.io API URL:")
         println(uri_str)
 
-        heads   = @compat Dict("Content-Type" => "application/json")
+        heads   = Dict("Content-Type" => "application/json")
         data    = to_json(fcs)
         req     = Requests.post(URI(uri_str); json = data, headers = heads)
         println("Result of submission:")
@@ -84,7 +83,7 @@ module Codecov
                             branch=Git.branch(dir=""))
         repo_token = ENV["REPO_TOKEN"]
         uri_str = "https://codecov.io/upload/v2?&token=$(repo_token)&commit=$(commit)&branch=$(branch)"
-        heads   = @compat Dict("Content-Type" => "application/json")
+        heads   = Dict("Content-Type" => "application/json")
         data    = to_json(fcs)
         req     = Requests.post(URI(uri_str); json = data, headers = heads)
         println("Result of submission:")

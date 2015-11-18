@@ -36,7 +36,7 @@ module Coverage
     # }
     export process_src_coveralls
     function process_src_coveralls(filename)
-        return @compat Dict("name" => filename,
+        return Dict("name" => filename,
                             "source" => readall(filename),
                             "coverage" => process_cov(filename*".cov"))
     end
@@ -63,7 +63,7 @@ module Coverage
     # }
     export create_coveralls_travis_post
     function create_coveralls_travis_post(source_files)
-        return @compat Dict("service_job_id" => ENV["TRAVIS_JOB_ID"],
+        return Dict("service_job_id" => ENV["TRAVIS_JOB_ID"],
                             "service_name" => "travis-ci",
                             "source_files" => source_files)
     end
@@ -73,7 +73,7 @@ module Coverage
     export submit_coveralls
     function submit_coveralls(data)
         println(JSON.json(data))
-        post("https://coveralls.io/api/v1/jobs"; data = @compat Dict("json_file" => JSON.json(data)))
+        post("https://coveralls.io/api/v1/jobs"; data = Dict("json_file" => JSON.json(data)))
     end
 
 

@@ -10,7 +10,6 @@ module Coveralls
     using Coverage
     using Requests
     using JSON
-    using Compat
 
     export submit, submit_token
 
@@ -38,9 +37,9 @@ module Coveralls
 
     # to_json
     # Convert a FileCoverage instance to its Coveralls JSON representation
-    to_json(fc::FileCoverage) = @compat Dict("name"     => fc.filename,
-                                             "source"   => fc.source,
-                                             "coverage" => fc.coverage)
+    to_json(fc::FileCoverage) = Dict("name"     => fc.filename,
+                                     "source"   => fc.source,
+                                     "coverage" => fc.coverage)
 
     """
         submit(fcs::Vector{FileCoverage})
@@ -50,9 +49,9 @@ module Coveralls
     on TravisCI. If running locally, use `submit_token`.
     """
     function submit(fcs::Vector{FileCoverage})
-        data = @compat Dict("service_job_id"    => ENV["TRAVIS_JOB_ID"],
-                            "service_name"      => "travis-ci",
-                            "source_files"      => map(to_json, fcs))
+        data = Dict("service_job_id"    => ENV["TRAVIS_JOB_ID"],
+                    "service_name"      => "travis-ci",
+                    "source_files"      => map(to_json, fcs))
         println("Submitting data to Coveralls...")
         req = Requests.post(
                 URI("https://coveralls.io/api/v1/jobs"),
@@ -78,15 +77,15 @@ module Coveralls
         # Normalize remote url to https
         remote = "https" * Git.normalize_url(remote)[4:end]
 
-        return @compat Dict(
+        return Dict(
             "branch"    => branch,
             "remotes"   => [
-                @compat Dict(
+                Dict(
                     "name"  => "origin",
                     "url"   => remote
                 )
             ],
-            "head" => @compat Dict(
+            "head" => Dict(
                 "id" => commit_sha,
                 "author_name"       => author_name,
                 "author_email"      => author_email,
@@ -106,8 +105,8 @@ module Coveralls
     git_info can be either a `Dict` or a function that returns a `Dict`.
     """
     function submit_token(fcs::Vector{FileCoverage}, git_info=query_git_info)
-        data = @compat Dict("repo_token" => ENV["REPO_TOKEN"],
-                            "source_files" => map(to_json, fcs))
+        data = Dict("repo_token" => ENV["REPO_TOKEN"],
+                    "source_files" => map(to_json, fcs))
 
         # Attempt to parse git info via git_info, unless the user explicitly disables it by setting git_info to nothing
         try
