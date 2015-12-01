@@ -57,5 +57,7 @@ cd(Pkg.dir("Coverage")) do
 
     #json_data = Codecov.build_json_data(Codecov.process_folder("data"))
     #@test typeof(json_data["coverage"]["data/Coverage.jl"]) == Array{Union{Int64,Void},1}
-
+    open("fakefile",true,true,true,false,false)
+    @test isempty(Coverage.process_cov("fakefile",datadir))
+    rm("fakefile")
 end
