@@ -1,16 +1,16 @@
 Coverage.jl
 ===========
 
-[![Build Status](https://travis-ci.org/IainNZ/Coverage.jl.svg?branch=master)](https://travis-ci.org/IainNZ/Coverage.jl)
-[![Coverage Status](https://coveralls.io/repos/IainNZ/Coverage.jl/badge.svg?branch=master)](https://coveralls.io/r/IainNZ/Coverage.jl?branch=master)
-[![codecov.io](http://codecov.io/github/IainNZ/Coverage.jl/coverage.svg?branch=master)](http://codecov.io/github/IainNZ/Coverage.jl?branch=master)
+[![Build Status](https://travis-ci.org/JuliaCI/Coverage.jl.svg?branch=master)](https://travis-ci.org/IainNZ/Coverage.jl)
+[![Coverage Status](https://coveralls.io/repos/JuliaCI/Coverage.jl/badge.svg?branch=master)](https://coveralls.io/r/JuliaCI/Coverage.jl?branch=master)
+[![codecov.io](http://codecov.io/github/JuliaCI/Coverage.jl/coverage.svg?branch=master)](http://codecov.io/github/JuliaCI/Coverage.jl?branch=master)
 
 [![Coverage](http://pkg.julialang.org/badges/Coverage_0.3.svg)](http://pkg.julialang.org/?pkg=Coverage&ver=0.3)
 [![Coverage](http://pkg.julialang.org/badges/Coverage_0.4.svg)](http://pkg.julialang.org/?pkg=Coverage&ver=0.4)
 
 **"Take Julia code coverage and memory allocation results, do useful things with them"**
 
-**Code coverage**: Julia can track how many times, if any, each line of your code is run. This is useful for measuring how much of your code base your tests actually test, and can reveal the parts of your code that are not tested and might be hiding a bug. You can use Coverage.jl to summarize the results of this tracking, or to send them to a service like [Coveralls.io](http://coveralls.io) or [Codecov.io](https://codecov.io/github/IainNZ).
+**Code coverage**: Julia can track how many times, if any, each line of your code is run. This is useful for measuring how much of your code base your tests actually test, and can reveal the parts of your code that are not tested and might be hiding a bug. You can use Coverage.jl to summarize the results of this tracking, or to send them to a service like [Coveralls.io](http://coveralls.io) or [Codecov.io](https://codecov.io/github/JuliaCI).
 
 **Memory allocation**: Julia can track how much memory is allocated by each line of your code. This can reveal problems like type instability, or operations that you might have thought were cheap (in terms of memory allocated) but aren't (i.e. accidental copying).
 
