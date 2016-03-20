@@ -121,6 +121,7 @@ after_success:
 *Pull requests to add your package welcome (or open an issue)*
 
 * [ArgParse.jl](https://github.com/carlobaldassi/ArgParse.jl/blob/master/.travis.yml)
+* [AstroLib.jl](https://github.com/giordano/AstroLib.jl/blob/master/.travis.yml)
 * [AudioIO.jl](https://github.com/ssfrr/AudioIO.jl/blob/master/.travis.yml)
 * [Augur.jl](https://github.com/AugurProject/Augur.jl/blob/master/.travis.yml)
 * [Bootstrap.jl](https://github.com/julian-gehring/Bootstrap.jl/blob/master/.travis.yml)
