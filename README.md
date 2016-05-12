@@ -104,7 +104,7 @@ REPO_TOKEN=$YOUR_TOKEN_HERE julia -e 'cd(Pkg.dir("MyPkg")); using Coverage; Code
 
 [Coveralls.io](https://coveralls.io) is a test coverage tracking tool that integrates with your continuous integration solution (e.g. [TravisCI](https://travis-ci.org/)).
 
-1. Enable [Coveralls.io](https://coveralls.io) for your repository. If it is public on GitHub and you are using using TravisCI, this is all you need to do. If this isn't the case, please submit an issue, and we can work on adding additional functionality for your use case.
+1. Enable [Coveralls.io](https://coveralls.io) for your repository. If it is public on GitHub and you are using TravisCI, this is all you need to do. If this isn't the case, please submit an issue, and we can work on adding additional functionality for your use case.
 2. You must be using `Julia 0.3` or higher, which added the `--code-coverage` command line argument.
 3. Use the command line option when you run your tests
   * Either with something like `julia --code-coverage test/runtests.jl`, or
@@ -158,6 +158,7 @@ after_success:
 * [RationalSimplex.jl](https://github.com/IainNZ/RationalSimplex.jl/blob/master/.travis.yml)
 * [RDF.jl](https://github.com/joejimbo/RDF.jl/blob/master/.travis.yml)
 * [Requests.jl](https://github.com/loladiro/Requests.jl/blob/master/.travis.yml)
+* [Restful.jl](https://github.com/ylxdzsw/Restful.jl/blob/master/.travis.yml)
 * [Robotics.jl](https://github.com/cdsousa/Robotics.jl/blob/master/.travis.yml)
 * [RouletteWheels.jl](https://github.com/jbn/RouletteWheels.jl/blob/master/.travis.yml)
 * [SimJulia.jl](https://github.com/BenLauwens/SimJulia.jl/blob/master/.travis.yml)
