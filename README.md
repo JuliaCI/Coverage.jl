@@ -1,9 +1,10 @@
 Coverage.jl
 ===========
 
-[![Build Status](https://travis-ci.org/JuliaCI/Coverage.jl.svg?branch=master)](https://travis-ci.org/IainNZ/Coverage.jl)
+[![Build Status](https://travis-ci.org/JuliaCI/Coverage.jl.svg?branch=master)](https://travis-ci.org/JuliaCI/Coverage.jl)
 [![Coverage Status](https://coveralls.io/repos/JuliaCI/Coverage.jl/badge.svg?branch=master)](https://coveralls.io/r/JuliaCI/Coverage.jl?branch=master)
-[![codecov.io](http://codecov.io/github/JuliaCI/Coverage.jl/coverage.svg?branch=master)](http://codecov.io/github/JuliaCI/Coverage.jl?branch=master)
+[![codecov](https://codecov.io/gh/JuliaCI/Coverage.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/JuliaCI/Coverage.jl)
+
 
 [![Coverage](http://pkg.julialang.org/badges/Coverage_0.3.svg)](http://pkg.julialang.org/?pkg=Coverage&ver=0.3)
 [![Coverage](http://pkg.julialang.org/badges/Coverage_0.4.svg)](http://pkg.julialang.org/?pkg=Coverage&ver=0.4)
