@@ -1,13 +1,17 @@
 Coverage.jl
 ===========
 
+*Release version*:
+
+[![Coverage](http://pkg.julialang.org/badges/Coverage_0.3.svg)](http://pkg.julialang.org/?pkg=Coverage)
+[![Coverage](http://pkg.julialang.org/badges/Coverage_0.4.svg)](http://pkg.julialang.org/?pkg=Coverage)
+[![Coverage](http://pkg.julialang.org/badges/Coverage_0.5.svg)](http://pkg.julialang.org/?pkg=Coverage)
+
+*Development version*:
+
 [![Build Status](https://travis-ci.org/JuliaCI/Coverage.jl.svg?branch=master)](https://travis-ci.org/JuliaCI/Coverage.jl)
-[![Coverage Status](https://coveralls.io/repos/JuliaCI/Coverage.jl/badge.svg?branch=master)](https://coveralls.io/r/JuliaCI/Coverage.jl?branch=master)
+[![Coverage Status](https://coveralls.io/repos/github/JuliaCI/Coverage.jl/badge.svg?branch=master)](https://coveralls.io/github/JuliaCI/Coverage.jl?branch=master)
 [![codecov](https://codecov.io/gh/JuliaCI/Coverage.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/JuliaCI/Coverage.jl)
-
-
-[![Coverage](http://pkg.julialang.org/badges/Coverage_0.3.svg)](http://pkg.julialang.org/?pkg=Coverage&ver=0.3)
-[![Coverage](http://pkg.julialang.org/badges/Coverage_0.4.svg)](http://pkg.julialang.org/?pkg=Coverage&ver=0.4)
 
 **"Take Julia code coverage and memory allocation results, do useful things with them"**
 
