@@ -12,7 +12,7 @@ module Codecov
     using Coverage
     using JSON
 
-    export submit, submit_token
+    export submit, submit_token, submit_local, submit_generic
 
     #=
     JSON structure for Codecov.io
@@ -40,24 +40,121 @@ module Codecov
         return Dict("coverage" => cov)
     end
 
+
+    """
+    kwargs provides default values to insert into args_array, only if they are 
+    not already specified in args_array.
+    """
+    function set_defaults(args_array; kwargs...)
+        defined_names = [k for (k,v) in args_array]
+        for kwarg in kwargs
+            if ~(kwarg[1] in defined_names)
+                push!(args_array, kwarg)
+            end
+        end
+      return args_array
+    end
+
+
     """
         submit(fcs::Vector{FileCoverage})
 
-    Take a vector of file coverage results (produced by `process_folder`),
+    Takes a vector of file coverage results (produced by `process_folder`),
     and submits them to Codecov.io. Assumes that this code is being run
-    on TravisCI. If running locally, use `submit_token`.
+    on TravisCI. If running locally, use `submit_local`.
     """
-    function submit(fcs::Vector{FileCoverage})
-        branch  = ENV["TRAVIS_BRANCH"]
-        pr      = ENV["TRAVIS_PULL_REQUEST"]
-        job     = ENV["TRAVIS_JOB_ID"]
-        slug    = ENV["TRAVIS_REPO_SLUG"]
-        build   = ENV["TRAVIS_JOB_NUMBER"]
-        commit  = ENV["TRAVIS_COMMIT"]
-        uri_str = "https://codecov.io/upload/v2?service=travis-org" *
-                    "&branch=$(branch)&commit=$(commit)" *
-                    "&build=$(build)&pull_request=$(pr)&" *
-                    "job=$(job)&slug=$(slug)"
+    function submit(fcs::Vector{FileCoverage}; kwargs...)
+        kwargs = set_defaults(kwargs, 
+            codecov_url = "https://codecov.io",
+            service      = "travis-org",
+            branch       = ENV["TRAVIS_BRANCH"],
+            commit       = ENV["TRAVIS_COMMIT"],
+            pull_request = ENV["TRAVIS_PULL_REQUEST"],
+            job          = ENV["TRAVIS_JOB_ID"],
+            slug         = ENV["TRAVIS_REPO_SLUG"],
+            build        = ENV["TRAVIS_JOB_NUMBER"],
+            )
+
+        submit_generic(fcs; kwargs...)
+    end
+
+
+    """
+        submit_token(fcs::Vector{FileCoverage})
+
+    make depreciated
+    """
+    function submit_token(fcs::Vector{FileCoverage})
+        println("submit_token is deprecated, use submit_local instead")
+        submit_local(fcs)
+    end
+
+
+    import Base.Git
+
+    """
+        submit_local(fcs::Vector{FileCoverage})
+
+    Takes a `Vector` of file coverage results (produced by `process_folder`),
+    and submits them to Codecov.io. Assumes the submission is being made from 
+    a local git installation.  A repository token should be specified by a 
+    'token' keyword argument or the CODECOV_TOKEN environment variable.
+    """
+    function submit_local(fcs::Vector{FileCoverage}; kwargs...)
+        kwargs = set_defaults(kwargs, 
+            codecov_url = "https://codecov.io",
+            commit = Git.readchomp(`rev-parse HEAD`, dir=""), 
+            branch = Git.branch(dir="")
+            )
+
+        if haskey(ENV, "REPO_TOKEN")
+            println("the environment variable REPO_TOKEN is deprecated, use CODECOV_TOKEN instead")
+            kwargs = set_defaults(kwargs, token = ENV["REPO_TOKEN"])
+        end
+
+        submit_generic(fcs; kwargs...)
+    end
+
+
+
+    """
+        submit_generic(fcs::Vector{FileCoverage})
+
+    Takes a vector of file coverage results (produced by `process_folder`),
+    and submits them to a Codecov.io instance. Keyword arguments are converted 
+    into a generic Codecov.io API uri.  It is essential that the keywords and 
+    values match the Codecov upload/v2 API specification.  The `codecov_url` 
+    keyword argument or the CODECOV_URL environment variable can be used to 
+    specify the base path of the uri.
+    """
+    function submit_generic(fcs::Vector{FileCoverage}; kwargs...)
+        @assert length(kwargs) > 0
+
+        if haskey(ENV, "CODECOV_URL")
+            kwargs = set_defaults(kwargs, codecov_url = ENV["CODECOV_URL"])
+        end
+
+        if haskey(ENV, "CODECOV_TOKEN")
+            kwargs = set_defaults(kwargs, token = ENV["CODECOV_TOKEN"])
+        end
+
+        codecov_url = "None"
+        for (k,v) in kwargs
+            if k == :codecov_url
+                codecov_url = v
+                break
+            end
+        end
+        @assert codecov_url != "None"
+        @assert codecov_url[end] != "/"
+
+        uri_str = "$(codecov_url)/upload/v2?"
+        for (k,v) in kwargs
+            if k != :codecov_url
+                uri_str = "$(uri_str)&$(k)=$(v)"
+            end
+        end
+
         println("Codecov.io API URL:")
         println(uri_str)
 
@@ -68,25 +165,4 @@ module Codecov
         dump(req.data)
     end
 
-    import Base.Git
-
-    """
-        submit_token(fcs::Vector{FileCoverage},
-                     commit=Git.readchomp(`rev-parse HEAD`, dir=""),
-                     branch=Git.branch(dir=""))
-
-    Take a `Vector` of file coverage results (produced by `process_folder`),
-    and submits them to Codecov.io. For submissions not from TravisCI.
-    """
-    function submit_token(fcs::Vector{FileCoverage},
-                            commit=Git.readchomp(`rev-parse HEAD`, dir=""),
-                            branch=Git.branch(dir=""))
-        repo_token = ENV["REPO_TOKEN"]
-        uri_str = "https://codecov.io/upload/v2?&token=$(repo_token)&commit=$(commit)&branch=$(branch)"
-        heads   = Dict("Content-Type" => "application/json")
-        data    = to_json(fcs)
-        req     = Requests.post(URI(uri_str); json = data, headers = heads)
-        println("Result of submission:")
-        dump(req.data)
-    end
 end  # module Codecov
