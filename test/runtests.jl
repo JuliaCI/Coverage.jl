@@ -23,7 +23,6 @@ using Coverage, Base.Test
 @test Coverage.iscovfile("/somedir/test.jl.8392.cov", "/somedir/test.jl")
 @test !Coverage.iscovfile("/otherdir/test.jl.cov", "/somedir/test.jl")
 
-if false
 cd(Pkg.dir("Coverage")) do
     datadir = joinpath("test", "data")
     # Process a saved set of coverage data...
@@ -61,7 +60,6 @@ cd(Pkg.dir("Coverage")) do
     open("fakefile",true,true,true,false,false)
     @test isempty(Coverage.process_cov("fakefile",datadir))
     rm("fakefile")
-end
 end
 
 
