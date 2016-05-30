@@ -48,7 +48,7 @@ module Codecov
     function set_defaults(args_array; kwargs...)
         defined_names = [k for (k,v) in args_array]
         for kwarg in kwargs
-            if ~(kwarg[1] in defined_names)
+            if !(kwarg[1] in defined_names)
                 push!(args_array, kwarg)
             end
         end
@@ -81,13 +81,17 @@ module Codecov
     """
         submit_token(fcs::Vector{FileCoverage})
 
-    make depreciated
+    Takes a `Vector` of file coverage results (produced by `process_folder`),
+    and submits them to Codecov.io. Assumes the submission is being made from 
+    a local git installation.  A repository token should be specified by a 
+    'token' keyword argument or the CODECOV_TOKEN environment variable.
     """
-    function submit_token(fcs::Vector{FileCoverage})
+    function submit_token(fcs::Vector{FileCoverage}; kwargs...)
         println("submit_token is deprecated, use submit_local instead")
-        submit_local(fcs)
+        submit_local(fcs; kwargs...)
     end
 
+    @deprecate submit_token submit_local
 
     import Base.Git
 
@@ -170,3 +174,4 @@ module Codecov
     end
 
 end  # module Codecov
+
