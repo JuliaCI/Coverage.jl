@@ -65,7 +65,6 @@ module Codecov
     """
     function submit(fcs::Vector{FileCoverage}; kwargs...)
         kwargs = set_defaults(kwargs, 
-            codecov_url = "https://codecov.io",
             service      = "travis-org",
             branch       = ENV["TRAVIS_BRANCH"],
             commit       = ENV["TRAVIS_COMMIT"],
@@ -102,7 +101,6 @@ module Codecov
     """
     function submit_local(fcs::Vector{FileCoverage}; kwargs...)
         kwargs = set_defaults(kwargs, 
-            codecov_url = "https://codecov.io",
             commit = Git.readchomp(`rev-parse HEAD`, dir=""), 
             branch = Git.branch(dir="")
             )
@@ -140,7 +138,7 @@ module Codecov
             kwargs = set_defaults(kwargs, token = ENV["CODECOV_TOKEN"])
         end
 
-        codecov_url = "None"
+        codecov_url = "https://codecov.io"
         julia_test = false
         for (k,v) in kwargs
             if k == :codecov_url
@@ -150,8 +148,7 @@ module Codecov
                 julia_test = true
             end
         end
-        @assert codecov_url != "None"
-        @assert codecov_url[end] != "/"
+        @assert codecov_url[end] != "/" "the codecov_url should not end with a /, given url $(codecov_url)"
 
         uri_str = "$(codecov_url)/upload/v2?"
         for (k,v) in kwargs
