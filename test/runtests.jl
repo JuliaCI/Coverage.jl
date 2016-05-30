@@ -23,6 +23,7 @@ using Coverage, Base.Test
 @test Coverage.iscovfile("/somedir/test.jl.8392.cov", "/somedir/test.jl")
 @test !Coverage.iscovfile("/otherdir/test.jl.cov", "/somedir/test.jl")
 
+
 cd(Pkg.dir("Coverage")) do
     datadir = joinpath("test", "data")
     # Process a saved set of coverage data...
@@ -61,3 +62,190 @@ cd(Pkg.dir("Coverage")) do
     @test isempty(Coverage.process_cov("fakefile",datadir))
     rm("fakefile")
 end
+
+
+
+
+
+######################
+# codecovio.jl tests #
+######################
+
+"""
+extracts the api URL from stdout in a codecov.io submit call
+very helpful for testing codecovio.jl
+"""
+function extract_codecov_url(fun)
+    originalSTDOUT = STDOUT
+
+    (outRead, outWrite) = redirect_stdout()
+
+    fun()
+
+    close(outWrite)
+
+    data = utf8(readavailable(outRead))
+
+    close(outRead)
+    redirect_stdout(originalSTDOUT)
+
+    lines = split(data, "\n")
+
+    url = "None"
+    get_next = false
+    for line in lines
+        if get_next 
+            url = line
+            get_next = false
+        end
+        if contains(line, "Codecov.io API URL")
+            get_next = true
+        end
+    end
+
+    #println("url: $(url)")
+    @assert url != "None" "unable to find codecov api url in stdout, check for changes in codecovio.jl" 
+    return url
+end
+
+
+# clear system defined ENV vars in preparation for testing
+
+delete!(ENV, "CODECOV_URL")
+delete!(ENV, "CODECOV_TOKEN")
+
+delete!(ENV, "TRAVIS_BRANCH")
+delete!(ENV, "TRAVIS_COMMIT")
+delete!(ENV, "TRAVIS_PULL_REQUEST")
+delete!(ENV, "TRAVIS_JOB_ID")
+delete!(ENV, "TRAVIS_REPO_SLUG")
+delete!(ENV, "TRAVIS_JOB_NUMBER")
+
+# empty file coverage for testing
+fcs = FileCoverage[] 
+
+
+# test local submission process
+
+# default values
+codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit_local(fcs; julia_test = true) )
+@test contains(codecov_url, "codecov.io")
+@test contains(codecov_url, "commit")
+@test contains(codecov_url, "branch")
+@test !contains(codecov_url, "service")
+
+# env var url override
+ENV["CODECOV_URL"] = "https://enterprise-codecov-1.com"
+codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit_local(fcs; julia_test = true) )
+#@test contains(codecov_url, "enterprise-codecov-1.com")
+@test contains(codecov_url, "commit")
+@test contains(codecov_url, "branch")
+@test !contains(codecov_url, "service")
+
+# function argument url override
+codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit_local(fcs; julia_test = true, codecov_url = "https://enterprise-codecov-2.com") )
+@test contains(codecov_url, "enterprise-codecov-2.com")
+@test contains(codecov_url, "commit")
+@test contains(codecov_url, "branch")
+@test !contains(codecov_url, "service")
+
+# env var token
+ENV["CODECOV_TOKEN"] = "token_name_1"
+codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit_local(fcs; julia_test = true) )
+#@test contains(codecov_url, "enterprise-codecov-1.com")
+@test contains(codecov_url, "token=token_name_1")
+@test !contains(codecov_url, "service")
+
+# function argument token
+codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit_local(fcs; julia_test = true, token="token_name_2") )
+#@test contains(codecov_url, "enterprise-codecov-1.com")
+@test contains(codecov_url, "token=token_name_2")
+@test !contains(codecov_url, "service")
+
+# clearing testing env vars
+delete!(ENV, "CODECOV_URL")
+delete!(ENV, "CODECOV_TOKEN")
+
+
+# test travis-ci submission process
+
+#setup travis env
+ENV["TRAVIS_BRANCH"] = "t_branch"
+ENV["TRAVIS_COMMIT"] = "t_commit"
+ENV["TRAVIS_PULL_REQUEST"] = "t_pr"
+ENV["TRAVIS_JOB_ID"] = "t_job_id"
+ENV["TRAVIS_REPO_SLUG"] = "t_slug"
+ENV["TRAVIS_JOB_NUMBER"] = "t_job_num"
+
+# default values
+codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit(fcs; julia_test = true) )
+@test contains(codecov_url, "codecov.io")
+@test contains(codecov_url, "service=travis-org")
+@test contains(codecov_url, "branch=t_branch")
+@test contains(codecov_url, "commit=t_commit")
+@test contains(codecov_url, "pull_request=t_pr")
+@test contains(codecov_url, "job=t_job_id")
+@test contains(codecov_url, "slug=t_slug")
+@test contains(codecov_url, "build=t_job_num")
+
+# env var url override
+ENV["CODECOV_URL"] = "https://enterprise-codecov-1.com"
+codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit(fcs; julia_test = true) )
+#@test contains(codecov_url, "enterprise-codecov-1.com")
+@test contains(codecov_url, "service=travis-org")
+@test contains(codecov_url, "branch=t_branch")
+@test contains(codecov_url, "commit=t_commit")
+@test contains(codecov_url, "pull_request=t_pr")
+@test contains(codecov_url, "job=t_job_id")
+@test contains(codecov_url, "slug=t_slug")
+@test contains(codecov_url, "build=t_job_num")
+
+# function argument url override
+codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit(fcs; julia_test = true, codecov_url = "https://enterprise-codecov-2.com") )
+@test contains(codecov_url, "enterprise-codecov-2.com")
+@test contains(codecov_url, "service=travis-org")
+@test contains(codecov_url, "branch=t_branch")
+@test contains(codecov_url, "commit=t_commit")
+@test contains(codecov_url, "pull_request=t_pr")
+@test contains(codecov_url, "job=t_job_id")
+@test contains(codecov_url, "slug=t_slug")
+@test contains(codecov_url, "build=t_job_num")
+
+# env var token
+ENV["CODECOV_TOKEN"] = "token_name_1"
+codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit(fcs; julia_test = true) )
+#@test contains(codecov_url, "enterprise-codecov-1.com")
+@test contains(codecov_url, "token=token_name_1")
+@test contains(codecov_url, "branch=t_branch")
+@test contains(codecov_url, "commit=t_commit")
+@test contains(codecov_url, "pull_request=t_pr")
+@test contains(codecov_url, "job=t_job_id")
+@test contains(codecov_url, "slug=t_slug")
+@test contains(codecov_url, "build=t_job_num")
+
+# function argument token
+codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit(fcs; julia_test = true, token="token_name_2") )
+#@test contains(codecov_url, "enterprise-codecov-1.com")
+@test contains(codecov_url, "token=token_name_2")
+@test contains(codecov_url, "branch=t_branch")
+@test contains(codecov_url, "commit=t_commit")
+@test contains(codecov_url, "pull_request=t_pr")
+@test contains(codecov_url, "job=t_job_id")
+@test contains(codecov_url, "slug=t_slug")
+@test contains(codecov_url, "build=t_job_num")
+
+
+# clearing testing env vars
+delete!(ENV, "CODECOV_URL")
+delete!(ENV, "CODECOV_TOKEN")
+delete!(ENV, "TRAVIS_BRANCH")
+delete!(ENV, "TRAVIS_COMMIT")
+delete!(ENV, "TRAVIS_PULL_REQUEST")
+delete!(ENV, "TRAVIS_JOB_ID")
+delete!(ENV, "TRAVIS_REPO_SLUG")
+delete!(ENV, "TRAVIS_JOB_NUMBER")
+
+
+
+
+
