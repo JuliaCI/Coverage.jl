@@ -123,9 +123,11 @@ module Codecov
     Takes a vector of file coverage results (produced by `process_folder`),
     and submits them to a Codecov.io instance. Keyword arguments are converted 
     into a generic Codecov.io API uri.  It is essential that the keywords and 
-    values match the Codecov upload/v2 API specification.  The `codecov_url` 
-    keyword argument or the CODECOV_URL environment variable can be used to 
-    specify the base path of the uri.
+    values match the Codecov upload/v2 API specification.  
+    The `codecov_url` keyword argument or the CODECOV_URL environment variable 
+    can be used to specify the base path of the uri.
+    The `julia_test` keyword can be used to prevent the http request from 
+    being generated
     """
     function submit_generic(fcs::Vector{FileCoverage}; kwargs...)
         @assert length(kwargs) > 0
@@ -139,10 +141,13 @@ module Codecov
         end
 
         codecov_url = "None"
+        julia_test = false
         for (k,v) in kwargs
             if k == :codecov_url
                 codecov_url = v
-                break
+            end
+            if k == :julia_test
+                julia_test = true
             end
         end
         @assert codecov_url != "None"
@@ -150,7 +155,7 @@ module Codecov
 
         uri_str = "$(codecov_url)/upload/v2?"
         for (k,v) in kwargs
-            if k != :codecov_url
+            if k != :codecov_url && k != :julia_test
                 uri_str = "$(uri_str)&$(k)=$(v)"
             end
         end
@@ -158,11 +163,13 @@ module Codecov
         println("Codecov.io API URL:")
         println(uri_str)
 
-        heads   = Dict("Content-Type" => "application/json")
-        data    = to_json(fcs)
-        req     = Requests.post(URI(uri_str); json = data, headers = heads)
-        println("Result of submission:")
-        dump(req.data)
+        if !julia_test
+            heads   = Dict("Content-Type" => "application/json")
+            data    = to_json(fcs)
+            req     = Requests.post(URI(uri_str); json = data, headers = heads)
+            println("Result of submission:")
+            dump(req.data)
+        end
     end
 
 end  # module Codecov
