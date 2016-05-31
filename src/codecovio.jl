@@ -114,7 +114,7 @@ module Codecov
     values match the Codecov upload/v2 API specification.  
     The `codecov_url` keyword argument or the CODECOV_URL environment variable 
     can be used to specify the base path of the uri.
-    The `julia_test` keyword can be used to prevent the http request from 
+    The `dry_run` keyword can be used to prevent the http request from 
     being generated
     """
     function submit_generic(fcs::Vector{FileCoverage}; kwargs...)
@@ -129,20 +129,20 @@ module Codecov
         end
 
         codecov_url = "https://codecov.io"
-        julia_test = false
+        dry_run = false
         for (k,v) in kwargs
             if k == :codecov_url
                 codecov_url = v
             end
-            if k == :julia_test
-                julia_test = true
+            if k == :dry_run
+                dry_run = true
             end
         end
         @assert codecov_url[end] != "/" "the codecov_url should not end with a /, given url $(codecov_url)"
 
         uri_str = "$(codecov_url)/upload/v2?"
         for (k,v) in kwargs
-            if k != :codecov_url && k != :julia_test
+            if k != :codecov_url && k != :dry_run
                 uri_str = "$(uri_str)&$(k)=$(v)"
             end
         end
@@ -150,7 +150,7 @@ module Codecov
         println("Codecov.io API URL:")
         println(uri_str)
 
-        if !julia_test
+        if !dry_run
             heads   = Dict("Content-Type" => "application/json")
             data    = to_json(fcs)
             req     = Requests.post(URI(uri_str); json = data, headers = heads)
