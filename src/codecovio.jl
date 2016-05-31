@@ -105,7 +105,6 @@ module Codecov
     @deprecate submit_token submit_local
 
 
-
     """
         submit_generic(fcs::Vector{FileCoverage})
 

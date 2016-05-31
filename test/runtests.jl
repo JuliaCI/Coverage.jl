@@ -133,7 +133,7 @@ codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit_local(fcs; juli
 @test !contains(codecov_url, "service")
 
 # default values in depreciated call
-codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit_token(fcs; julia_test = true) )
+codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit_token(fcs) )
 @test contains(codecov_url, "codecov.io")
 @test contains(codecov_url, "commit")
 @test contains(codecov_url, "branch")
