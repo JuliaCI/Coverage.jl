@@ -78,21 +78,6 @@ module Codecov
     end
 
 
-    """
-        submit_token(fcs::Vector{FileCoverage})
-
-    Takes a `Vector` of file coverage results (produced by `process_folder`),
-    and submits them to Codecov.io. Assumes the submission is being made from 
-    a local git installation.  A repository token should be specified by a 
-    'token' keyword argument or the CODECOV_TOKEN environment variable.
-    """
-    function submit_token(fcs::Vector{FileCoverage}; kwargs...)
-        println("submit_token is deprecated, use submit_local instead")
-        submit_local(fcs; kwargs...)
-    end
-
-    @deprecate submit_token submit_local
-
     import Base.Git
 
     """
@@ -116,6 +101,8 @@ module Codecov
 
         submit_generic(fcs; kwargs...)
     end
+
+    @deprecate submit_token submit_local
 
 
 
