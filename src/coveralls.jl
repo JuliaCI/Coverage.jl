@@ -63,7 +63,7 @@ module Coveralls
     # query_git_info
     # Pulls information about the repository that isn't available if we
     # are running somewhere other than TravisCI
-    import Base.Git
+    import Git
     function query_git_info(dir="")
         commit_sha      = Git.readchomp(`rev-parse HEAD`, dir=dir)
         author_name     = Git.readchomp(`log -1 --pretty=format:"%aN"`, dir=dir)

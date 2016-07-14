@@ -78,7 +78,7 @@ module Codecov
     end
 
 
-    import Base.Git
+    import Git
 
     """
         submit_local(fcs::Vector{FileCoverage})
