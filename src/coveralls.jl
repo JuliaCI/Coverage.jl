@@ -57,7 +57,7 @@ module Coveralls
                 URI("https://coveralls.io/api/v1/jobs"),
                 files = [FileParam(JSON.json(data),"application/json","json_file","coverage.json")])
         println("Result of submission:")
-        dump(req.data)
+        println(String(req.data))
     end
 
     # query_git_info
@@ -120,6 +120,6 @@ module Coveralls
         r = post(URI("https://coveralls.io/api/v1/jobs"), files =
             [FileParam(JSON.json(data),"application/json","json_file","coverage.json")])
         println("Result of submission:")
-        dump(r.data)
+        println(String(r.data))
     end
 end  # module Coveralls
