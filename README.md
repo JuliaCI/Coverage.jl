@@ -136,6 +136,7 @@ after_success:
 * [Decimals.jl](https://github.com/tensorjack/Decimals.jl/blob/master/.travis.yml)
 * [Distributions.jl](https://github.com/JuliaStats/Distributions.jl/blob/master/.travis.yml)
 * [DSP.jl](https://github.com/JuliaDSP/DSP.jl/blob/master/.travis.yml)
+* [ExtractMacro.jl](https://github.com/carlobaldassi/ExtractMacro.jl/blob/master/.travis.yml)
 * [FastaIO.jl](https://github.com/carlobaldassi/FastaIO.jl/blob/master/.travis.yml)
 * [FiniteStateMachine.jl](https://github.com/tensorjack/FiniteStateMachine.jl/blob/master/.travis.yml)
 * [Gadfly.jl](https://github.com/dcjones/Gadfly.jl/blob/master/.travis.yml)
