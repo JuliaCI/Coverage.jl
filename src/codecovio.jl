@@ -155,7 +155,7 @@ module Codecov
             data    = to_json(fcs)
             req     = Requests.post(URI(uri_str); json = data, headers = heads)
             println("Result of submission:")
-            println(String(req.data))
+            println(UTF8String(req.data))
         end
     end
 
