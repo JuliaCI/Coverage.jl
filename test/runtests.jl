@@ -4,7 +4,8 @@
 # https://github.com/IainNZ/Coverage.jl
 #######################################################################
 
-using Coverage, Base.Test
+using Coverage, Base.Test, Compat
+using Compat.String
 
 # test our filename matching. These aren't exported functions but it's probably
 # a good idea to have explicit tests for them, as they're used to match files
@@ -33,7 +34,7 @@ cd(Pkg.dir("Coverage")) do
     # we only have a single file, but we want to test on the Vector of file results
     LCOV.write(lcov, FileCoverage[r])
     open(joinpath(datadir, "expected.info")) do f
-        @test takebuf_string(lcov) == readall(f)
+        @test takebuf_string(lcov) == readstring(f)
     end
 
     # Test a file from scratch
@@ -82,7 +83,7 @@ function extract_codecov_url(fun)
 
     close(outWrite)
 
-    data = utf8(readavailable(outRead))
+    data = String(readavailable(outRead))
 
     close(outRead)
     redirect_stdout(originalSTDOUT)
@@ -92,7 +93,7 @@ function extract_codecov_url(fun)
     url = "None"
     get_next = false
     for line in lines
-        if get_next 
+        if get_next
             url = line
             get_next = false
         end
@@ -102,17 +103,17 @@ function extract_codecov_url(fun)
     end
 
     #println("url: $(url)")
-    @assert url != "None" "unable to find codecov api url in stdout, check for changes in codecovio.jl" 
+    @assert url != "None" "unable to find codecov api url in stdout, check for changes in codecovio.jl"
     return url
 end
 
 
 
 # empty file coverage for testing
-fcs = FileCoverage[] 
+fcs = FileCoverage[]
 
 # setup base system ENV vars for testing
-withenv(   
+withenv(
     "CODECOV_URL" => nothing,
     "CODECOV_TOKEN" => nothing,
     "TRAVIS_BRANCH" => nothing,
@@ -121,7 +122,7 @@ withenv(
     "TRAVIS_JOB_ID" => nothing,
     "TRAVIS_REPO_SLUG" => nothing,
     "TRAVIS_JOB_NUMBER" => nothing
-    ) do 
+    ) do
 
     # test local submission process
 
@@ -133,7 +134,7 @@ withenv(
     @test !contains(codecov_url, "service")
 
     # default values in depreciated call
-    codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit_token(fcs) )
+    codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit_local(fcs) )
     @test contains(codecov_url, "codecov.io")
     @test contains(codecov_url, "commit")
     @test contains(codecov_url, "branch")
@@ -247,7 +248,3 @@ withenv(
     end
 
 end
-
-
-
-
