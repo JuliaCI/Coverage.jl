@@ -22,7 +22,7 @@ function analyze_malloc_files(files)
                 tln = strip(ln)
                 if !isempty(tln) && isdigit(tln[1])
                     s = split(tln)
-                    b = parseint(s[1])
+                    b = parse(Int, s[1])
                     push!(bc, MallocInfo(b, filename, i))
                 end
             end
