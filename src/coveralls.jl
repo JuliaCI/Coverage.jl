@@ -10,6 +10,7 @@ module Coveralls
     using Coverage
     using Requests
     using JSON
+    using Compat
 
     export submit, submit_token
 
@@ -57,7 +58,7 @@ module Coveralls
                 URI("https://coveralls.io/api/v1/jobs"),
                 files = [FileParam(JSON.json(data),"application/json","json_file","coverage.json")])
         println("Result of submission:")
-        println(UTF8String(req.data))
+        println(Compat.UTF8String(req.data))
     end
 
     # query_git_info
@@ -120,6 +121,6 @@ module Coveralls
         r = post(URI("https://coveralls.io/api/v1/jobs"), files =
             [FileParam(JSON.json(data),"application/json","json_file","coverage.json")])
         println("Result of submission:")
-        println(UTF8String(r.data))
+        println(Compat.UTF8String(r.data))
     end
 end  # module Coveralls

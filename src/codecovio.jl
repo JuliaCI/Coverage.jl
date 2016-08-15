@@ -11,6 +11,7 @@ module Codecov
     using Requests
     using Coverage
     using JSON
+    using Compat
 
     export submit, submit_token, submit_local, submit_generic
 
@@ -42,7 +43,7 @@ module Codecov
 
 
     """
-    kwargs provides default values to insert into args_array, only if they are 
+    kwargs provides default values to insert into args_array, only if they are
     not already specified in args_array.
     """
     function set_defaults(args_array; kwargs...)
@@ -64,7 +65,7 @@ module Codecov
     on TravisCI. If running locally, use `submit_local`.
     """
     function submit(fcs::Vector{FileCoverage}; kwargs...)
-        kwargs = set_defaults(kwargs, 
+        kwargs = set_defaults(kwargs,
             service      = "travis-org",
             branch       = ENV["TRAVIS_BRANCH"],
             commit       = ENV["TRAVIS_COMMIT"],
@@ -84,13 +85,13 @@ module Codecov
         submit_local(fcs::Vector{FileCoverage})
 
     Takes a `Vector` of file coverage results (produced by `process_folder`),
-    and submits them to Codecov.io. Assumes the submission is being made from 
-    a local git installation.  A repository token should be specified by a 
+    and submits them to Codecov.io. Assumes the submission is being made from
+    a local git installation.  A repository token should be specified by a
     'token' keyword argument or the CODECOV_TOKEN environment variable.
     """
     function submit_local(fcs::Vector{FileCoverage}; kwargs...)
-        kwargs = set_defaults(kwargs, 
-            commit = Git.readchomp(`rev-parse HEAD`, dir=""), 
+        kwargs = set_defaults(kwargs,
+            commit = Git.readchomp(`rev-parse HEAD`, dir=""),
             branch = Git.branch(dir="")
             )
 
@@ -109,12 +110,12 @@ module Codecov
         submit_generic(fcs::Vector{FileCoverage})
 
     Takes a vector of file coverage results (produced by `process_folder`),
-    and submits them to a Codecov.io instance. Keyword arguments are converted 
-    into a generic Codecov.io API uri.  It is essential that the keywords and 
-    values match the Codecov upload/v2 API specification.  
-    The `codecov_url` keyword argument or the CODECOV_URL environment variable 
+    and submits them to a Codecov.io instance. Keyword arguments are converted
+    into a generic Codecov.io API uri.  It is essential that the keywords and
+    values match the Codecov upload/v2 API specification.
+    The `codecov_url` keyword argument or the CODECOV_URL environment variable
     can be used to specify the base path of the uri.
-    The `dry_run` keyword can be used to prevent the http request from 
+    The `dry_run` keyword can be used to prevent the http request from
     being generated
     """
     function submit_generic(fcs::Vector{FileCoverage}; kwargs...)
@@ -155,9 +156,8 @@ module Codecov
             data    = to_json(fcs)
             req     = Requests.post(URI(uri_str); json = data, headers = heads)
             println("Result of submission:")
-            println(UTF8String(req.data))
+            println(Compat.UTF8String(req.data))
         end
     end
 
 end  # module Codecov
-

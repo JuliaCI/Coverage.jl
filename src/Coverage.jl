@@ -11,6 +11,8 @@ module Coverage
     # but were not (should be 0). We use JuliaParser to augment the
     # coverage results by identifying this code.
 
+    using Compat
+
     export process_folder, process_file
     export clean_folder, clean_file
     export process_cov, amend_coverage_from_src!
@@ -180,7 +182,7 @@ module Coverage
         println("Coverage.process_file: Detecting coverage for $filename")
         coverage = process_cov(filename,folder)
         amend_coverage_from_src!(coverage, filename)
-        return FileCoverage(filename, readall(filename), coverage)
+        return FileCoverage(filename, readstring(filename), coverage)
     end
     process_file(filename) = process_file(filename,splitdir(filename)[1])
 

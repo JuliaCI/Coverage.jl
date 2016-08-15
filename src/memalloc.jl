@@ -2,7 +2,7 @@
 
 immutable MallocInfo
     bytes::Int
-    filename::UTF8String
+    filename::Compat.UTF8String
     linenumber::Int
 end
 
@@ -22,7 +22,7 @@ function analyze_malloc_files(files)
                 tln = strip(ln)
                 if !isempty(tln) && isdigit(tln[1])
                     s = split(tln)
-                    b = parseint(s[1])
+                    b = parse(Int, s[1])
                     push!(bc, MallocInfo(b, filename, i))
                 end
             end
@@ -32,7 +32,7 @@ function analyze_malloc_files(files)
 end
 
 function find_malloc_files(dirs)
-    files = ByteString[]
+    files = Compat.String[]
     for dir in dirs
         filelist = readdir(dir)
         for file in filelist
@@ -46,10 +46,10 @@ function find_malloc_files(dirs)
     end
     files
 end
-find_malloc_files(file::ByteString) = find_malloc_files([file])
+find_malloc_files(file::Compat.String) = find_malloc_files([file])
 
 analyze_malloc(dirs) = analyze_malloc_files(find_malloc_files(dirs))
-analyze_malloc(dir::ByteString) = analyze_malloc([dir])
+analyze_malloc(dir::Compat.String) = analyze_malloc([dir])
 
 isfuncexpr(ex::Expr) =
     ex.head == :function || (ex.head == :(=) && typeof(ex.args[1]) == Expr && ex.args[1].head == :call)
