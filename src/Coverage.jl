@@ -73,8 +73,8 @@ module Coverage
         n = max(length(a1),length(a2))
         a = Array(CovCount, n)
         for i in 1:n
-            a1v = isdefined(a1, i) ? a1[i] : nothing
-            a2v = isdefined(a2, i) ? a2[i] : nothing
+            a1v = isassigned(a1, i) ? a1[i] : nothing
+            a2v = isassigned(a2, i) ? a2[i] : nothing
             a[i] = a1v == nothing ? a2v :
                    a2v == nothing ? a1v : max(a1v, a2v)
         end
