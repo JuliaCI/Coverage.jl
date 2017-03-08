@@ -71,7 +71,7 @@ module Coverage
     function merge_coverage_counts(a1::Vector{CovCount},
                                    a2::Vector{CovCount})
         n = max(length(a1),length(a2))
-        a = Array(CovCount, n)
+        a = Vector{CovCount}(n)
         for i in 1:n
             a1v = isassigned(a1, i) ? a1[i] : nothing
             a2v = isassigned(a2, i) ? a2[i] : nothing
@@ -103,17 +103,17 @@ module Coverage
             lines = open(filename) do fp
                 readlines(fp)
             end
-            coverage = Array(CovCount, length(lines))
+            coverage = Vector{CovCount}(length(lines))
             return fill!(coverage, nothing)
         end
         # Keep track of the combined coverage
-        full_coverage = Array(CovCount, 0)
+        full_coverage = Vector{CovCount}(0)
         for file in files
             lines = open(file, "r") do fp
                 readlines(fp)
             end
             num_lines = length(lines)
-            coverage = Array(CovCount, num_lines)
+            coverage = Vector{CovCount}(num_lines)
             for i in 1:num_lines
                 # Columns 1:9 contain the coverage count
                 cov_segment = lines[i][1:9]
