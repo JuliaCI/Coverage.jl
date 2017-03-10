@@ -22,7 +22,7 @@ module Coverage
     # The unit for line counts. Counts can be >= 0 or nothing, where
     # the nothing means it doesn't make sense to have a count for this
     # line (e.g. a comment), but 0 means it could have run but didn't.
-    typealias CovCount Union{Void,Int}
+    const CovCount = Union{Void,Int}
 
     export FileCoverage
     """
