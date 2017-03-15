@@ -34,7 +34,7 @@ cd(Pkg.dir("Coverage")) do
     # we only have a single file, but we want to test on the Vector of file results
     LCOV.write(lcov, FileCoverage[r])
     open(joinpath(datadir, "expected.info")) do f
-        @test takebuf_string(lcov) == readstring(f)
+        @test String(take!(lcov)) == readstring(f)
     end
 
     # Test a file from scratch
