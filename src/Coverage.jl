@@ -92,7 +92,7 @@ module Coverage
         # Find all coverage files in the folder that match the file we
         # are currently working on
         files = readdir(folder)
-        files = map!(file -> joinpath(folder,file), files)
+        files = map!(file -> joinpath(folder,file), files, files)
         filter!(file -> contains(file,filename) && contains(file,".cov"), files)
         # If there are no coverage files...
         if isempty(files)
