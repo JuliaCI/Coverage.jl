@@ -1,7 +1,7 @@
 #######################################################################
 # Coverage.jl
 # Take Julia test coverage results and bundle them up in JSONs
-# https://github.com/IainNZ/Coverage.jl
+# https://github.com/JuliaCI/Coverage.jl
 #######################################################################
 
 using Coverage, Base.Test, Compat
@@ -24,7 +24,7 @@ using Compat.String
 @test Coverage.iscovfile("/somedir/test.jl.8392.cov", "/somedir/test.jl")
 @test !Coverage.iscovfile("/otherdir/test.jl.cov", "/somedir/test.jl")
 
-cd(Pkg.dir("Coverage")) do
+cd(dirname(@__DIR__)) do
     datadir = joinpath("test", "data")
     # Process a saved set of coverage data...
     r = process_file(joinpath(datadir,"Coverage.jl"))
@@ -44,7 +44,7 @@ cd(Pkg.dir("Coverage")) do
     # need to preserve the pre-baked coverage file Coverage.jl.cov
     clean_file(srcname)
     cmdstr = "include(\"$srcname\"); using Base.Test; @test f2(2) == 4"
-    run(`julia --code-coverage=user -e $cmdstr`)
+    run(`$JULIA_HOME/julia --code-coverage=user -e $cmdstr`)
     r = process_file(srcname, datadir)
     # The next one is the correct one, but julia & JuliaParser don't insert a line number after the 1-line @doc -> test
     # See https://github.com/JuliaLang/julia/issues/9663 (when this is fixed, can uncomment the next line on julia 0.4)
@@ -60,6 +60,7 @@ cd(Pkg.dir("Coverage")) do
     #@test typeof(json_data["coverage"]["data/Coverage.jl"]) == Array{Union{Int64,Void},1}
     open("fakefile",true,true,true,false,false)
     @test isempty(Coverage.process_cov("fakefile",datadir))
+    close("fakefile")
     rm("fakefile")
 end
 
