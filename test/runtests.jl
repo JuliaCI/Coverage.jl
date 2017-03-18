@@ -60,7 +60,6 @@ cd(dirname(@__DIR__)) do
     #@test typeof(json_data["coverage"]["data/Coverage.jl"]) == Array{Union{Int64,Void},1}
     open("fakefile",true,true,true,false,false)
     @test isempty(Coverage.process_cov("fakefile",datadir))
-    close("fakefile")
     rm("fakefile")
 end
 
