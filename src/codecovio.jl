@@ -62,18 +62,42 @@ module Codecov
 
     Takes a vector of file coverage results (produced by `process_folder`),
     and submits them to Codecov.io. Assumes that this code is being run
-    on TravisCI. If running locally, use `submit_local`.
+    on TravisCI or AppVeyor. If running locally, use `submit_local`.
     """
     function submit(fcs::Vector{FileCoverage}; kwargs...)
-        kwargs = set_defaults(kwargs,
-            service      = "travis-org",
-            branch       = ENV["TRAVIS_BRANCH"],
-            commit       = ENV["TRAVIS_COMMIT"],
-            pull_request = ENV["TRAVIS_PULL_REQUEST"],
-            job          = ENV["TRAVIS_JOB_ID"],
-            slug         = ENV["TRAVIS_REPO_SLUG"],
-            build        = ENV["TRAVIS_JOB_NUMBER"],
+        if ENV["APPVEYOR"] == "True"
+            appveyor_pr = haskey(ENV, "APPVEYOR_PULL_REQUEST_NUMBER") ?
+                ENV["APPVEYOR_PULL_REQUEST_NUMBER"] : ""
+            appveyor_job = join(
+                [
+                    ENV["APPVEYOR_ACCOUNT_NAME"],
+                    ENV["APPVEYOR_PROJECT_SLUG"],
+                    ENV["APPVEYOR_BUILD_VERSION"],
+                ],
+                "%2F",
             )
+            kwargs = set_defaults(kwargs,
+                service      = "appveyor",
+                branch       = ENV["APPVEYOR_REPO_BRANCH"],
+                commit       = ENV["APPVEYOR_REPO_COMMIT"],
+                pull_request = appveyor_pr,
+                job          = appveyor_job,
+                slug         = ENV["APPVEYOR_REPO_NAME"],
+                build        = ENV["APPVEYOR_JOB_ID"],
+            )
+        elseif ENV["TRAVIS_CI"] == "True"
+            kwargs = set_defaults(kwargs,
+                service      = "travis-org",
+                branch       = ENV["TRAVIS_BRANCH"],
+                commit       = ENV["TRAVIS_COMMIT"],
+                pull_request = ENV["TRAVIS_PULL_REQUEST"],
+                job          = ENV["TRAVIS_JOB_ID"],
+                slug         = ENV["TRAVIS_REPO_SLUG"],
+                build        = ENV["TRAVIS_JOB_NUMBER"],
+            )
+        else
+            error("No compatible CI platform detected")
+        end
 
         submit_generic(fcs; kwargs...)
     end
