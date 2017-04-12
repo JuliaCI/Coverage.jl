@@ -5,7 +5,6 @@
 #######################################################################
 
 using Coverage, Base.Test, Compat
-using Compat.String
 
 # test our filename matching. These aren't exported functions but it's probably
 # a good idea to have explicit tests for them, as they're used to match files
@@ -38,12 +37,12 @@ cd(dirname(@__DIR__)) do
     end
 
     # Test a file from scratch
-    srcname = joinpath("test", "data","testparser.jl")
+    srcname = joinpath(dirname(@__DIR__), "test", "data", "testparser.jl")
     covname = srcname*".cov"
     # clean out any previous coverage files. Don't use clean_folder because we
     # need to preserve the pre-baked coverage file Coverage.jl.cov
     clean_file(srcname)
-    cmdstr = "include(\"$srcname\"); using Base.Test; @test f2(2) == 4"
+    cmdstr = "include(\"$(escape_string(srcname))\"); using Base.Test; @test f2(2) == 4"
     run(`$JULIA_HOME/julia --code-coverage=user -e $cmdstr`)
     r = process_file(srcname, datadir)
     # The next one is the correct one, but julia & JuliaParser don't insert a line number after the 1-line @doc -> test

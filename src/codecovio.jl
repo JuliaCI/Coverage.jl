@@ -8,10 +8,7 @@ web service. It exports the `submit` and `submit_token` methods.
 """
 
 module Codecov
-    using Requests
-    using Coverage
-    using JSON
-    using Compat
+    using Coverage, HTTP, JSON
 
     export submit, submit_token, submit_local, submit_generic
 
@@ -154,9 +151,9 @@ module Codecov
         if !dry_run
             heads   = Dict("Content-Type" => "application/json")
             data    = to_json(fcs)
-            req     = Requests.post(URI(uri_str); json = data, headers = heads)
+            req     =  HTTP.post(uri_str; body = data, headers = heads)
             println("Result of submission:")
-            println(Compat.UTF8String(req.data))
+            println(String(req.data))
         end
     end
 
