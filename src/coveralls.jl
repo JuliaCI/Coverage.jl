@@ -7,10 +7,7 @@ This module provides functionality to push coverage information to the Coveralls
 web service. It exports the `submit` and `submit_token` methods.
 """
 module Coveralls
-    using Coverage
-    using Requests
-    using JSON
-    using Compat
+    using Coverage, HTTP, JSON
 
     export submit, submit_token
 
@@ -54,11 +51,11 @@ module Coveralls
                     "service_name"      => "travis-ci",
                     "source_files"      => map(to_json, fcs))
         println("Submitting data to Coveralls...")
-        req = Requests.post(
-                URI("https://coveralls.io/api/v1/jobs"),
+        req = HTTP.post(
+                "https://coveralls.io/api/v1/jobs",
                 files = [FileParam(JSON.json(data),"application/json","json_file","coverage.json")])
         println("Result of submission:")
-        println(Compat.UTF8String(req.data))
+        println(String(req.data))
     end
 
     # query_git_info
@@ -118,9 +115,9 @@ module Coveralls
             end
         end
 
-        r = post(URI("https://coveralls.io/api/v1/jobs"), files =
-            [FileParam(JSON.json(data),"application/json","json_file","coverage.json")])
+        r = HTTP.post("https://coveralls.io/api/v1/jobs",
+            files = [FileParam(JSON.json(data),"application/json","json_file","coverage.json")])
         println("Result of submission:")
-        println(Compat.UTF8String(r.data))
+        println(String(r.data))
     end
 end  # module Coveralls
