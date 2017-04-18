@@ -112,16 +112,17 @@ end
 # empty file coverage for testing
 fcs = FileCoverage[]
 
-# setup base system ENV vars for testing
+# set up base system ENV vars for testing
 withenv(
     "CODECOV_URL" => nothing,
     "CODECOV_TOKEN" => nothing,
+    "TRAVIS_CI" => nothing,
     "TRAVIS_BRANCH" => nothing,
     "TRAVIS_COMMIT" => nothing,
     "TRAVIS_PULL_REQUEST" => nothing,
     "TRAVIS_JOB_ID" => nothing,
     "TRAVIS_REPO_SLUG" => nothing,
-    "TRAVIS_JOB_NUMBER" => nothing
+    "TRAVIS_JOB_NUMBER" => nothing,
     ) do
 
     # test local submission process
@@ -172,17 +173,17 @@ withenv(
         end
     end
 
-
     # test travis-ci submission process
 
-    #setup travis env
+    # set up travis env
     withenv(
+        "TRAVIS_CI" => "True",
         "TRAVIS_BRANCH" => "t_branch",
         "TRAVIS_COMMIT" => "t_commit",
         "TRAVIS_PULL_REQUEST" => "t_pr",
         "TRAVIS_JOB_ID" => "t_job_id",
         "TRAVIS_REPO_SLUG" => "t_slug",
-        "TRAVIS_JOB_NUMBER" => "t_job_num"
+        "TRAVIS_JOB_NUMBER" => "t_job_num",
         ) do
 
         # default values
