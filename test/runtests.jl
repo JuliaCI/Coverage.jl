@@ -186,7 +186,7 @@ withenv(
 
     # set up travis env
     withenv(
-        "TRAVIS_CI" => "True",
+        "TRAVIS_CI" => "true",
         "TRAVIS_BRANCH" => "t_branch",
         "TRAVIS_COMMIT" => "t_commit",
         "TRAVIS_PULL_REQUEST" => "t_pr",
@@ -261,7 +261,7 @@ withenv(
 
     # set up appveyor env
     withenv(
-        "APPVEYOR" => "True",
+        "APPVEYOR" => "true",
         "APPVEYOR_PULL_REQUEST_NUMBER" => "t_pr",
         "APPVEYOR_ACCOUNT_NAME" => "t_account",
         "APPVEYOR_PROJECT_SLUG" => "t_slug",
