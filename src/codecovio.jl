@@ -65,9 +65,8 @@ module Codecov
     on TravisCI or AppVeyor. If running locally, use `submit_local`.
     """
     function submit(fcs::Vector{FileCoverage}; kwargs...)
-        if haskey(ENV, "APPVEYOR") && lowercase(ENV["APPVEYOR"]) == "true"
-            appveyor_pr = haskey(ENV, "APPVEYOR_PULL_REQUEST_NUMBER") ?
-                ENV["APPVEYOR_PULL_REQUEST_NUMBER"] : ""
+        if lowercase(get(ENV, "APPVEYOR", "false")) == "true"
+            appveyor_pr = get(ENV, "APPVEYOR_PULL_REQUEST_NUMBER", "")
             appveyor_job = join(
                 [
                     ENV["APPVEYOR_ACCOUNT_NAME"],
@@ -85,7 +84,7 @@ module Codecov
                 slug         = ENV["APPVEYOR_REPO_NAME"],
                 build        = ENV["APPVEYOR_JOB_ID"],
             )
-        elseif haskey(ENV, "TRAVIS_CI") && lowercase(ENV["TRAVIS_CI"]) == "true"
+        elseif lowercase(get(ENV, "TRAVIS", "false")) == "true"
             kwargs = set_defaults(kwargs,
                 service      = "travis-org",
                 branch       = ENV["TRAVIS_BRANCH"],

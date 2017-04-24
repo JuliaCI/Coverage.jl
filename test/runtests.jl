@@ -116,7 +116,7 @@ fcs = FileCoverage[]
 withenv(
     "CODECOV_URL" => nothing,
     "CODECOV_TOKEN" => nothing,
-    "TRAVIS_CI" => nothing,
+    "TRAVIS" => nothing,
     "TRAVIS_BRANCH" => nothing,
     "TRAVIS_COMMIT" => nothing,
     "TRAVIS_PULL_REQUEST" => nothing,
@@ -186,7 +186,7 @@ withenv(
 
     # set up travis env
     withenv(
-        "TRAVIS_CI" => "true",
+        "TRAVIS" => "true",
         "TRAVIS_BRANCH" => "t_branch",
         "TRAVIS_COMMIT" => "t_commit",
         "TRAVIS_PULL_REQUEST" => "t_pr",

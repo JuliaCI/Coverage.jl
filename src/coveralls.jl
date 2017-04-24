@@ -50,7 +50,7 @@ module Coveralls
     on TravisCI or AppVeyor. If running locally, use `submit_token`.
     """
     function submit(fcs::Vector{FileCoverage})
-        if haskey(ENV, "APPVEYOR") && lowercase(ENV["APPVEYOR"]) == "true"
+        if lowercase(get(ENV, "APPVEYOR", "false")) == "true"
             # Submission from AppVeyor requires a REPO_TOKEN environment variable
             data = Dict("service_job_id"    => ENV["APPVEYOR_JOB_ID"],
                         "service_name"      => "appveyor",
@@ -63,7 +63,7 @@ module Coveralls
             println("Result of submission:")
             println(Compat.UTF8String(req.data))
 
-        elseif haskey(ENV, "TRAVIS_CI") && lowercase(ENV["TRAVIS_CI"]) == "true"
+        elseif lowercase(get(ENV, "TRAVIS", "false")) == "true"
             data = Dict("service_job_id"    => ENV["TRAVIS_JOB_ID"],
                         "service_name"      => "travis-ci",
                         "source_files"      => map(to_json, fcs))
