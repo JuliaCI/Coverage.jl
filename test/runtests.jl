@@ -136,6 +136,7 @@ withenv(
 
     # test local submission process
 
+
     # default values
     codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit_local(fcs; dry_run = true) )
     @test contains(codecov_url, "codecov.io")
@@ -181,6 +182,11 @@ withenv(
             @test !contains(codecov_url, "service")
         end
     end
+
+
+    # test faulty non-CI submission
+
+    @test_throws ErrorException extract_codecov_url( () -> Coverage.Codecov.submit(fcs; dry_run = true) )
 
     # test travis-ci submission process
 
