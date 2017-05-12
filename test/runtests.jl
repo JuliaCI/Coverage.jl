@@ -9,6 +9,7 @@ using Coverage, Base.Test, Compat
 # test our filename matching. These aren't exported functions but it's probably
 # a good idea to have explicit tests for them, as they're used to match files
 # that get deleted
+@testset "Coverage" begin
 
 @test Coverage.iscovfile("test.jl.cov")
 @test Coverage.iscovfile("test.jl.2934.cov")
@@ -247,3 +248,5 @@ withenv(
     end
 
 end
+
+    end # testset
