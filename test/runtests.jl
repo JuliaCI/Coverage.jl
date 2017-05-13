@@ -102,7 +102,7 @@ function extract_codecov_url(fun)
         end
     end
 
-    #println("url: $(url)")
+    # println("url: $(url)")
     @assert url != "None" "unable to find codecov api url in stdout, check for changes in codecovio.jl"
     return url
 end
@@ -112,19 +112,30 @@ end
 # empty file coverage for testing
 fcs = FileCoverage[]
 
-# setup base system ENV vars for testing
+# set up base system ENV vars for testing
 withenv(
     "CODECOV_URL" => nothing,
     "CODECOV_TOKEN" => nothing,
+    "TRAVIS" => nothing,
     "TRAVIS_BRANCH" => nothing,
     "TRAVIS_COMMIT" => nothing,
     "TRAVIS_PULL_REQUEST" => nothing,
     "TRAVIS_JOB_ID" => nothing,
     "TRAVIS_REPO_SLUG" => nothing,
-    "TRAVIS_JOB_NUMBER" => nothing
+    "TRAVIS_JOB_NUMBER" => nothing,
+    "APPVEYOR" => nothing,
+    "APPVEYOR_PULL_REQUEST_NUMBER" => nothing,
+    "APPVEYOR_ACCOUNT_NAME" => nothing,
+    "APPVEYOR_PROJECT_SLUG" => nothing,
+    "APPVEYOR_BUILD_VERSION" => nothing,
+    "APPVEYOR_REPO_BRANCH" => nothing,
+    "APPVEYOR_REPO_COMMIT" => nothing,
+    "APPVEYOR_REPO_NAME" => nothing,
+    "APPVEYOR_JOB_ID" => nothing,
     ) do
 
     # test local submission process
+
 
     # default values
     codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit_local(fcs; dry_run = true) )
@@ -173,16 +184,21 @@ withenv(
     end
 
 
+    # test faulty non-CI submission
+
+    @test_throws ErrorException extract_codecov_url( () -> Coverage.Codecov.submit(fcs; dry_run = true) )
+
     # test travis-ci submission process
 
-    #setup travis env
+    # set up travis env
     withenv(
+        "TRAVIS" => "true",
         "TRAVIS_BRANCH" => "t_branch",
         "TRAVIS_COMMIT" => "t_commit",
         "TRAVIS_PULL_REQUEST" => "t_pr",
         "TRAVIS_JOB_ID" => "t_job_id",
         "TRAVIS_REPO_SLUG" => "t_slug",
-        "TRAVIS_JOB_NUMBER" => "t_job_num"
+        "TRAVIS_JOB_NUMBER" => "t_job_num",
         ) do
 
         # default values
@@ -246,5 +262,77 @@ withenv(
             end
         end
     end
+
+    # test appveyor submission process
+
+    # set up appveyor env
+    withenv(
+        "APPVEYOR" => "true",
+        "APPVEYOR_PULL_REQUEST_NUMBER" => "t_pr",
+        "APPVEYOR_ACCOUNT_NAME" => "t_account",
+        "APPVEYOR_PROJECT_SLUG" => "t_slug",
+        "APPVEYOR_BUILD_VERSION" => "t_version",
+        "APPVEYOR_REPO_BRANCH" => "t_branch",
+        "APPVEYOR_REPO_COMMIT" => "t_commit",
+        "APPVEYOR_REPO_NAME" => "t_repo",
+        "APPVEYOR_JOB_ID" => "t_job_num",
+        ) do
+
+            # default values
+            codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit(fcs; dry_run = true) )
+            @test contains(codecov_url, "codecov.io")
+            @test contains(codecov_url, "service=appveyor")
+            @test contains(codecov_url, "branch=t_branch")
+            @test contains(codecov_url, "commit=t_commit")
+            @test contains(codecov_url, "pull_request=t_pr")
+            @test contains(codecov_url, "job=t_account%2Ft_slug%2Ft_version")
+            @test contains(codecov_url, "build=t_job_num")
+
+            # env var url override
+            withenv( "CODECOV_URL" => "https://enterprise-codecov-1.com" ) do
+
+                codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit(fcs; dry_run = true) )
+                @test contains(codecov_url, "enterprise-codecov-1.com")
+                @test contains(codecov_url, "service=appveyor")
+                @test contains(codecov_url, "branch=t_branch")
+                @test contains(codecov_url, "commit=t_commit")
+                @test contains(codecov_url, "pull_request=t_pr")
+                @test contains(codecov_url, "job=t_account%2Ft_slug%2Ft_version")
+                @test contains(codecov_url, "build=t_job_num")
+
+                # function argument url override
+                codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit(fcs; dry_run = true, codecov_url = "https://enterprise-codecov-2.com") )
+                @test contains(codecov_url, "enterprise-codecov-2.com")
+                @test contains(codecov_url, "service=appveyor")
+                @test contains(codecov_url, "branch=t_branch")
+                @test contains(codecov_url, "commit=t_commit")
+                @test contains(codecov_url, "pull_request=t_pr")
+                @test contains(codecov_url, "job=t_account%2Ft_slug%2Ft_version")
+                @test contains(codecov_url, "build=t_job_num")
+
+                # env var token
+                withenv( "CODECOV_TOKEN" => "token_name_1" ) do
+
+                    codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit(fcs; dry_run = true) )
+                    @test contains(codecov_url, "enterprise-codecov-1.com")
+                    @test contains(codecov_url, "token=token_name_1")
+                    @test contains(codecov_url, "branch=t_branch")
+                    @test contains(codecov_url, "commit=t_commit")
+                    @test contains(codecov_url, "pull_request=t_pr")
+                    @test contains(codecov_url, "job=t_account%2Ft_slug%2Ft_version")
+                    @test contains(codecov_url, "build=t_job_num")
+
+                    # function argument token url override
+                    codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit(fcs; dry_run = true, token="token_name_2") )
+                    @test contains(codecov_url, "enterprise-codecov-1.com")
+                    @test contains(codecov_url, "token=token_name_2")
+                    @test contains(codecov_url, "branch=t_branch")
+                    @test contains(codecov_url, "commit=t_commit")
+                    @test contains(codecov_url, "pull_request=t_pr")
+                    @test contains(codecov_url, "job=t_account%2Ft_slug%2Ft_version")
+                    @test contains(codecov_url, "build=t_job_num")
+                end
+            end
+        end
 
 end

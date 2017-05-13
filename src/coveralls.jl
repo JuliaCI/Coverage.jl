@@ -47,18 +47,35 @@ module Coveralls
 
     Take a vector of file coverage results (produced by `process_folder`),
     and submits them to Coveralls. Assumes that this code is being run
-    on TravisCI. If running locally, use `submit_token`.
+    on TravisCI or AppVeyor. If running locally, use `submit_token`.
     """
     function submit(fcs::Vector{FileCoverage})
-        data = Dict("service_job_id"    => ENV["TRAVIS_JOB_ID"],
-                    "service_name"      => "travis-ci",
-                    "source_files"      => map(to_json, fcs))
-        println("Submitting data to Coveralls...")
-        req = Requests.post(
+        if lowercase(get(ENV, "APPVEYOR", "false")) == "true"
+            # Submission from AppVeyor requires a REPO_TOKEN environment variable
+            data = Dict("service_job_id"    => ENV["APPVEYOR_JOB_ID"],
+                        "service_name"      => "appveyor",
+                        "source_files"      => map(to_json, fcs),
+                        "repo_token"        => ENV["REPO_TOKEN"])
+            println("Submitting data to Coveralls...")
+            req = Requests.post(
                 URI("https://coveralls.io/api/v1/jobs"),
                 files = [FileParam(JSON.json(data),"application/json","json_file","coverage.json")])
-        println("Result of submission:")
-        println(Compat.UTF8String(req.data))
+            println("Result of submission:")
+            println(Compat.UTF8String(req.data))
+
+        elseif lowercase(get(ENV, "TRAVIS", "false")) == "true"
+            data = Dict("service_job_id"    => ENV["TRAVIS_JOB_ID"],
+                        "service_name"      => "travis-ci",
+                        "source_files"      => map(to_json, fcs))
+            println("Submitting data to Coveralls...")
+            req = Requests.post(
+                URI("https://coveralls.io/api/v1/jobs"),
+                files = [FileParam(JSON.json(data),"application/json","json_file","coverage.json")])
+            println("Result of submission:")
+            println(Compat.UTF8String(req.data))
+        else
+            error("No compatible CI platform detected")
+        end
     end
 
     # query_git_info
