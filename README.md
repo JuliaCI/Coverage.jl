@@ -103,7 +103,7 @@ When using Coverage.jl locally, over time a lot of `.cov` files can accumulate. 
   * On AppVeyor:
   ```yml
   after_test:
-  - C:\projects\julia\bin\julia -e 'cd(Pkg.dir("MyPkg")); Pkg.add("Coverage"); using Coverage; Codecov.submit(process_folder())'
+  - C:\projects\julia\bin\julia -e "cd(Pkg.dir(\"MyPkg\")); Pkg.add(\"Coverage\"); using Coverage; Codecov.submit(process_folder())"
   ```
 If you're running coverage on your own machine and want to upload results to Codecov, make a bash script like the following:
 ```bash
@@ -129,7 +129,7 @@ REPO_TOKEN=$YOUR_TOKEN_HERE julia -e 'cd(Pkg.dir("MyPkg")); using Coverage; Code
   * On AppVeyor:
   ```yml
   after_test:
-  - C:\projects\julia\bin\julia -e 'cd(Pkg.dir("MyPkg")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(process_folder())'
+  - C:\projects\julia\bin\julia -e "cd(Pkg.dir(\"MyPkg\")); Pkg.add(\"Coverage\"); using Coverage; Coveralls.submit(process_folder())"
   ```
 
 
