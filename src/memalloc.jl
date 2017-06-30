@@ -56,7 +56,7 @@ isfuncexpr(ex::Expr) =
 isfuncexpr(arg) = false
 
 # Support Unix command line usage like `julia Coverage.jl $(find ~/.julia/v0.3 -name "*.jl.mem")`
-if !isinteractive()
+if abspath(PROGRAM_FILE) == @__FILE__
     bc = analyze_malloc_files(ARGS)
     println(bc)
 end
