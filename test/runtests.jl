@@ -61,6 +61,21 @@ cd(dirname(@__DIR__)) do
     open("fakefile",true,true,true,false,false)
     @test isempty(Coverage.process_cov("fakefile",datadir))
     rm("fakefile")
+
+    # Test `using Coverage` with non-empty command-line arguments
+    script = tempname()
+    write(script, """
+        try
+            using Coverage
+            println(join(ARGS, ","))
+        catch
+            nothing
+        end
+        """)
+    @test readchomp(`$(Base.julia_cmd()) $script argument`) == "argument"
+
+    # Test command-line usage
+    @test readchomp(`$(Base.julia_cmd()) $(joinpath("src", "Coverage.jl"))`) == "Coverage.MallocInfo[]"
 end
 
 
