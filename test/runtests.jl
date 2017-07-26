@@ -73,6 +73,7 @@ cd(dirname(@__DIR__)) do
         end
         """)
     @test readchomp(`$(Base.julia_cmd()) $script argument`) == "argument"
+    rm(script)
 
     # Test command-line usage
     @test readchomp(`$(Base.julia_cmd()) $(joinpath("src", "Coverage.jl"))`) == "Coverage.MallocInfo[]"
