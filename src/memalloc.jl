@@ -55,8 +55,8 @@ isfuncexpr(ex::Expr) =
     ex.head == :function || (ex.head == :(=) && typeof(ex.args[1]) == Expr && ex.args[1].head == :call)
 isfuncexpr(arg) = false
 
-# Support Unix command line usage like `julia Coverage.jl $(find ~/.julia/v0.3 -name "*.jl.mem")`
-if !isinteractive()
+# Support Unix command line usage like `julia Coverage.jl $(find ~/.julia/v0.6 -name "*.jl.mem")`
+if abspath(PROGRAM_FILE) == joinpath(@__DIR__, "Coverage.jl")
     bc = analyze_malloc_files(ARGS)
     println(bc)
 end
