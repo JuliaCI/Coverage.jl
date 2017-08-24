@@ -351,4 +351,75 @@ withenv(
             end
         end
 
+    # test circle ci submission process
+
+    # set up circle ci env
+    withenv(
+        "CIRCLECI" => "true",
+        "CIRCLE_PR_NUMBER" => "t_pr",
+        "CIRCLE_PROJECT_USERNAME" => "t_proj",
+        "CIRCLE_BRANCH" => "t_branch",
+        "CIRCLE_SHA1" => "t_commit",
+        "CIRCLE_PROJECT_REPONAME" => "t_repo",
+        "CIRCLE_BUILD_URL" => "t_url",
+        "CIRCLE_BUILD_NUM" => "t_num",
+        ) do
+
+        # default values
+        codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit(fcs; dry_run = true) )
+        @test contains(codecov_url, "codecov.io")
+        @test contains(codecov_url, "service=circleci")
+        @test contains(codecov_url, "branch=t_branch")
+        @test contains(codecov_url, "commit=t_commit")
+        @test contains(codecov_url, "pull_request=t_pr")
+        @test contains(codecov_url, "build_url=t_url")
+        @test contains(codecov_url, "build=t_num")
+
+        # env var url override
+        withenv( "CODECOV_URL" => "https://enterprise-codecov-1.com" ) do
+
+            codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit(fcs; dry_run = true) )
+            @test contains(codecov_url, "enterprise-codecov-1.com")
+            @test contains(codecov_url, "service=circleci")
+            @test contains(codecov_url, "branch=t_branch")
+            @test contains(codecov_url, "commit=t_commit")
+            @test contains(codecov_url, "pull_request=t_pr")
+            @test contains(codecov_url, "build_url=t_url")
+            @test contains(codecov_url, "build=t_num")
+
+            # function argument url override
+            codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit(fcs; dry_run = true, codecov_url = "https://enterprise-codecov-2.com") )
+            @test contains(codecov_url, "enterprise-codecov-2.com")
+            @test contains(codecov_url, "service=circleci")
+            @test contains(codecov_url, "branch=t_branch")
+            @test contains(codecov_url, "commit=t_commit")
+            @test contains(codecov_url, "pull_request=t_pr")
+            @test contains(codecov_url, "build_url=t_url")
+            @test contains(codecov_url, "build=t_num")
+
+            # env var token
+            withenv( "CODECOV_TOKEN" => "token_name_1" ) do
+
+                codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit(fcs; dry_run = true) )
+                @test contains(codecov_url, "enterprise-codecov-1.com")
+                @test contains(codecov_url, "token=token_name_1")
+                @test contains(codecov_url, "service=circleci")
+                @test contains(codecov_url, "branch=t_branch")
+                @test contains(codecov_url, "commit=t_commit")
+                @test contains(codecov_url, "pull_request=t_pr")
+                @test contains(codecov_url, "build_url=t_url")
+                @test contains(codecov_url, "build=t_num")
+
+                # function argument token url override
+                codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit(fcs; dry_run = true, token="token_name_2") )
+                @test contains(codecov_url, "enterprise-codecov-1.com")
+                @test contains(codecov_url, "service=circleci")
+                @test contains(codecov_url, "branch=t_branch")
+                @test contains(codecov_url, "commit=t_commit")
+                @test contains(codecov_url, "pull_request=t_pr")
+                @test contains(codecov_url, "build_url=t_url")
+                @test contains(codecov_url, "build=t_num")
+            end
+        end
+    end
 end
