@@ -94,6 +94,23 @@ module Codecov
                 slug         = ENV["TRAVIS_REPO_SLUG"],
                 build        = ENV["TRAVIS_JOB_NUMBER"],
             )
+        elseif lowercase(get(ENV, "CIRCLECI", "false")) == "true"
+            circle_slug = join(
+                [
+                    ENV["CIRCLE_PROJECT_USERNAME"],
+                    ENV["CIRCLE_PROJECT_REPONAME"],
+                ],
+                "%2F",
+            )
+            kwargs = set_defaults(kwargs,
+                service      = "circleci",
+                branch       = ENV["CIRCLE_BRANCH"],
+                commit       = ENV["CIRCLE_SHA1"],
+                pull_request = ENV["CIRCLE_PR_NUMBER"],
+                build_url    = ENV["CIRCLE_BUILD_URL"],
+                slug         = circle_slug,
+                build        = ENV["CIRCLE_BUILD_NUM"],
+            )
         else
             error("No compatible CI platform detected")
         end
