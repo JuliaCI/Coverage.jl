@@ -106,7 +106,7 @@ module Codecov
                 service      = "circleci",
                 branch       = ENV["CIRCLE_BRANCH"],
                 commit       = ENV["CIRCLE_SHA1"],
-                pull_request = ENV["CIRCLE_PR_NUMBER"],
+                pull_request = get(ENV, "CIRCLE_PR_NUMBER", "false"),  # like Travis
                 build_url    = ENV["CIRCLE_BUILD_URL"],
                 slug         = circle_slug,
                 build        = ENV["CIRCLE_BUILD_NUM"],
