@@ -46,10 +46,17 @@ cd(dirname(@__DIR__)) do
     cmdstr = "include(\"$(escape_string(srcname))\"); using Base.Test; @test f2(2) == 4"
     run(`$JULIA_HOME/julia --code-coverage=user -e $cmdstr`)
     r = process_file(srcname, datadir)
-    # The next one is the correct one, but julia & JuliaParser don't insert a line number after the 1-line @doc -> test
-    # See https://github.com/JuliaLang/julia/issues/9663 (when this is fixed, can uncomment the next line on julia 0.4)
-    target = Union{Int64,Void}[nothing, 1, nothing, 0, nothing, 0, nothing, nothing, nothing, 0, nothing, nothing, nothing, nothing, nothing, nothing, 0, nothing, nothing, 0, nothing, nothing, nothing, nothing]
-    #target = Union{Int64,Void}[nothing, 1, nothing, 0, nothing, 0, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, 0, nothing, nothing, 0, nothing, nothing, nothing, nothing]
+
+    # Parsing seems to have changed slightly in Julia (or JuliaParser?) between v0.6 and v0.7.
+    # Line 10 is the end of a @doc string (`""" ->`), and Line 11 is an expression (`f6(x) = 6x`)
+    # In v0.6, the zero count goes to line 10, and in v0.7, the zero count goes (more correctly?)
+    # to line 11
+
+    if VERSION < v"0.7.0-DEV.468"
+        target = Union{Int64,Void}[nothing, 1, nothing, 0, nothing, 0, nothing, nothing, nothing, 0, nothing, nothing, nothing, nothing, nothing, nothing, 0, nothing, nothing, 0, nothing, nothing, nothing, nothing]
+    else
+        target = Union{Int64,Void}[nothing, 1, nothing, 0, nothing, 0, nothing, nothing, nothing, nothing, 0, nothing, nothing, nothing, nothing, nothing, 0, nothing, nothing, 0, nothing, nothing, nothing, nothing]
+    end
     @test r.coverage[1:length(target)] == target
 
     covtarget = (sum(x->x != nothing && x > 0, target), sum(x->x != nothing, target))
