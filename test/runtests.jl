@@ -51,8 +51,10 @@ cd(dirname(@__DIR__)) do
     # Line 10 is the end of a @doc string (`""" ->`), and Line 11 is an expression (`f6(x) = 6x`)
     # In v0.6, the zero count goes to line 10, and in v0.7, the zero count goes (more correctly?)
     # to line 11
+    # NOTE: The commit that made this change in Base was backported to 0.6.1, which necessitates
+    # another VERSION check.
 
-    if VERSION < v"0.7.0-DEV.468"
+    if (VERSION.major == 0 && VERSION.minor == 7 && VERSION < v"0.7.0-DEV.468") || VERSION < v"0.6.1-pre.93"
         target = Union{Int64,Void}[nothing, 1, nothing, 0, nothing, 0, nothing, nothing, nothing, 0, nothing, nothing, nothing, nothing, nothing, nothing, 0, nothing, nothing, 0, nothing, nothing, nothing, nothing]
     else
         target = Union{Int64,Void}[nothing, 1, nothing, 0, nothing, 0, nothing, nothing, nothing, nothing, 0, nothing, nothing, nothing, nothing, nothing, 0, nothing, nothing, 0, nothing, nothing, nothing, nothing]
