@@ -207,7 +207,7 @@ module Coverage
                 else
                     println("Coverage.process_folder: Skipping $file, not a .jl file")
                 end
-            else isdir(fullfile)
+            elseif isdir(fullfile)
                 # If it is a folder, recursively traverse
                 append!(source_files, process_folder(fullfile))
             end
