@@ -2,7 +2,7 @@
 
 immutable MallocInfo
     bytes::Int
-    filename::Compat.UTF8String
+    filename::Compat.String
     linenumber::Int
 end
 
