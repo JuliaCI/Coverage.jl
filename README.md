@@ -108,7 +108,7 @@ When using Coverage.jl locally, over time a lot of `.cov` files can accumulate. 
 If you're running coverage on your own machine and want to upload results to Codecov, make a bash script like the following:
 ```bash
 #!/bin/bash
-REPO_TOKEN=$YOUR_TOKEN_HERE julia -e 'cd(Pkg.dir("MyPkg")); using Coverage; Codecov.submit_token(process_folder())'
+CODECOV_TOKEN=$YOUR_TOKEN_HERE julia -e 'cd(Pkg.dir("MyPkg")); using Coverage; Codecov.submit_local(process_folder())'
 ```
 
 ## Tracking Coverage with [Coveralls.io](https://coveralls.io)
