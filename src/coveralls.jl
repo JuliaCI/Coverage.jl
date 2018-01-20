@@ -61,7 +61,7 @@ module Coveralls
                 URI("https://coveralls.io/api/v1/jobs"),
                 files = [FileParam(JSON.json(data),"application/json","json_file","coverage.json")])
             println("Result of submission:")
-            println(Compat.UTF8String(req.data))
+            println(String(req.data))
 
         elseif lowercase(get(ENV, "TRAVIS", "false")) == "true"
             data = Dict("service_job_id"    => ENV["TRAVIS_JOB_ID"],
@@ -72,7 +72,7 @@ module Coveralls
                 URI("https://coveralls.io/api/v1/jobs"),
                 files = [FileParam(JSON.json(data),"application/json","json_file","coverage.json")])
             println("Result of submission:")
-            println(Compat.UTF8String(req.data))
+            println(String(req.data))
         else
             error("No compatible CI platform detected")
         end
@@ -138,6 +138,6 @@ module Coveralls
         r = post(URI("https://coveralls.io/api/v1/jobs"), files =
             [FileParam(JSON.json(data),"application/json","json_file","coverage.json")])
         println("Result of submission:")
-        println(Compat.UTF8String(r.data))
+        println(String(r.data))
     end
 end  # module Coveralls

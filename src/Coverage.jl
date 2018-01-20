@@ -22,7 +22,7 @@ module Coverage
     # The unit for line counts. Counts can be >= 0 or nothing, where
     # the nothing means it doesn't make sense to have a count for this
     # line (e.g. a comment), but 0 means it could have run but didn't.
-    const CovCount = Union{Void,Int}
+    const CovCount = Union{Nothing,Int}
 
     export FileCoverage
     """
@@ -33,7 +33,7 @@ module Coverage
     line was expected to be run the count will be an `Int` >= 0. Other lines
     such as comments will have a count of `nothing`.
     """
-    type FileCoverage
+    mutable struct FileCoverage
         filename::AbstractString
         source::AbstractString
         coverage::Vector{CovCount}
@@ -71,7 +71,7 @@ module Coverage
     function merge_coverage_counts(a1::Vector{CovCount},
                                    a2::Vector{CovCount})
         n = max(length(a1),length(a2))
-        a = Vector{CovCount}(n)
+        a = Vector{CovCount}(uninitialized, n)
         for i in 1:n
             a1v = isassigned(a1, i) ? a1[i] : nothing
             a2v = isassigned(a2, i) ? a2[i] : nothing
@@ -103,17 +103,17 @@ module Coverage
             lines = open(filename) do fp
                 readlines(fp)
             end
-            coverage = Vector{CovCount}(length(lines))
+            coverage = Vector{CovCount}(uninitialized, length(lines))
             return fill!(coverage, nothing)
         end
         # Keep track of the combined coverage
-        full_coverage = Vector{CovCount}(0)
+        full_coverage = Vector{CovCount}(uninitialized, 0)
         for file in files
             lines = open(file, "r") do fp
                 readlines(fp)
             end
             num_lines = length(lines)
-            coverage = Vector{CovCount}(num_lines)
+            coverage = Vector{CovCount}(uninitialized, num_lines)
             for i in 1:num_lines
                 # Columns 1:9 contain the coverage count
                 cov_segment = lines[i][1:9]
@@ -148,7 +148,7 @@ module Coverage
             while !eof(io)
                 pos = position(io)
                 linestart = minimum(searchsorted(linepos, pos))
-                ast = Base.parse(io)
+                ast = _parse(io)
                 isa(ast, Expr) || continue
                 flines = function_body_lines(ast)
                 if !isempty(flines)
@@ -166,7 +166,7 @@ module Coverage
         end
         nothing
     end
-    # function_body_lines is located in parser.jl
+    # function_body_lines and _parse are located in parser.jl
     include("parser.jl")
 
     """
