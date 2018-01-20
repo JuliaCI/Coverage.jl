@@ -32,7 +32,11 @@ cd(dirname(@__DIR__)) do
     lcov = IOBuffer()
     # we only have a single file, but we want to test on the Vector of file results
     LCOV.write(lcov, FileCoverage[r])
-    open(joinpath(datadir, "expected.info")) do f
+    fn = "expected.info"
+    if VERSION >= v"0.7.0-DEV.3481"
+        fn = "expected07.info"
+    end
+    open(joinpath(datadir, fn)) do f
         @test String(take!(lcov)) == readstring(f)
     end
 
@@ -56,7 +60,7 @@ cd(dirname(@__DIR__)) do
     if (VERSION.major == 0 && VERSION.minor == 7 && VERSION < v"0.7.0-DEV.468") || VERSION < v"0.6.1-pre.93"
         target = Union{Int64,Nothing}[nothing, 1, nothing, 0, nothing, 0, nothing, nothing, nothing, 0, nothing, nothing, nothing, nothing, nothing, nothing, 0, nothing, nothing, 0, nothing, nothing, nothing, nothing]
     else
-        target = Union{Int64,Nothing}[nothing, 1, nothing, 0, nothing, 0, nothing, nothing, nothing, nothing, 0, nothing, nothing, nothing, nothing, nothing, 0, nothing, nothing, 0, nothing, nothing, nothing, nothing]
+        target = Union{Int64,Nothing}[nothing, 1, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing]
     end
     @test r.coverage[1:length(target)] == target
 
@@ -84,7 +88,11 @@ cd(dirname(@__DIR__)) do
     rm(script)
 
     # Test command-line usage
-    @test readchomp(`$(Base.julia_cmd()) $(joinpath("src", "Coverage.jl"))`) == "Coverage.MallocInfo[]"
+    if VERSION < v"0.7.0-DEV.3481"
+        @test readchomp(`$(Base.julia_cmd()) $(joinpath("src", "Coverage.jl"))`) == "Coverage.MallocInfo[]"
+    else
+        @test readchomp(`$(Base.julia_cmd()) $(joinpath("src", "Coverage.jl"))`) == "Coverage.MallocInfo[]\nMain.Coverage.MallocInfo[]"
+    end
 end
 
 
