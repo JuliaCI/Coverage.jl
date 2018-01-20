@@ -90,7 +90,7 @@ cd(dirname(@__DIR__)) do
     if VERSION < v"0.7.0-DEV.3481"
         @test readchomp(`$(Base.julia_cmd()) $(joinpath("src", "Coverage.jl"))`) == "Coverage.MallocInfo[]"
     else
-        @test readchomp(`$(Base.julia_cmd()) $(joinpath("src", "Coverage.jl"))`) == "Coverage.MallocInfo[]\nMain.Coverage.MallocInfo[]"
+        @test readchomp(`$(Base.julia_cmd()) $(joinpath("src", "Coverage.jl"))`) == "Main.Coverage.MallocInfo[]"
     end
 end
 
