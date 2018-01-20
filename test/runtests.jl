@@ -9,7 +9,6 @@ using Coverage, Compat, Compat.Test
 # test our filename matching. These aren't exported functions but it's probably
 # a good idea to have explicit tests for them, as they're used to match files
 # that get deleted
-
 @test Coverage.iscovfile("test.jl.cov")
 @test Coverage.iscovfile("test.jl.2934.cov")
 @test Coverage.iscovfile("/home/somebody/test.jl.2934.cov")
@@ -98,6 +97,7 @@ end
 
 
 
+
 ######################
 # codecovio.jl tests #
 ######################
@@ -138,8 +138,6 @@ function extract_codecov_url(fun)
     @assert url != "None" "unable to find codecov api url in stdout, check for changes in codecovio.jl"
     return url
 end
-
-
 
 # empty file coverage for testing
 fcs = FileCoverage[]

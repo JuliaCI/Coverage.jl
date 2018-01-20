@@ -47,13 +47,19 @@ module Codecov
     not already specified in args_array.
     """
     function set_defaults(args_array; kwargs...)
-        defined_names = [k for (k,v) in args_array]
+        defined_names = keys(pairs(args_array))
+        is_args_array = Pair{Symbol, Any}[]
+        if args_array isa Base.Iterators.IndexValue
+            is_args_array = vcat(is_args_array, collect(Pair(k, v) for (k,v) in args_array))
+        else
+            is_args_array = vcat(is_args_array, vec(args_array))
+        end
         for kwarg in kwargs
             if !(kwarg[1] in defined_names)
-                push!(args_array, kwarg)
+                push!(is_args_array, Pair(kwarg[2], kwarg[1]))
             end
         end
-        return args_array
+        return is_args_array
     end
 
 
@@ -127,7 +133,7 @@ module Codecov
     Takes a `Vector` of file coverage results (produced by `process_folder`),
     and submits them to Codecov.io. Assumes the submission is being made from
     a local git installation.  A repository token should be specified by a
-    'token' keyword argument or the CODECOV_TOKEN environment variable.
+    'token' keyword argument or the `CODECOV_TOKEN` environment variable.
     """
     function submit_local(fcs::Vector{FileCoverage}; kwargs...)
         kwargs = set_defaults(kwargs,
