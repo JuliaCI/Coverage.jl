@@ -182,7 +182,7 @@ module Coverage
         println("Coverage.process_file: Detecting coverage for $filename")
         coverage = process_cov(filename,folder)
         amend_coverage_from_src!(coverage, filename)
-        return FileCoverage(filename, readstring(filename), coverage)
+        return FileCoverage(filename, read(filename, String), coverage)
     end
     process_file(filename) = process_file(filename,splitdir(filename)[1])
 
@@ -216,12 +216,12 @@ module Coverage
     end
 
     # matches julia coverage files with and without the PID
-    iscovfile(filename) = ismatch(r"\.jl\.?[0-9]*\.cov$", filename)
+    iscovfile(filename) = contains(filename, r"\.jl\.?[0-9]*\.cov$")
     # matches a coverage file for the given sourcefile. They can be full paths
     # with directories, but the directories must match
     function iscovfile(filename, sourcefile)
         startswith(filename, sourcefile) || return false
-        ismatch(r"\.jl\.?[0-9]*\.cov$", filename)
+        contains(filename, r"\.jl\.?[0-9]*\.cov$")
     end
 
     """

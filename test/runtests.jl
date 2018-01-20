@@ -37,7 +37,7 @@ cd(dirname(@__DIR__)) do
         fn = "expected07.info"
     end
     open(joinpath(datadir, fn)) do f
-        @test String(take!(lcov)) == readstring(f)
+        @test String(take!(lcov)) == read(f, String)
     end
 
     # Test a file from scratch
@@ -69,7 +69,7 @@ cd(dirname(@__DIR__)) do
     @test get_summary(process_folder(datadir)) != covtarget
 
     #json_data = Codecov.build_json_data(Codecov.process_folder("data"))
-    #@test typeof(json_data["coverage"]["data/Coverage.jl"]) == Array{Union{Int64,Void},1}
+    #@test typeof(json_data["coverage"]["data/Coverage.jl"]) == Array{Union{Int64,Nothing},1}
     open("fakefile",true,true,true,false,false)
     @test isempty(Coverage.process_cov("fakefile",datadir))
     rm("fakefile")
