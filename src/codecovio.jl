@@ -200,7 +200,7 @@ module Codecov
         if !dry_run
             heads   = Dict("Content-Type" => "application/json")
             data    = to_json(fcs)
-            req     = HTTP.post(uri_str; json = data, headers = heads)
+            req     = HTTP.post(uri_str; body = JSON.json(data), headers = heads)
             println("Result of submission:")
             println(String(req.data))
         end
