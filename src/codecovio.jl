@@ -42,11 +42,11 @@ module Codecov
     end
 
 
-    """
-    kwargs provides default values to insert into args_array, only if they are
-    not already specified in args_array.
-    """
     if VERSION >= v"0.7.0-DEV.3481"
+        """
+        kwargs provides default values to insert into args_array, only if they are
+        not already specified in args_array.
+        """
         function set_defaults(args_array; kwargs...)
             defined_names = keys(pairs(args_array))
             is_args_array = Pair{Symbol, Any}[]
@@ -63,6 +63,10 @@ module Codecov
             return is_args_array
         end
     else
+        """
+        kwargs provides default values to insert into args_array, only if they are
+        not already specified in args_array.
+        """
         function set_defaults(args_array; kwargs...)
             defined_names = [k for (k, v) in args_array]
             for kwarg in kwargs
