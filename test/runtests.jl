@@ -89,10 +89,10 @@ cd(dirname(@__DIR__)) do
     rm(script)
 
     # Test command-line usage
-    if VERSION < v"0.7.0-DEV.3481"
+    if VERSION < v"0.7.0-DEV.3001"
         @test readchomp(`$(Base.julia_cmd()) $(joinpath("src", "Coverage.jl"))`) == "Coverage.MallocInfo[]"
     else
-        @test readchomp(`$(Base.julia_cmd()) $(joinpath("src", "Coverage.jl"))`) == "Main.Coverage.MallocInfo[]"
+        @test readchomp(`$(Base.julia_cmd()) $(joinpath("src", "Coverage.jl"))`) == "Coverage.MallocInfo[]\nMain.Coverage.MallocInfo[]"
     end
 end
 
