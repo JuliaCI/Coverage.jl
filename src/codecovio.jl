@@ -8,7 +8,7 @@ web service. It exports the `submit` and `submit_token` methods.
 """
 
 module Codecov
-    using Requests
+    using HTTP
     using Coverage
     using JSON
     using Compat
@@ -42,20 +42,41 @@ module Codecov
     end
 
 
-    """
-    kwargs provides default values to insert into args_array, only if they are
-    not already specified in args_array.
-    """
-    function set_defaults(args_array; kwargs...)
-        defined_names = [k for (k,v) in args_array]
-        for kwarg in kwargs
-            if !(kwarg[1] in defined_names)
-                push!(args_array, kwarg)
+    if VERSION >= v"0.7.0-DEV.3481"
+        """
+        kwargs provides default values to insert into args_array, only if they are
+        not already specified in args_array.
+        """
+        function set_defaults(args_array; kwargs...)
+            defined_names = keys(pairs(args_array))
+            is_args_array = Pair{Symbol, Any}[]
+            if args_array isa Base.Iterators.IndexValue
+                is_args_array = vcat(is_args_array, collect(Pair(k, v) for (k,v) in args_array))
+            else
+                is_args_array = vcat(is_args_array, vec(args_array))
             end
+            for kwarg in kwargs
+                if !(kwarg[1] in defined_names)
+                    push!(is_args_array, Pair(kwarg[1], kwarg[2]))
+                end
+            end
+            return is_args_array
         end
-      return args_array
+    else
+        """
+        kwargs provides default values to insert into args_array, only if they are
+        not already specified in args_array.
+        """
+        function set_defaults(args_array; kwargs...)
+            defined_names = [k for (k, v) in args_array]
+            for kwarg in kwargs
+                if !(kwarg[1] in defined_names)
+                    push!(args_array, kwarg)
+                end
+            end
+            return args_array
+        end
     end
-
 
     """
         submit(fcs::Vector{FileCoverage})
@@ -127,7 +148,7 @@ module Codecov
     Takes a `Vector` of file coverage results (produced by `process_folder`),
     and submits them to Codecov.io. Assumes the submission is being made from
     a local git installation.  A repository token should be specified by a
-    'token' keyword argument or the CODECOV_TOKEN environment variable.
+    'token' keyword argument or the `CODECOV_TOKEN` environment variable.
     """
     function submit_local(fcs::Vector{FileCoverage}; kwargs...)
         kwargs = set_defaults(kwargs,
@@ -194,9 +215,9 @@ module Codecov
         if !dry_run
             heads   = Dict("Content-Type" => "application/json")
             data    = to_json(fcs)
-            req     = Requests.post(URI(uri_str); json = data, headers = heads)
+            req     = HTTP.post(uri_str; body = JSON.json(data), headers = heads)
             println("Result of submission:")
-            println(Compat.UTF8String(req.data))
+            println(String(req.data))
         end
     end
 

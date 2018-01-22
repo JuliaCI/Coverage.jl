@@ -4,13 +4,11 @@
 # https://github.com/JuliaCI/Coverage.jl
 #######################################################################
 
-using Coverage, Base.Test, Compat
-using Compat.String
+using Coverage, Compat, Compat.Test
 
 # test our filename matching. These aren't exported functions but it's probably
 # a good idea to have explicit tests for them, as they're used to match files
 # that get deleted
-
 @test Coverage.iscovfile("test.jl.cov")
 @test Coverage.iscovfile("test.jl.2934.cov")
 @test Coverage.iscovfile("/home/somebody/test.jl.2934.cov")
@@ -33,8 +31,12 @@ cd(dirname(@__DIR__)) do
     lcov = IOBuffer()
     # we only have a single file, but we want to test on the Vector of file results
     LCOV.write(lcov, FileCoverage[r])
-    open(joinpath(datadir, "expected.info")) do f
-        @test String(take!(lcov)) == readstring(f)
+    fn = "expected.info"
+    if VERSION >= v"0.7.0-DEV.3481"
+        fn = "expected07.info"
+    end
+    open(joinpath(datadir, fn)) do f
+        @test String(take!(lcov)) == read(f, String)
     end
 
     # Test a file from scratch
@@ -43,8 +45,8 @@ cd(dirname(@__DIR__)) do
     # clean out any previous coverage files. Don't use clean_folder because we
     # need to preserve the pre-baked coverage file Coverage.jl.cov
     clean_file(srcname)
-    cmdstr = "include(\"$(escape_string(srcname))\"); using Base.Test; @test f2(2) == 4"
-    run(`$JULIA_HOME/julia --code-coverage=user -e $cmdstr`)
+    cmdstr = "include(\"$(escape_string(srcname))\"); using Compat, Compat.Test; @test f2(2) == 4"
+    run(`$(Compat.Sys.BINDIR)/julia --code-coverage=user -e $cmdstr`)
     r = process_file(srcname, datadir)
 
     # Parsing seems to have changed slightly in Julia (or JuliaParser?) between v0.6 and v0.7.
@@ -55,9 +57,11 @@ cd(dirname(@__DIR__)) do
     # another VERSION check.
 
     if (VERSION.major == 0 && VERSION.minor == 7 && VERSION < v"0.7.0-DEV.468") || VERSION < v"0.6.1-pre.93"
-        target = Union{Int64,Void}[nothing, 1, nothing, 0, nothing, 0, nothing, nothing, nothing, 0, nothing, nothing, nothing, nothing, nothing, nothing, 0, nothing, nothing, 0, nothing, nothing, nothing, nothing]
-    else
+        target = Union{Int64,Nothing}[nothing, 1, nothing, 0, nothing, 0, nothing, nothing, nothing, 0, nothing, nothing, nothing, nothing, nothing, nothing, 0, nothing, nothing, 0, nothing, nothing, nothing, nothing]
+    elseif (VERSION.major == 0 && VERSION.minor == 6)
         target = Union{Int64,Void}[nothing, 1, nothing, 0, nothing, 0, nothing, nothing, nothing, nothing, 0, nothing, nothing, nothing, nothing, nothing, 0, nothing, nothing, 0, nothing, nothing, nothing, nothing]
+    else
+        target = Union{Int64,Nothing}[nothing, 1, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing]
     end
     @test r.coverage[1:length(target)] == target
 
@@ -66,30 +70,11 @@ cd(dirname(@__DIR__)) do
     @test get_summary(process_folder(datadir)) != covtarget
 
     #json_data = Codecov.build_json_data(Codecov.process_folder("data"))
-    #@test typeof(json_data["coverage"]["data/Coverage.jl"]) == Array{Union{Int64,Void},1}
+    #@test typeof(json_data["coverage"]["data/Coverage.jl"]) == Array{Union{Int64,Nothing},1}
     open("fakefile",true,true,true,false,false)
     @test isempty(Coverage.process_cov("fakefile",datadir))
     rm("fakefile")
-
-    # Test `using Coverage` with non-empty command-line arguments
-    script = tempname()
-    write(script, """
-        try
-            using Coverage
-            println(join(ARGS, ","))
-        catch
-            nothing
-        end
-        """)
-    @test readchomp(`$(Base.julia_cmd()) $script argument`) == "argument"
-    rm(script)
-
-    # Test command-line usage
-    @test readchomp(`$(Base.julia_cmd()) $(joinpath("src", "Coverage.jl"))`) == "Coverage.MallocInfo[]"
 end
-
-
-
 
 ######################
 # codecovio.jl tests #
@@ -132,8 +117,6 @@ function extract_codecov_url(fun)
     return url
 end
 
-
-
 # empty file coverage for testing
 fcs = FileCoverage[]
 
@@ -164,13 +147,6 @@ withenv(
 
     # default values
     codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit_local(fcs; dry_run = true) )
-    @test contains(codecov_url, "codecov.io")
-    @test contains(codecov_url, "commit")
-    @test contains(codecov_url, "branch")
-    @test !contains(codecov_url, "service")
-
-    # default values in depreciated call
-    codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit_local(fcs) )
     @test contains(codecov_url, "codecov.io")
     @test contains(codecov_url, "commit")
     @test contains(codecov_url, "branch")

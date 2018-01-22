@@ -8,7 +8,7 @@ web service. It exports the `submit` and `submit_token` methods.
 """
 module Coveralls
     using Coverage
-    using Requests
+    using HTTP
     using JSON
     using Compat
 
@@ -57,22 +57,22 @@ module Coveralls
                         "source_files"      => map(to_json, fcs),
                         "repo_token"        => ENV["REPO_TOKEN"])
             println("Submitting data to Coveralls...")
-            req = Requests.post(
-                URI("https://coveralls.io/api/v1/jobs"),
+            req = HTTP.post(
+                "https://coveralls.io/api/v1/jobs",
                 files = [FileParam(JSON.json(data),"application/json","json_file","coverage.json")])
             println("Result of submission:")
-            println(Compat.UTF8String(req.data))
+            println(String(req.data))
 
         elseif lowercase(get(ENV, "TRAVIS", "false")) == "true"
             data = Dict("service_job_id"    => ENV["TRAVIS_JOB_ID"],
                         "service_name"      => "travis-ci",
                         "source_files"      => map(to_json, fcs))
             println("Submitting data to Coveralls...")
-            req = Requests.post(
-                URI("https://coveralls.io/api/v1/jobs"),
+            req = HTTP.post(
+                "https://coveralls.io/api/v1/jobs",
                 files = [FileParam(JSON.json(data),"application/json","json_file","coverage.json")])
             println("Result of submission:")
-            println(Compat.UTF8String(req.data))
+            println(String(req.data))
         else
             error("No compatible CI platform detected")
         end
@@ -135,9 +135,9 @@ module Coveralls
             end
         end
 
-        r = post(URI("https://coveralls.io/api/v1/jobs"), files =
+        r = HTTP.post("https://coveralls.io/api/v1/jobs", files =
             [FileParam(JSON.json(data),"application/json","json_file","coverage.json")])
         println("Result of submission:")
-        println(Compat.UTF8String(r.data))
+        println(String(r.data))
     end
 end  # module Coveralls

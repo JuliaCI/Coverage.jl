@@ -1,8 +1,8 @@
 ## Analyzing memory allocation
 
-immutable MallocInfo
+struct MallocInfo
     bytes::Int
-    filename::Compat.UTF8String
+    filename::String
     linenumber::Int
 end
 
@@ -32,7 +32,7 @@ function analyze_malloc_files(files)
 end
 
 function find_malloc_files(dirs)
-    files = Compat.String[]
+    files = String[]
     for dir in dirs
         filelist = readdir(dir)
         for file in filelist
@@ -46,10 +46,10 @@ function find_malloc_files(dirs)
     end
     files
 end
-find_malloc_files(file::Compat.String) = find_malloc_files([file])
+find_malloc_files(file::String) = find_malloc_files([file])
 
 analyze_malloc(dirs) = analyze_malloc_files(find_malloc_files(dirs))
-analyze_malloc(dir::Compat.String) = analyze_malloc([dir])
+analyze_malloc(dir::String) = analyze_malloc([dir])
 
 isfuncexpr(ex::Expr) =
     ex.head == :function || (ex.head == :(=) && typeof(ex.args[1]) == Expr && ex.args[1].head == :call)

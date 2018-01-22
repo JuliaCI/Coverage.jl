@@ -34,3 +34,12 @@ function function_body_lines!(flines, ast::Expr, infunction)
     end
     flines
 end
+
+if VERSION >= v"0.7.0-DEV.2437"
+    function _parse(io::IO)
+        pos = position(io)
+        Meta.parse(read(io, String), position(io))
+    end
+else
+    _parse(io::IO) = Base.parse(io)
+end

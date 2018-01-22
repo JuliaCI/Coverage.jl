@@ -10,6 +10,7 @@ Julia coverage data. It exports the `writefile` function.
 """
 module LCOV
 
+using Compat
 using Coverage
 
 export writefile
@@ -68,7 +69,7 @@ function writeline(io::IO, line::Int, count::Int)
     println(io, "DA:$line,$count")
     (1, count)
 end
-function writeline(io::IO, line::Int, count::Void)
+function writeline(io::IO, line::Int, count::Nothing)
     # skipped line, nothing to do here
     (0, 0)
 end
