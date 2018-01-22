@@ -74,26 +74,6 @@ cd(dirname(@__DIR__)) do
     open("fakefile",true,true,true,false,false)
     @test isempty(Coverage.process_cov("fakefile",datadir))
     rm("fakefile")
-
-    # Test `using Coverage` with non-empty command-line arguments
-    script = tempname()
-    write(script, """
-        try
-            using Coverage
-            println(join(ARGS, ","))
-        catch
-            nothing
-        end
-        """)
-    @test readchomp(`$(Base.julia_cmd()) $script argument`) == "argument"
-    rm(script)
-
-    # Test command-line usage
-    if VERSION < v"0.7.0-DEV.3001"
-        @test readchomp(`$(Base.julia_cmd()) $(joinpath("src", "Coverage.jl"))`) == "Coverage.MallocInfo[]"
-    else
-        @test readchomp(`$(Base.julia_cmd()) $(joinpath("src", "Coverage.jl"))`) == "Coverage.MallocInfo[]\nMain.Coverage.MallocInfo[]"
-    end
 end
 
 ######################
@@ -171,13 +151,6 @@ withenv(
     @test contains(codecov_url, "commit")
     @test contains(codecov_url, "branch")
     @test !contains(codecov_url, "service")
-
-    # default values in depreciated call
-    #codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit_local(fcs) )
-    #@test contains(codecov_url, "codecov.io")
-    #@test contains(codecov_url, "commit")
-    #@test contains(codecov_url, "branch")
-    #@test !contains(codecov_url, "service")
 
     # env var url override
     withenv( "CODECOV_URL" => "https://enterprise-codecov-1.com" ) do
