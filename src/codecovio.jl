@@ -57,7 +57,7 @@ module Codecov
             end
             for kwarg in kwargs
                 if !(kwarg[1] in defined_names)
-                    push!(is_args_array, Pair(kwarg[2], kwarg[1]))
+                    push!(is_args_array, Pair(kwarg[1], kwarg[2]))
                 end
             end
             return is_args_array
