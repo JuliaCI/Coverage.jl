@@ -42,6 +42,9 @@ module Coveralls
                                      "source"   => fc.source,
                                      "coverage" => fc.coverage)
 
+    # Format the body argument to HTTP.post
+    makebody(data::Dict) = Dict("json_file" => IOBuffer(JSON.json(data)))
+
     """
         submit(fcs::Vector{FileCoverage})
 
@@ -50,6 +53,8 @@ module Coveralls
     on TravisCI or AppVeyor. If running locally, use `submit_token`.
     """
     function submit(fcs::Vector{FileCoverage})
+        url = "https://coveralls.io/api/v1/jobs"
+        head = Dict("Content-Type" => "application/json")
         if lowercase(get(ENV, "APPVEYOR", "false")) == "true"
             # Submission from AppVeyor requires a REPO_TOKEN environment variable
             data = Dict("service_job_id"    => ENV["APPVEYOR_JOB_ID"],
@@ -57,20 +62,15 @@ module Coveralls
                         "source_files"      => map(to_json, fcs),
                         "repo_token"        => ENV["REPO_TOKEN"])
             println("Submitting data to Coveralls...")
-            req = HTTP.post(
-                "https://coveralls.io/api/v1/jobs",
-                files = [FileParam(JSON.json(data),"application/json","json_file","coverage.json")])
+            req = HTTP.post(url, body=makebody(data), headers=head, verbose=true)
             println("Result of submission:")
             println(String(req.data))
-
         elseif lowercase(get(ENV, "TRAVIS", "false")) == "true"
             data = Dict("service_job_id"    => ENV["TRAVIS_JOB_ID"],
                         "service_name"      => "travis-ci",
                         "source_files"      => map(to_json, fcs))
             println("Submitting data to Coveralls...")
-            req = HTTP.post(
-                "https://coveralls.io/api/v1/jobs",
-                files = [FileParam(JSON.json(data),"application/json","json_file","coverage.json")])
+            req = HTTP.post(url, body=makebody(data), headers=head, verbose=true)
             println("Result of submission:")
             println(String(req.data))
         else
@@ -123,6 +123,7 @@ module Coveralls
     git_info can be either a `Dict` or a function that returns a `Dict`.
     """
     function submit_token(fcs::Vector{FileCoverage}, git_info=query_git_info)
+        head = Dict("Content-Type" => "application/json")
         data = Dict("repo_token" => ENV["REPO_TOKEN"],
                     "source_files" => map(to_json, fcs))
 
@@ -135,8 +136,7 @@ module Coveralls
             end
         end
 
-        r = HTTP.post("https://coveralls.io/api/v1/jobs", files =
-            [FileParam(JSON.json(data),"application/json","json_file","coverage.json")])
+        r = HTTP.post("https://coveralls.io/api/v1/jobs", body=makebody(data), headers=head, verbose=true)
         println("Result of submission:")
         println(String(r.data))
     end
