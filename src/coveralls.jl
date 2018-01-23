@@ -45,7 +45,9 @@ module Coveralls
                                      "coverage"      => fc.coverage)
 
     # Format the body argument to HTTP.post
-    makebody(data::Dict) = Dict("json_file" => IOBuffer(JSON.json(data)))
+    makebody(data::Dict) =
+        Dict("json_file" => HTTP.Multipart("coverage.json", IOBuffer(JSON.json(data)),
+                                           content_type="application/json"))
 
     """
         submit(fcs::Vector{FileCoverage})
