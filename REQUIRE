@@ -1,5 +1,6 @@
 julia 0.6
 JSON
 HTTP
+MbedTLS
 Git
 Compat 0.44.0
