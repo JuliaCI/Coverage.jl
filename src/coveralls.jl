@@ -11,6 +11,7 @@ module Coveralls
     using HTTP
     using JSON
     using Compat
+    using MbedTLS
 
     export submit, submit_token
 
@@ -38,9 +39,14 @@ module Coveralls
 
     # to_json
     # Convert a FileCoverage instance to its Coveralls JSON representation
-    to_json(fc::FileCoverage) = Dict("name"     => fc.filename,
-                                     "source"   => fc.source,
-                                     "coverage" => fc.coverage)
+    to_json(fc::FileCoverage) = Dict("name"          => fc.filename,
+                                     "source_digest" => digest(MD_MD5, fc.source, "secret"),
+                                     "coverage"      => fc.coverage)
+
+    # Format the body argument to HTTP.post
+    makebody(data::Dict) =
+        Dict("json_file" => HTTP.Multipart("json_file", IOBuffer(JSON.json(data)),
+                                           "application/json"))
 
     """
         submit(fcs::Vector{FileCoverage})
@@ -50,6 +56,7 @@ module Coveralls
     on TravisCI or AppVeyor. If running locally, use `submit_token`.
     """
     function submit(fcs::Vector{FileCoverage})
+        url = "https://coveralls.io/api/v1/jobs"
         if lowercase(get(ENV, "APPVEYOR", "false")) == "true"
             # Submission from AppVeyor requires a REPO_TOKEN environment variable
             data = Dict("service_job_id"    => ENV["APPVEYOR_JOB_ID"],
@@ -57,22 +64,17 @@ module Coveralls
                         "source_files"      => map(to_json, fcs),
                         "repo_token"        => ENV["REPO_TOKEN"])
             println("Submitting data to Coveralls...")
-            req = HTTP.post(
-                "https://coveralls.io/api/v1/jobs",
-                files = [FileParam(JSON.json(data),"application/json","json_file","coverage.json")])
+            req = HTTP.post(url, body=makebody(data))
             println("Result of submission:")
-            println(String(req))
-
+            println(String(req.body))
         elseif lowercase(get(ENV, "TRAVIS", "false")) == "true"
             data = Dict("service_job_id"    => ENV["TRAVIS_JOB_ID"],
                         "service_name"      => "travis-ci",
                         "source_files"      => map(to_json, fcs))
             println("Submitting data to Coveralls...")
-            req = HTTP.post(
-                "https://coveralls.io/api/v1/jobs",
-                files = [FileParam(JSON.json(data),"application/json","json_file","coverage.json")])
+            req = HTTP.post(url, body=makebody(data))
             println("Result of submission:")
-            println(String(req))
+            println(String(req.body))
         else
             error("No compatible CI platform detected")
         end
@@ -135,9 +137,8 @@ module Coveralls
             end
         end
 
-        r = HTTP.post("https://coveralls.io/api/v1/jobs", files =
-            [FileParam(JSON.json(data),"application/json","json_file","coverage.json")])
+        r = HTTP.post("https://coveralls.io/api/v1/jobs", body=makebody(data))
         println("Result of submission:")
-        println(String(r))
+        println(String(r.body))
     end
 end  # module Coveralls
