@@ -11,7 +11,6 @@ module Coveralls
     using HTTP
     using JSON
     using Compat
-    using MbedTLS
 
     export submit, submit_token
 
@@ -41,7 +40,6 @@ module Coveralls
     # Convert a FileCoverage instance to its Coveralls JSON representation
     to_json(fc::FileCoverage) = Dict("name"          => fc.filename,
                                      "source"        => fc.source,
-                                     "source_digest" => digest(MD_MD5, fc.source, "secret"),
                                      "coverage"      => fc.coverage)
 
     # Format the body argument to HTTP.post
