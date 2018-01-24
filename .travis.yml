@@ -8,4 +8,4 @@ sudo: false
 script:
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
   - julia --check-bounds=yes -e 'Pkg.clone(pwd()); Pkg.test("Coverage"; coverage=true)'
-  - julia -e 'using Coverage; cov_res = process_folder(); Coveralls.submit(cov_res); Codecov.submit(cov_res)';
+  - julia -e 'using Coverage; cov_res = process_folder(joinpath(Pkg.dir("Coverage"), "src")); Coveralls.submit(cov_res); Codecov.submit(cov_res)';
