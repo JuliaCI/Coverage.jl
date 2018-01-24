@@ -3,9 +3,8 @@ Coverage.jl
 
 *Release version*:
 
-[![Coverage](http://pkg.julialang.org/badges/Coverage_0.3.svg)](http://pkg.julialang.org/?pkg=Coverage)
-[![Coverage](http://pkg.julialang.org/badges/Coverage_0.4.svg)](http://pkg.julialang.org/?pkg=Coverage)
-[![Coverage](http://pkg.julialang.org/badges/Coverage_0.5.svg)](http://pkg.julialang.org/?pkg=Coverage)
+[![Coverage](http://pkg.julialang.org/badges/Coverage_0.6.svg)](http://pkg.julialang.org/?pkg=Coverage)
+[![Coverage](http://pkg.julialang.org/badges/Coverage_0.7.svg)](http://pkg.julialang.org/?pkg=Coverage)
 
 *Development version*:
 
