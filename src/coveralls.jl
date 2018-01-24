@@ -83,19 +83,23 @@ module Coveralls
     # query_git_info
     # Pulls information about the repository that isn't available if we
     # are running somewhere other than TravisCI
-    import Git
-    function query_git_info(dir="")
-        commit_sha      = Git.readchomp(`rev-parse HEAD`, dir=dir)
-        author_name     = Git.readchomp(`log -1 --pretty=format:"%aN"`, dir=dir)
-        author_email    = Git.readchomp(`log -1 --pretty=format:"%aE"`, dir=dir)
-        committer_name  = Git.readchomp(`log -1 --pretty=format:"%cN"`, dir=dir)
-        committer_email = Git.readchomp(`log -1 --pretty=format:"%cE"`, dir=dir)
-        message         = Git.readchomp(`log -1 --pretty=format:"%s"`, dir=dir)
-        remote          = Git.readchomp(`config --get remote.origin.url`, dir=dir)
-        branch          = Git.branch(dir=dir)
-
-        # Normalize remote url to https
-        remote = "https" * Git.normalize_url(remote)[4:end]
+    import Base.LibGit2
+    function query_git_info(dir=pwd())
+        repo            = LibGit2.GitRepo(dir)
+        head_cmt        = LibGit2.peel(LibGit2.head(repo))
+        head_oid        = LibGit2.GitHash(head_cmt)
+        commit_sha      = string(head_oid)
+        author_name     = string(LibGit2.author(head_cmt).name)
+        author_email    = string(LibGit2.author(head_cmt).email)
+        committer_name  = string(LibGit2.committer(head_cmt).name)
+        committer_email = string(LibGit2.committer(head_cmt).email)
+        message         = LibGit2.message(head_cmt)
+        remote          = ""
+        branch          = LibGit2.shortname(headref)
+        LibGit2.with(LibGit2.get(LibGit2.GitRemote, repo, branch)) do remote
+            remote = LibGit2.url(remote)
+        end
+        LibGit2.close(repo)
 
         return Dict(
             "branch"    => branch,

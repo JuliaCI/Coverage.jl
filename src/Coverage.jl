@@ -2,7 +2,7 @@
 # Coverage.jl
 # Input: Code coverage and memory allocations
 # Output: Useful things
-# https://github.com/IainNZ/Coverage.jl
+# https://github.com/JuliaCI/Coverage.jl
 #######################################################################
 module Coverage
 

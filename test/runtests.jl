@@ -94,7 +94,6 @@ function extract_codecov_url(fun)
     close(outWrite)
 
     data = String(readavailable(outRead))
-
     close(outRead)
     redirect_stdout(originalSTDOUT)
 
@@ -143,7 +142,6 @@ withenv(
     ) do
 
     # test local submission process
-
 
     # default values
     codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit_local(fcs; dry_run = true) )

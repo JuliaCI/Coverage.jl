@@ -140,21 +140,27 @@ module Codecov
     end
 
 
-    import Git
+    import Base.LibGit2
 
     """
-        submit_local(fcs::Vector{FileCoverage})
+        submit_local(fcs::Vector{FileCoverage}, dir::AbstractString=pwd())
 
-    Takes a `Vector` of file coverage results (produced by `process_folder`),
-    and submits them to Codecov.io. Assumes the submission is being made from
-    a local git installation.  A repository token should be specified by a
-    'token' keyword argument or the `CODECOV_TOKEN` environment variable.
+    Take a `Vector` of file coverage results (produced by `process_folder`),
+    and submit them to Codecov.io. Assumes the submission is being made from
+    a local git installation, rooted at `dir`. A repository token should be specified by a
+    `token` keyword argument or the `CODECOV_TOKEN` environment variable.
     """
-    function submit_local(fcs::Vector{FileCoverage}; kwargs...)
-        kwargs = set_defaults(kwargs,
-            commit = Git.readchomp(`rev-parse HEAD`, dir=""),
-            branch = Git.branch(dir="")
-            )
+    function submit_local(fcs::Vector{FileCoverage}, dir::AbstractString=joinpath(pwd(),".."); kwargs...)
+        LibGit2.with(LibGit2.GitRepo(dir)) do repo
+            LibGit2.with(LibGit2.head(repo)) do headref
+                branch_name = LibGit2.shortname(headref) # this function returns a String
+                commit_oid  = LibGit2.GitHash(LibGit2.peel(headref))
+                kwargs = set_defaults(kwargs,
+                    commit = string(commit_oid),
+                    branch = branch_name
+                    )
+            end
+        end
 
         if haskey(ENV, "REPO_TOKEN")
             println("the environment variable REPO_TOKEN is deprecated, use CODECOV_TOKEN instead")
