@@ -42,7 +42,7 @@ module Codecov
     end
 
 
-    if VERSION >= v"0.7.0-DEV.3481"
+    if VERSION >= v"0.7.0-DEV.3198"
         """
         kwargs provides default values to insert into args_array, only if they are
         not already specified in args_array.

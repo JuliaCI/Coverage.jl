@@ -22,6 +22,8 @@ using Coverage, Compat, Compat.Test
 @test Coverage.iscovfile("/somedir/test.jl.8392.cov", "/somedir/test.jl")
 @test !Coverage.iscovfile("/otherdir/test.jl.cov", "/somedir/test.jl")
 
+@test !Coverage.isfuncexpr("2")
+
 cd(dirname(@__DIR__)) do
     datadir = joinpath("test", "data")
     # Process a saved set of coverage data...
