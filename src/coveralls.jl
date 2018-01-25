@@ -10,8 +10,9 @@ module Coveralls
     using Coverage
     using HTTP
     using JSON
-    using Compat
     using MbedTLS
+    using Compat
+    using Compat: @info
 
     export submit, submit_token
 
@@ -63,21 +64,17 @@ module Coveralls
                         "service_name"      => "appveyor",
                         "source_files"      => map(to_json, fcs),
                         "repo_token"        => ENV["REPO_TOKEN"])
-            println("Submitting data to Coveralls...")
-            req = HTTP.post(url, body=makebody(data))
-            println("Result of submission:")
-            println(String(req.body))
         elseif lowercase(get(ENV, "TRAVIS", "false")) == "true"
             data = Dict("service_job_id"    => ENV["TRAVIS_JOB_ID"],
                         "service_name"      => "travis-ci",
                         "source_files"      => map(to_json, fcs))
-            println("Submitting data to Coveralls...")
-            req = HTTP.post(url, body=makebody(data))
-            println("Result of submission:")
-            println(String(req.body))
         else
             error("No compatible CI platform detected")
         end
+        @info "Submitting data to Coveralls..."
+        req = HTTP.post(url, body=makebody(data))
+        @info "Result of submission:\n" * String(req.body)
+        nothing
     end
 
     # query_git_info
@@ -142,7 +139,6 @@ module Coveralls
         end
 
         r = HTTP.post("https://coveralls.io/api/v1/jobs", body=makebody(data))
-        println("Result of submission:")
-        println(String(r.body))
+        @info "Result of submission:\n" * String(r.body)
     end
 end  # module Coveralls

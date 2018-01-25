@@ -12,6 +12,7 @@ module Codecov
     using Coverage
     using JSON
     using Compat
+    using Compat: @info, @warn
 
     export submit, submit_token, submit_local, submit_generic
 
@@ -163,7 +164,7 @@ module Codecov
         end
 
         if haskey(ENV, "REPO_TOKEN")
-            println("the environment variable REPO_TOKEN is deprecated, use CODECOV_TOKEN instead")
+            @warn "the environment variable REPO_TOKEN is deprecated, use CODECOV_TOKEN instead"
             kwargs = set_defaults(kwargs, token = ENV["REPO_TOKEN"])
         end
 
@@ -215,15 +216,13 @@ module Codecov
             end
         end
 
-        println("Codecov.io API URL:")
-        println(uri_str)
+        @info "Codecov.io API URL:\n" * uri_str
 
         if !dry_run
             heads   = Dict("Content-Type" => "application/json")
             data    = to_json(fcs)
             req     = HTTP.post(uri_str; body = JSON.json(data), headers = heads)
-            println("Result of submission:")
-            println(String(req))
+            @info "Result of submission:\n" * String(req)
         end
     end
 
