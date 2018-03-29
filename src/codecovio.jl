@@ -166,7 +166,7 @@ module Codecov
     a local git installation, rooted at `dir`. A repository token should be specified by a
     `token` keyword argument or the `CODECOV_TOKEN` environment variable.
     """
-    function submit_local(fcs::Vector{FileCoverage}, dir::AbstractString=joinpath(pwd(),".."); kwargs...)
+    function submit_local(fcs::Vector{FileCoverage}, dir::AbstractString=pwd(); kwargs...)
         LibGit2.with(LibGit2.GitRepo(dir)) do repo
             LibGit2.with(LibGit2.head(repo)) do headref
                 branch_name = LibGit2.shortname(headref) # this function returns a String
