@@ -37,9 +37,11 @@ end
 
 if VERSION >= v"0.7.0-DEV.4881"
     function _parse(io::IO)
-        # position(io) is 0-based
-        pos = position(io)+1
-        Meta.parse(read(io, String), pos)[1]
+        pos = position(io) + 1
+        str = read(io, String)
+        ex, pos2 = Meta.parse(str, 1)
+        seek(io, pos+pos2 - 2)
+        ex
     end
 elseif VERSION >= v"0.7.0-DEV.2437"
     function _parse(io::IO)
