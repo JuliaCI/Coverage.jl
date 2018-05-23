@@ -91,7 +91,7 @@ extracts the api URL from stdout in a codecov.io submit call
 very helpful for testing codecovio.jl
 """
 function extract_codecov_url(fun)
-    originalSTDOUT = STDOUT
+    originalSTDOUT = stdout
 
     (outRead, outWrite) = redirect_stdout()
 
@@ -112,7 +112,7 @@ function extract_codecov_url(fun)
             url = line
             get_next = false
         end
-        if contains(line, "Codecov.io API URL")
+        if occursin("Codecov.io API URL", line)
             get_next = true
         end
     end
@@ -151,40 +151,40 @@ withenv(
 
     # default values
     codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit_local(fcs; dry_run = true) )
-    @test contains(codecov_url, "codecov.io")
-    @test contains(codecov_url, "commit")
-    @test contains(codecov_url, "branch")
-    @test !contains(codecov_url, "service")
+    @test occursin("codecov.io", codecov_url)
+    @test occursin("commit", codecov_url)
+    @test occursin("branch", codecov_url)
+    @test !occursin("service", codecov_url)
 
     # env var url override
     withenv( "CODECOV_URL" => "https://enterprise-codecov-1.com" ) do
 
         codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit_local(fcs; dry_run = true) )
-        @test contains(codecov_url, "enterprise-codecov-1.com")
-        @test contains(codecov_url, "commit")
-        @test contains(codecov_url, "branch")
-        @test !contains(codecov_url, "service")
+        @test occursin("enterprise-codecov-1.com", codecov_url)
+        @test occursin("commit", codecov_url)
+        @test occursin("branch", codecov_url)
+        @test !occursin("service", codecov_url)
 
         # function argument url override
         codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit_local(fcs; dry_run = true, codecov_url = "https://enterprise-codecov-2.com") )
-        @test contains(codecov_url, "enterprise-codecov-2.com")
-        @test contains(codecov_url, "commit")
-        @test contains(codecov_url, "branch")
-        @test !contains(codecov_url, "service")
+        @test occursin("enterprise-codecov-2.com", codecov_url)
+        @test occursin("commit", codecov_url)
+        @test occursin("branch", codecov_url)
+        @test !occursin("service", codecov_url)
 
         # env var token
         withenv( "CODECOV_TOKEN" => "token_name_1" ) do
 
             codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit_local(fcs; dry_run = true) )
-            @test contains(codecov_url, "enterprise-codecov-1.com")
-            @test contains(codecov_url, "token=token_name_1")
-            @test !contains(codecov_url, "service")
+            @test occursin("enterprise-codecov-1.com", codecov_url)
+            @test occursin("token=token_name_1", codecov_url)
+            @test !occursin("service", codecov_url)
 
             # function argument token url override
             codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit_local(fcs; dry_run = true, token="token_name_2") )
-            @test contains(codecov_url, "enterprise-codecov-1.com")
-            @test contains(codecov_url, "token=token_name_2")
-            @test !contains(codecov_url, "service")
+            @test occursin("enterprise-codecov-1.com", codecov_url)
+            @test occursin("token=token_name_2", codecov_url)
+            @test !occursin("service", codecov_url)
         end
     end
 
@@ -208,62 +208,62 @@ withenv(
 
         # default values
         codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit(fcs; dry_run = true) )
-        @test contains(codecov_url, "codecov.io")
-        @test contains(codecov_url, "service=travis-org")
-        @test contains(codecov_url, "branch=t_branch")
-        @test contains(codecov_url, "commit=t_commit")
-        @test contains(codecov_url, "pull_request=t_pr")
-        @test contains(codecov_url, "job=t_job_id")
-        @test contains(codecov_url, "slug=t_slug")
-        @test contains(codecov_url, "build=t_job_num")
+        @test occursin("codecov.io", codecov_url)
+        @test occursin("service=travis-org", codecov_url)
+        @test occursin("branch=t_branch", codecov_url)
+        @test occursin("commit=t_commit", codecov_url)
+        @test occursin("pull_request=t_pr", codecov_url)
+        @test occursin("job=t_job_id", codecov_url)
+        @test occursin("slug=t_slug", codecov_url)
+        @test occursin("build=t_job_num", codecov_url)
 
         # env var url override
         withenv( "CODECOV_URL" => "https://enterprise-codecov-1.com" ) do
 
             codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit(fcs; dry_run = true) )
-            @test contains(codecov_url, "enterprise-codecov-1.com")
-            @test contains(codecov_url, "service=travis-org")
-            @test contains(codecov_url, "branch=t_branch")
-            @test contains(codecov_url, "commit=t_commit")
-            @test contains(codecov_url, "pull_request=t_pr")
-            @test contains(codecov_url, "job=t_job_id")
-            @test contains(codecov_url, "slug=t_slug")
-            @test contains(codecov_url, "build=t_job_num")
+            @test occursin("enterprise-codecov-1.com", codecov_url)
+            @test occursin("service=travis-org", codecov_url)
+            @test occursin("branch=t_branch", codecov_url)
+            @test occursin("commit=t_commit", codecov_url)
+            @test occursin("pull_request=t_pr", codecov_url)
+            @test occursin("job=t_job_id", codecov_url)
+            @test occursin("slug=t_slug", codecov_url)
+            @test occursin("build=t_job_num", codecov_url)
 
             # function argument url override
             codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit(fcs; dry_run = true, codecov_url = "https://enterprise-codecov-2.com") )
-            @test contains(codecov_url, "enterprise-codecov-2.com")
-            @test contains(codecov_url, "service=travis-org")
-            @test contains(codecov_url, "branch=t_branch")
-            @test contains(codecov_url, "commit=t_commit")
-            @test contains(codecov_url, "pull_request=t_pr")
-            @test contains(codecov_url, "job=t_job_id")
-            @test contains(codecov_url, "slug=t_slug")
-            @test contains(codecov_url, "build=t_job_num")
+            @test occursin("enterprise-codecov-2.com", codecov_url)
+            @test occursin("service=travis-org", codecov_url)
+            @test occursin("branch=t_branch", codecov_url)
+            @test occursin("commit=t_commit", codecov_url)
+            @test occursin("pull_request=t_pr", codecov_url)
+            @test occursin("job=t_job_id", codecov_url)
+            @test occursin("slug=t_slug", codecov_url)
+            @test occursin("build=t_job_num", codecov_url)
 
             # env var token
             withenv( "CODECOV_TOKEN" => "token_name_1" ) do
 
                 codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit(fcs; dry_run = true) )
-                @test contains(codecov_url, "enterprise-codecov-1.com")
-                @test contains(codecov_url, "token=token_name_1")
-                @test contains(codecov_url, "branch=t_branch")
-                @test contains(codecov_url, "commit=t_commit")
-                @test contains(codecov_url, "pull_request=t_pr")
-                @test contains(codecov_url, "job=t_job_id")
-                @test contains(codecov_url, "slug=t_slug")
-                @test contains(codecov_url, "build=t_job_num")
+                @test occursin("enterprise-codecov-1.com", codecov_url)
+                @test occursin("token=token_name_1", codecov_url)
+                @test occursin("branch=t_branch", codecov_url)
+                @test occursin("commit=t_commit", codecov_url)
+                @test occursin("pull_request=t_pr", codecov_url)
+                @test occursin("job=t_job_id", codecov_url)
+                @test occursin("slug=t_slug", codecov_url)
+                @test occursin("build=t_job_num", codecov_url)
 
                 # function argument token url override
                 codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit(fcs; dry_run = true, token="token_name_2") )
-                @test contains(codecov_url, "enterprise-codecov-1.com")
-                @test contains(codecov_url, "token=token_name_2")
-                @test contains(codecov_url, "branch=t_branch")
-                @test contains(codecov_url, "commit=t_commit")
-                @test contains(codecov_url, "pull_request=t_pr")
-                @test contains(codecov_url, "job=t_job_id")
-                @test contains(codecov_url, "slug=t_slug")
-                @test contains(codecov_url, "build=t_job_num")
+                @test occursin("enterprise-codecov-1.com", codecov_url)
+                @test occursin("token=token_name_2", codecov_url)
+                @test occursin("branch=t_branch", codecov_url)
+                @test occursin("commit=t_commit", codecov_url)
+                @test occursin("pull_request=t_pr", codecov_url)
+                @test occursin("job=t_job_id", codecov_url)
+                @test occursin("slug=t_slug", codecov_url)
+                @test occursin("build=t_job_num", codecov_url)
             end
         end
     end
@@ -285,57 +285,57 @@ withenv(
 
             # default values
             codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit(fcs; dry_run = true) )
-            @test contains(codecov_url, "codecov.io")
-            @test contains(codecov_url, "service=appveyor")
-            @test contains(codecov_url, "branch=t_branch")
-            @test contains(codecov_url, "commit=t_commit")
-            @test contains(codecov_url, "pull_request=t_pr")
-            @test contains(codecov_url, "job=t_account%2Ft_slug%2Ft_version")
-            @test contains(codecov_url, "build=t_job_num")
+            @test occursin("codecov.io", codecov_url)
+            @test occursin("service=appveyor", codecov_url)
+            @test occursin("branch=t_branch", codecov_url)
+            @test occursin("commit=t_commit", codecov_url)
+            @test occursin("pull_request=t_pr", codecov_url)
+            @test occursin("job=t_account%2Ft_slug%2Ft_version", codecov_url)
+            @test occursin("build=t_job_num", codecov_url)
 
             # env var url override
             withenv( "CODECOV_URL" => "https://enterprise-codecov-1.com" ) do
 
                 codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit(fcs; dry_run = true) )
-                @test contains(codecov_url, "enterprise-codecov-1.com")
-                @test contains(codecov_url, "service=appveyor")
-                @test contains(codecov_url, "branch=t_branch")
-                @test contains(codecov_url, "commit=t_commit")
-                @test contains(codecov_url, "pull_request=t_pr")
-                @test contains(codecov_url, "job=t_account%2Ft_slug%2Ft_version")
-                @test contains(codecov_url, "build=t_job_num")
+                @test occursin("enterprise-codecov-1.com", codecov_url)
+                @test occursin("service=appveyor", codecov_url)
+                @test occursin("branch=t_branch", codecov_url)
+                @test occursin("commit=t_commit", codecov_url)
+                @test occursin("pull_request=t_pr", codecov_url)
+                @test occursin("job=t_account%2Ft_slug%2Ft_version", codecov_url)
+                @test occursin("build=t_job_num", codecov_url)
 
                 # function argument url override
                 codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit(fcs; dry_run = true, codecov_url = "https://enterprise-codecov-2.com") )
-                @test contains(codecov_url, "enterprise-codecov-2.com")
-                @test contains(codecov_url, "service=appveyor")
-                @test contains(codecov_url, "branch=t_branch")
-                @test contains(codecov_url, "commit=t_commit")
-                @test contains(codecov_url, "pull_request=t_pr")
-                @test contains(codecov_url, "job=t_account%2Ft_slug%2Ft_version")
-                @test contains(codecov_url, "build=t_job_num")
+                @test occursin("enterprise-codecov-2.com", codecov_url)
+                @test occursin("service=appveyor", codecov_url)
+                @test occursin("branch=t_branch", codecov_url)
+                @test occursin("commit=t_commit", codecov_url)
+                @test occursin("pull_request=t_pr", codecov_url)
+                @test occursin("job=t_account%2Ft_slug%2Ft_version", codecov_url)
+                @test occursin("build=t_job_num", codecov_url)
 
                 # env var token
                 withenv( "CODECOV_TOKEN" => "token_name_1" ) do
 
                     codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit(fcs; dry_run = true) )
-                    @test contains(codecov_url, "enterprise-codecov-1.com")
-                    @test contains(codecov_url, "token=token_name_1")
-                    @test contains(codecov_url, "branch=t_branch")
-                    @test contains(codecov_url, "commit=t_commit")
-                    @test contains(codecov_url, "pull_request=t_pr")
-                    @test contains(codecov_url, "job=t_account%2Ft_slug%2Ft_version")
-                    @test contains(codecov_url, "build=t_job_num")
+                    @test occursin("enterprise-codecov-1.com", codecov_url)
+                    @test occursin("token=token_name_1", codecov_url)
+                    @test occursin("branch=t_branch", codecov_url)
+                    @test occursin("commit=t_commit", codecov_url)
+                    @test occursin("pull_request=t_pr", codecov_url)
+                    @test occursin("job=t_account%2Ft_slug%2Ft_version", codecov_url)
+                    @test occursin("build=t_job_num", codecov_url)
 
                     # function argument token url override
                     codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit(fcs; dry_run = true, token="token_name_2") )
-                    @test contains(codecov_url, "enterprise-codecov-1.com")
-                    @test contains(codecov_url, "token=token_name_2")
-                    @test contains(codecov_url, "branch=t_branch")
-                    @test contains(codecov_url, "commit=t_commit")
-                    @test contains(codecov_url, "pull_request=t_pr")
-                    @test contains(codecov_url, "job=t_account%2Ft_slug%2Ft_version")
-                    @test contains(codecov_url, "build=t_job_num")
+                    @test occursin("enterprise-codecov-1.com", codecov_url)
+                    @test occursin("token=token_name_2", codecov_url)
+                    @test occursin("branch=t_branch", codecov_url)
+                    @test occursin("commit=t_commit", codecov_url)
+                    @test occursin("pull_request=t_pr", codecov_url)
+                    @test occursin("job=t_account%2Ft_slug%2Ft_version", codecov_url)
+                    @test occursin("build=t_job_num", codecov_url)
                 end
             end
         end
@@ -356,58 +356,58 @@ withenv(
 
         # default values
         codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit(fcs; dry_run = true) )
-        @test contains(codecov_url, "codecov.io")
-        @test contains(codecov_url, "service=circleci")
-        @test contains(codecov_url, "branch=t_branch")
-        @test contains(codecov_url, "commit=t_commit")
-        @test contains(codecov_url, "pull_request=t_pr")
-        @test contains(codecov_url, "build_url=t_url")
-        @test contains(codecov_url, "build=t_num")
+        @test occursin("codecov.io", codecov_url)
+        @test occursin("service=circleci", codecov_url)
+        @test occursin("branch=t_branch", codecov_url)
+        @test occursin("commit=t_commit", codecov_url)
+        @test occursin("pull_request=t_pr", codecov_url)
+        @test occursin("build_url=t_url", codecov_url)
+        @test occursin("build=t_num", codecov_url)
 
         # env var url override
         withenv( "CODECOV_URL" => "https://enterprise-codecov-1.com" ) do
 
             codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit(fcs; dry_run = true) )
-            @test contains(codecov_url, "enterprise-codecov-1.com")
-            @test contains(codecov_url, "service=circleci")
-            @test contains(codecov_url, "branch=t_branch")
-            @test contains(codecov_url, "commit=t_commit")
-            @test contains(codecov_url, "pull_request=t_pr")
-            @test contains(codecov_url, "build_url=t_url")
-            @test contains(codecov_url, "build=t_num")
+            @test occursin("enterprise-codecov-1.com", codecov_url)
+            @test occursin("service=circleci", codecov_url)
+            @test occursin("branch=t_branch", codecov_url)
+            @test occursin("commit=t_commit", codecov_url)
+            @test occursin("pull_request=t_pr", codecov_url)
+            @test occursin("build_url=t_url", codecov_url)
+            @test occursin("build=t_num", codecov_url)
 
             # function argument url override
             codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit(fcs; dry_run = true, codecov_url = "https://enterprise-codecov-2.com") )
-            @test contains(codecov_url, "enterprise-codecov-2.com")
-            @test contains(codecov_url, "service=circleci")
-            @test contains(codecov_url, "branch=t_branch")
-            @test contains(codecov_url, "commit=t_commit")
-            @test contains(codecov_url, "pull_request=t_pr")
-            @test contains(codecov_url, "build_url=t_url")
-            @test contains(codecov_url, "build=t_num")
+            @test occursin("enterprise-codecov-2.com", codecov_url)
+            @test occursin("service=circleci", codecov_url)
+            @test occursin("branch=t_branch", codecov_url)
+            @test occursin("commit=t_commit", codecov_url)
+            @test occursin("pull_request=t_pr", codecov_url)
+            @test occursin("build_url=t_url", codecov_url)
+            @test occursin("build=t_num", codecov_url)
 
             # env var token
             withenv( "CODECOV_TOKEN" => "token_name_1" ) do
 
                 codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit(fcs; dry_run = true) )
-                @test contains(codecov_url, "enterprise-codecov-1.com")
-                @test contains(codecov_url, "token=token_name_1")
-                @test contains(codecov_url, "service=circleci")
-                @test contains(codecov_url, "branch=t_branch")
-                @test contains(codecov_url, "commit=t_commit")
-                @test contains(codecov_url, "pull_request=t_pr")
-                @test contains(codecov_url, "build_url=t_url")
-                @test contains(codecov_url, "build=t_num")
+                @test occursin("enterprise-codecov-1.com", codecov_url)
+                @test occursin("token=token_name_1", codecov_url)
+                @test occursin("service=circleci", codecov_url)
+                @test occursin("branch=t_branch", codecov_url)
+                @test occursin("commit=t_commit", codecov_url)
+                @test occursin("pull_request=t_pr", codecov_url)
+                @test occursin("build_url=t_url", codecov_url)
+                @test occursin("build=t_num", codecov_url)
 
                 # function argument token url override
                 codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit(fcs; dry_run = true, token="token_name_2") )
-                @test contains(codecov_url, "enterprise-codecov-1.com")
-                @test contains(codecov_url, "service=circleci")
-                @test contains(codecov_url, "branch=t_branch")
-                @test contains(codecov_url, "commit=t_commit")
-                @test contains(codecov_url, "pull_request=t_pr")
-                @test contains(codecov_url, "build_url=t_url")
-                @test contains(codecov_url, "build=t_num")
+                @test occursin("enterprise-codecov-1.com", codecov_url)
+                @test occursin("service=circleci", codecov_url)
+                @test occursin("branch=t_branch", codecov_url)
+                @test occursin("commit=t_commit", codecov_url)
+                @test occursin("pull_request=t_pr", codecov_url)
+                @test occursin("build_url=t_url", codecov_url)
+                @test occursin("build=t_num", codecov_url)
             end
         end
     end

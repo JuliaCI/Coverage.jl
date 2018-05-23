@@ -6,12 +6,12 @@ Coverage.Codecov Module
 This module provides functionality to push coverage information to the CodeCov.io
 web service. It exports the `submit` and `submit_token` methods.
 """
-
 module Codecov
     using HTTP
     using Coverage
     using JSON
     using Compat
+    using Compat.LibGit2
 
     export submit, submit_token, submit_local, submit_generic
 
@@ -155,8 +155,6 @@ module Codecov
         submit_generic(fcs; kwargs...)
     end
 
-
-    import Base.LibGit2
 
     """
         submit_local(fcs::Vector{FileCoverage}, dir::AbstractString=pwd())

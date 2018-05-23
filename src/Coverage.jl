@@ -12,6 +12,7 @@ module Coverage
     # coverage results by identifying this code.
 
     using Compat
+    using Compat.LibGit2
 
     export process_folder, process_file
     export clean_folder, clean_file
@@ -76,7 +77,7 @@ module Coverage
     function merge_coverage_counts(a1::Vector{CovCount},
                                    a2::Vector{CovCount})
         n = max(length(a1),length(a2))
-        a = Vector{CovCount}(uninitialized, n)
+        a = Vector{CovCount}(undef, n)
         for i in 1:n
             a1v = isassigned(a1, i) ? a1[i] : nothing
             a2v = isassigned(a2, i) ? a2[i] : nothing
@@ -97,33 +98,29 @@ module Coverage
         # Find all coverage files in the folder that match the file we
         # are currently working on
         files = readdir(folder)
-        files = map!(file -> joinpath(folder,file), files, files)
-        filter!(file -> contains(file,filename) && contains(file,".cov"), files)
+        files = map!(file -> joinpath(folder, file), files, files)
+        filter!(file -> occursin(filename, file) && occursin(".cov", file), files)
         # If there are no coverage files...
         if isempty(files)
             # ... we will assume that, as there is a .jl file, it was
             # just never run. We'll report the coverage as all null.
             println( """Coverage.process_cov: Coverage file(s) for $filename do not exist.
                                               Assuming file has no coverage.""")
-            lines = open(filename) do fp
-                readlines(fp)
+            nlines = 0
+            for line in eachline(filename)
+                nlines += 1
             end
-            coverage = Vector{CovCount}(uninitialized, length(lines))
-            return fill!(coverage, nothing)
+            return fill!(Vector{CovCount}(undef, nlines), nothing)
         end
         # Keep track of the combined coverage
-        full_coverage = Vector{CovCount}(uninitialized, 0)
+        full_coverage = CovCount[]
         for file in files
-            lines = open(file, "r") do fp
-                readlines(fp)
-            end
-            num_lines = length(lines)
-            coverage = Vector{CovCount}(uninitialized, num_lines)
-            for i in 1:num_lines
+            coverage = CovCount[]
+            for line in eachline(file)
                 # Columns 1:9 contain the coverage count
-                cov_segment = lines[i][1:9]
+                cov_segment = line[1:9]
                 # If coverage is NA, there will be a dash
-                coverage[i] = cov_segment[9] == '-' ? nothing : parse(Int, cov_segment)
+                push!(coverage, cov_segment[9] == '-' ? nothing : parse(Int, cov_segment))
             end
             full_coverage = merge_coverage_counts(full_coverage, coverage)
         end
@@ -221,12 +218,12 @@ module Coverage
     end
 
     # matches julia coverage files with and without the PID
-    iscovfile(filename) = contains(filename, r"\.jl\.?[0-9]*\.cov$")
+    iscovfile(filename) = occursin(r"\.jl\.?[0-9]*\.cov$", filename)
     # matches a coverage file for the given sourcefile. They can be full paths
     # with directories, but the directories must match
     function iscovfile(filename, sourcefile)
         startswith(filename, sourcefile) || return false
-        contains(filename, r"\.jl\.?[0-9]*\.cov$")
+        occursin(r"\.jl\.?[0-9]*\.cov$", filename)
     end
 
     """
