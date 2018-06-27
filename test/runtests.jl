@@ -71,6 +71,10 @@ cd(dirname(@__DIR__)) do
     @test get_summary(r) == covtarget
     @test get_summary(process_folder(datadir)) != covtarget
 
+    # Handle an empty coverage vector
+    emptycov = FileCoverage("", "", [])
+    @test get_summary(emptycov) == (0, 0)
+
     #json_data = Codecov.build_json_data(Codecov.process_folder("data"))
     #@test typeof(json_data["coverage"]["data/Coverage.jl"]) == Array{Union{Int64,Nothing},1}
     open("fakefile",true,true,true,false,false)

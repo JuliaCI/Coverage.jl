@@ -48,8 +48,13 @@ module Coverage
     function get_summary end
 
     function get_summary(fc::FileCoverage)
-        cov_lines = sum(x -> x!=nothing && x > 0, fc.coverage)
-        tot_lines = sum(x -> x!=nothing, fc.coverage)
+        if !isempty(fc.coverage)
+            cov_lines = sum(x -> x !== nothing && x > 0, fc.coverage)
+            tot_lines = sum(x -> x !== nothing, fc.coverage)
+        else
+            cov_lines = 0
+            tot_lines = 0
+        end
         return cov_lines, tot_lines
     end
     function get_summary(fcs::Vector{FileCoverage})
