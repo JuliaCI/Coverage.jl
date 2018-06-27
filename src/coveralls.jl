@@ -139,6 +139,7 @@ module Coveralls
             elseif isa(git_info, Dict)
                 data["git"] = git_info
             end
+        catch
         end
 
         r = HTTP.post("https://coveralls.io/api/v1/jobs", body=makebody(data))
