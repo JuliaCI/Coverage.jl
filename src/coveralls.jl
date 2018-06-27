@@ -11,6 +11,7 @@ module Coveralls
     using HTTP
     using JSON
     using Compat
+    using Compat.LibGit2
     using MbedTLS
 
     export submit, submit_token
@@ -83,7 +84,6 @@ module Coveralls
     # query_git_info
     # Pulls information about the repository that isn't available if we
     # are running somewhere other than TravisCI
-    import Base.LibGit2
     function query_git_info(dir=pwd())
         repo            = LibGit2.GitRepo(dir)
         head_cmt        = LibGit2.peel(LibGit2.head(repo))
@@ -139,6 +139,7 @@ module Coveralls
             elseif isa(git_info, Dict)
                 data["git"] = git_info
             end
+        catch
         end
 
         r = HTTP.post("https://coveralls.io/api/v1/jobs", body=makebody(data))
