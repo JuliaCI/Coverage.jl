@@ -50,13 +50,20 @@ module Coveralls
                                            "application/json"))
 
     """
-        submit(fcs::Vector{FileCoverage})
+        submit(fcs::Vector{FileCoverage}; kwargs...)
 
     Take a vector of file coverage results (produced by `process_folder`),
     and submits them to Coveralls. Assumes that this code is being run
     on TravisCI or AppVeyor. If running locally, use `submit_token`.
     """
-    function submit(fcs::Vector{FileCoverage})
+    function submit(fcs::Vector{FileCoverage}; kwargs...)
+        verbose = true
+        for (k,v) in kwargs
+            if k == :verbose
+                verbose = v
+            end
+        end
+
         url = "https://coveralls.io/api/v1/jobs"
         if lowercase(get(ENV, "APPVEYOR", "false")) == "true"
             # Submission from AppVeyor requires a REPO_TOKEN environment variable
@@ -64,18 +71,29 @@ module Coveralls
                         "service_name"      => "appveyor",
                         "source_files"      => map(to_json, fcs),
                         "repo_token"        => ENV["REPO_TOKEN"])
-            println("Submitting data to Coveralls...")
+
+            if verbose
+                println("Submitting data to Coveralls...")
+            end
             req = HTTP.post(url, body=makebody(data))
-            println("Result of submission:")
-            println(String(req.body))
+
+            if verbose
+                println("Result of submission:")
+                println(String(req.body))
+            end
         elseif lowercase(get(ENV, "TRAVIS", "false")) == "true"
             data = Dict("service_job_id"    => ENV["TRAVIS_JOB_ID"],
                         "service_name"      => "travis-ci",
                         "source_files"      => map(to_json, fcs))
-            println("Submitting data to Coveralls...")
+            if verbose
+                println("Submitting data to Coveralls...")
+            end
             req = HTTP.post(url, body=makebody(data))
-            println("Result of submission:")
-            println(String(req.body))
+
+            if verbose
+                println("Result of submission:")
+                println(String(req.body))
+            end
         else
             error("No compatible CI platform detected")
         end
@@ -121,16 +139,23 @@ module Coveralls
     end
 
     """
-        submit_token(fcs::Vector{FileCoverage}, git_info=query_git_info)
+        submit_token(fcs::Vector{FileCoverage}, git_info=query_git_info; kwargs...)
 
     Take a `Vector` of file coverage results (produced by `process_folder`),
     and submits them to Coveralls. For submissions not from TravisCI.
 
     git_info can be either a `Dict` or a function that returns a `Dict`.
     """
-    function submit_token(fcs::Vector{FileCoverage}, git_info=query_git_info)
+    function submit_token(fcs::Vector{FileCoverage}, git_info=query_git_info; kwargs...)
         data = Dict("repo_token" => ENV["REPO_TOKEN"],
                     "source_files" => map(to_json, fcs))
+
+        verbose = true
+        for (k,v) in kwargs
+            if k == :verbose
+                verbose = v
+            end
+        end
 
         # Attempt to parse git info via git_info, unless the user explicitly disables it by setting git_info to nothing
         try
@@ -143,7 +168,10 @@ module Coveralls
         end
 
         r = HTTP.post("https://coveralls.io/api/v1/jobs", body=makebody(data))
-        println("Result of submission:")
-        println(String(r.body))
+
+        if verbose
+            println("Result of submission:")
+            println(String(r.body))
+        end
     end
 end  # module Coveralls

@@ -212,6 +212,7 @@ module Codecov
 
         codecov_url = "https://codecov.io"
         dry_run = false
+        verbose = true
         for (k,v) in kwargs
             if k == :codecov_url
                 codecov_url = v
@@ -219,18 +220,23 @@ module Codecov
             if k == :dry_run
                 dry_run = true
             end
+            if k == :verbose
+                verbose = v
+            end
         end
         @assert codecov_url[end] != "/" "the codecov_url should not end with a /, given url $(codecov_url)"
 
         uri_str = "$(codecov_url)/upload/v2?"
         for (k,v) in kwargs
-            if k != :codecov_url && k != :dry_run
+            if k != :codecov_url && k != :dry_run && k != :verbose
                 uri_str = "$(uri_str)&$(k)=$(v)"
             end
         end
 
-        println("Codecov.io API URL:")
-        println(uri_str)
+        if verbose
+            println("Codecov.io API URL:")
+            println(uri_str)
+        end
 
         if !dry_run
             heads   = Dict("Content-Type" => "application/json")
