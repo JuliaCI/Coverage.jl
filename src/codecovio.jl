@@ -153,7 +153,6 @@ module Codecov
                 service      = "jenkins",
                 branch       = ENV["GIT_BRANCH"],
                 commit       = ENV["GIT_COMMIT"],
-                pull_request = ENV["JENKINS_PULL_REQUEST"],
                 job          = ENV["JOB_NAME"],
                 build        = ENV["BUILD_ID"],
                 build_url    = ENV["BUILD_URL"],
