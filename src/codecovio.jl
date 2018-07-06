@@ -148,7 +148,7 @@ module Codecov
                 slug         = circle_slug,
                 build        = ENV["CIRCLE_BUILD_NUM"],
             )
-        elseif lowercase(get(ENV, "JENKINS_HOME", "false")) == "true"
+        elseif lowercase(get(ENV, "JENKINS", "false")) == "true"
             kwargs = set_defaults(kwargs,
                 service      = "jenkins",
                 branch       = ENV["GIT_BRANCH"],
