@@ -235,7 +235,7 @@ module Codecov
 
         uri_str = "$(codecov_url)/upload/v2?"
         for (k,v) in kwargs
-            if k != :codecov_url && k != :dry_run
+            if k != :codecov_url && k != :dry_run && k != :verbose
                 uri_str = "$(uri_str)&$(k)=$(v)"
             end
         end
