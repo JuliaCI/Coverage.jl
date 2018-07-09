@@ -148,6 +148,16 @@ module Codecov
                 slug         = circle_slug,
                 build        = ENV["CIRCLE_BUILD_NUM"],
             )
+        elseif lowercase(get(ENV, "JENKINS", "false")) == "true"
+            kwargs = set_defaults(kwargs,
+                service      = "jenkins",
+                branch       = ENV["GIT_BRANCH"],
+                commit       = ENV["GIT_COMMIT"],
+                job          = ENV["JOB_NAME"],
+                build        = ENV["BUILD_ID"],
+                build_url    = ENV["BUILD_URL"],
+                jenkins_url  = ENV["JENKINS_URL"],
+            )
         else
             error("No compatible CI platform detected")
         end
