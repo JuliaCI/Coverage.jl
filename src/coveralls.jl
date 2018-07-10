@@ -11,7 +11,6 @@ module Coveralls
     using HTTP
     using JSON
     using Compat
-    using Compat.LibGit2
     using MbedTLS
 
     export submit, submit_token
@@ -94,6 +93,25 @@ module Coveralls
                 println("Result of submission:")
                 println(String(req.body))
             end
+        elseif lowercase(get(ENV, "JENKINS", "false")) == "true"
+            data = Dict("service_job_id"    => ENV["BUILD_ID"],
+                        "service_name"      => "jenkins-ci",
+                        "source_files"      => map(to_json, fcs),
+                        "repo_token"        => ENV["REPO_TOKEN"])
+
+            data["git"] = query_git_info()
+
+            data["git"]["branch"] = split(ENV["GIT_BRANCH"], "/")[2]
+
+            if verbose
+                println("Submitting data to Coveralls...")
+            end
+            req = HTTP.post(url, body=makebody(data))
+
+            if verbose
+                println("Result of submission:")
+                println(String(req.body))
+            end
         else
             error("No compatible CI platform detected")
         end
@@ -104,7 +122,8 @@ module Coveralls
     # are running somewhere other than TravisCI
     function query_git_info(dir=pwd())
         repo            = LibGit2.GitRepo(dir)
-        head_cmt        = LibGit2.peel(LibGit2.head(repo))
+        head            = LibGit2.head(repo)
+        head_cmt        = LibGit2.peel(head)
         head_oid        = LibGit2.GitHash(head_cmt)
         commit_sha      = string(head_oid)
         author_name     = string(LibGit2.author(head_cmt).name)
@@ -113,9 +132,12 @@ module Coveralls
         committer_email = string(LibGit2.committer(head_cmt).email)
         message         = LibGit2.message(head_cmt)
         remote          = ""
-        branch          = LibGit2.shortname(headref)
-        LibGit2.with(LibGit2.get(LibGit2.GitRemote, repo, branch)) do remote
-            remote = LibGit2.url(remote)
+        branch          = LibGit2.shortname(head)
+
+        if branch != "HEAD" # if repo is not in detached state
+            LibGit2.with(LibGit2.get(LibGit2.GitRemote, repo, branch)) do remote
+                remote = LibGit2.url(remote)
+            end
         end
         LibGit2.close(repo)
 
@@ -131,7 +153,7 @@ module Coveralls
                 "id" => commit_sha,
                 "author_name"       => author_name,
                 "author_email"      => author_email,
-                "committer_name"    => committer_email,
+                "committer_name"    => committer_name,
                 "committer_email"   => committer_email,
                 "message"           => message
             )
