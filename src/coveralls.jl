@@ -11,6 +11,7 @@ module Coveralls
     using HTTP
     using JSON
     using Compat
+    using Compat.LibGit2
     using MbedTLS
 
     export submit, submit_token
