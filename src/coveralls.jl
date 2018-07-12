@@ -101,7 +101,10 @@ module Coveralls
 
             data["git"] = query_git_info()
 
-            data["git"]["branch"] = split(ENV["GIT_BRANCH"], "/")[2]
+            # get the name of the branch if not a pull request
+            if get(ENV, "CI_PULL_REQUEST", "false") == "false"
+                data["git"]["branch"] = split(ENV["GIT_BRANCH"], "/")[2]
+            end
 
             if verbose
                 println("Submitting data to Coveralls...")
