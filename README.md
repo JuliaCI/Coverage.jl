@@ -9,6 +9,7 @@ Coverage.jl
 *Development version*:
 
 [![Build Status](https://travis-ci.org/JuliaCI/Coverage.jl.svg?branch=master)](https://travis-ci.org/JuliaCI/Coverage.jl)
+[![Build status](https://ci.appveyor.com/api/projects/status/ooubhlayk9uek2kr/branch/master?svg=true)](https://ci.appveyor.com/project/ararslan/coverage-jl/branch/master)
 [![Coverage Status](https://coveralls.io/repos/github/JuliaCI/Coverage.jl/badge.svg?branch=master)](https://coveralls.io/github/JuliaCI/Coverage.jl?branch=master)
 [![codecov](https://codecov.io/gh/JuliaCI/Coverage.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/JuliaCI/Coverage.jl)
 
