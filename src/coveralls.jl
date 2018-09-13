@@ -66,11 +66,15 @@ module Coveralls
 
         url = "https://coveralls.io/api/v1/jobs"
         if lowercase(get(ENV, "APPVEYOR", "false")) == "true"
-            # Submission from AppVeyor requires a REPO_TOKEN environment variable
+            #
             data = Dict("service_job_id"    => ENV["APPVEYOR_JOB_ID"],
                         "service_name"      => "appveyor",
                         "source_files"      => map(to_json, fcs),
-                        "repo_token"        => ENV["REPO_TOKEN"])
+                        "repo_token"        => get(ENV,"COVERALLS_TOKEN") do
+                            get(ENV, "REPO_TOKEN") do #backward compatibility
+                                error("Coveralls submission requires a COVERALLS_TOKEN environment variable")
+                            end
+                        end)
 
             if verbose
                 println("Submitting data to Coveralls...")
@@ -98,7 +102,11 @@ module Coveralls
             data = Dict("service_job_id"    => ENV["BUILD_ID"],
                         "service_name"      => "jenkins-ci",
                         "source_files"      => map(to_json, fcs),
-                        "repo_token"        => ENV["REPO_TOKEN"])
+                        "repo_token"        => get(ENV,"COVERALLS_TOKEN") do
+                            get(ENV, "REPO_TOKEN") do #backward compatibility
+                                error("Coveralls submission from Jenkins requires a COVERALLS_TOKEN environment variable")
+                            end
+                        end)
 
             data["git"] = query_git_info()
 
@@ -173,7 +181,11 @@ module Coveralls
     git_info can be either a `Dict` or a function that returns a `Dict`.
     """
     function submit_token(fcs::Vector{FileCoverage}, git_info=query_git_info; kwargs...)
-        data = Dict("repo_token" => ENV["REPO_TOKEN"],
+        data = Dict("repo_token" => get(ENV,"COVERALLS_TOKEN") do
+                            get(ENV, "REPO_TOKEN") do #backward compatibility
+                                error("Coveralls submission from AppVeyor requires a COVERALLS_TOKEN environment variable")
+                            end
+                        end,
                     "source_files" => map(to_json, fcs))
 
         verbose = true
