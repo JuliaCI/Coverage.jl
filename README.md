@@ -141,6 +141,7 @@ CODECOV_TOKEN=$YOUR_TOKEN_HERE julia -e 'cd(Pkg.dir("MyPkg")); using Coverage; C
 * [AstroLib.jl](https://github.com/giordano/AstroLib.jl/blob/master/.travis.yml)
 * [AudioIO.jl](https://github.com/ssfrr/AudioIO.jl/blob/master/.travis.yml)
 * [Augur.jl](https://github.com/AugurProject/Augur.jl/blob/master/.travis.yml)
+* [BoltzmannMachines.jl](https://github.com/stefan-m-lenz/BoltzmannMachines.jl/blob/master/.travis.yml)
 * [Bootstrap.jl](https://github.com/julian-gehring/Bootstrap.jl/blob/master/.travis.yml)
 * [CAIRS.jl](https://github.com/scheidan/CAIRS.jl/blob/master/.travis.yml)
 * [ClimateTools.jl](https://github.com/Balinus/ClimateTools.jl/blob/master/.travis.yml)
