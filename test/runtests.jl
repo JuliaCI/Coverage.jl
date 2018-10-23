@@ -83,9 +83,9 @@ end
         #json_data = Codecov.build_json_data(Codecov.process_folder("data"))
         #@test typeof(json_data["coverage"]["data/Coverage.jl"]) == Array{Union{Int64,Nothing},1}
         if VERSION < v"0.7.0"
-            open("fakefile",true,true,true,false,false)
+            close(open("fakefile",true,true,true,false,false))
         else
-            open("fakefile",read=true,write=true,create=true,truncate=false,append=false)
+            close(open("fakefile",read=true,write=true,create=true,truncate=false,append=false))
         end
         @test isempty(Coverage.process_cov("fakefile",datadir))
         rm("fakefile")
