@@ -1,15 +1,17 @@
 language: julia
 julia:
   - 0.6
+  - 0.7
+  - 1.0
   - nightly
+
 notifications:
     email: false
-sudo: false
+
 script:
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
-  - julia --check-bounds=yes -e 'Pkg.clone(pwd()); Pkg.test("Coverage"; coverage=true)'
-  - julia --code-coverage=user -e 'cd(Pkg.dir("Coverage")); using Coverage; cov_res = process_folder(); Coveralls.submit(cov_res); Codecov.submit(cov_res)';
-after_success:
-  - if [ "$TRAVIS_JULIA_VERSION" != "nightly" ]; then
-      julia -e 'cd(Pkg.dir("Coverage")); using Coverage; cov_res = process_folder(); Coveralls.submit(cov_res); Codecov.submit(cov_res)';
-    fi
+  - julia --check-bounds=yes etc/travis-test.jl
+  # submit coverage data, and collect new coverage data on that
+  - julia --code-coverage=user etc/travis-coverage.jl
+  # submit coverage data *again*, this time without code coverage
+  - julia etc/travis-coverage.jl
