@@ -41,8 +41,11 @@ end
         lcov = IOBuffer()
         # we only have a single file, but we want to test on the Vector of file results
         LCOV.write(lcov, FileCoverage[r])
-        fn = joinpath(datadir, "expected.info")
-        @test String(take!(lcov)) == read(fn, String)
+        expected = read(joinpath(datadir, "expected.info"), String)
+        if Compat.Sys.iswindows()
+            expected = replace(expected, "SF:test/data/Coverage.jl\n" => "SF:test\\data\\Coverage.jl\n")
+        end
+        @test String(take!(lcov)) == expected
 
         # Test a file from scratch
         srcname = joinpath("test", "data","testparser.jl")
