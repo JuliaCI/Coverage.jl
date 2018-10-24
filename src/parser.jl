@@ -3,6 +3,10 @@
 isevaldef(x) = Base.Meta.isexpr(x, :(=)) && Base.Meta.isexpr(x.args[1], :call) &&
                x.args[1].args[1] == :eval
 
+isfuncexpr(ex::Expr) =
+    ex.head == :function || (ex.head == :(=) && typeof(ex.args[1]) == Expr && ex.args[1].head == :call)
+isfuncexpr(arg) = false
+
 function_body_lines(ast) = function_body_lines!(Int[], ast, false)
 function_body_lines!(flines, arg, infunction) = flines
 function function_body_lines!(flines, node::LineNumberNode, infunction)
@@ -33,13 +37,4 @@ function function_body_lines!(flines, ast::Expr, infunction)
         flines = function_body_lines!(flines, arg, infunction)
     end
     flines
-end
-
-if VERSION >= v"0.7.0-DEV.2437"
-    function _parse(io::IO)
-        # position(io) is 0-based
-        Meta.parse(read(io, String), Int(position(io) + 1))
-    end
-else
-    _parse(io::IO) = Base.parse(io)
 end

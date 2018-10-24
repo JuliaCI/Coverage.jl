@@ -146,29 +146,28 @@ module Coverage
             end
             push!(linepos, position(io))
         end
-        open(srcname) do io
-            while !eof(io)
-                pos = position(io)
-                linestart = minimum(searchsorted(linepos, pos))
-                ast = _parse(io)
-                isa(ast, Expr) || continue
-                flines = function_body_lines(ast)
-                if !isempty(flines)
-                    flines += linestart-1
-                    for l in flines
-                        if l > length(coverage)
-                            error("source file is longer than .cov file; source might have changed")
-                        end
-                        if coverage[l] == nothing
-                            coverage[l] = 0
-                        end
+        content = read(srcname, String)
+        pos = 1
+        while pos <= length(content)
+            linestart = minimum(searchsorted(linepos, pos - 1))
+            ast, pos = Meta.parse(content, pos)
+            isa(ast, Expr) || continue
+            flines = function_body_lines(ast)
+            if !isempty(flines)
+                flines .+= linestart-1
+                for l in flines
+                    if l > length(coverage)
+                        error("source file is longer than .cov file; source might have changed")
+                    end
+                    if coverage[l] == nothing
+                        coverage[l] = 0
                     end
                 end
             end
         end
         nothing
     end
-    # function_body_lines and _parse are located in parser.jl
+    # function_body_lines is located in parser.jl
     include("parser.jl")
 
     """
