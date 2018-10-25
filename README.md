@@ -186,6 +186,8 @@ CODECOV_TOKEN=$YOUR_TOKEN_HERE julia -e 'cd(Pkg.dir("MyPkg")); using Coverage; C
 * [SimJulia.jl](https://github.com/BenLauwens/SimJulia.jl/blob/master/.travis.yml)
 * [SIUnits.jl](https://github.com/loladiro/SIUnits.jl/blob/master/.travis.yml)
 * [StatsBase.jl](https://github.com/JuliaStats/StatsBase.jl/blob/master/.travis.yml)
+* [TaylorIntegration.jl](https://github.com/PerezHz/TaylorIntegration.jl/blob/master/.travis.yml)
+* [TaylorSeries.jl](https://github.com/JuliaDiff/TaylorSeries.jl/blob/master/.travis.yml)
 * [TextWrap.jl](https://github.com/carlobaldassi/TextWrap.jl/blob/master/.travis.yml)
 * [TimeData.jl](https://github.com/cgroll/TimeData.jl/blob/master/.travis.yml)
 * [TypeCheck.jl](https://github.com/astrieanna/TypeCheck.jl/blob/master/.travis.yml)
