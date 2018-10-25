@@ -90,7 +90,9 @@ When using Coverage.jl locally, over time a lot of `.cov` files can accumulate. 
 
 [Codecov.io](https://codecov.io) is a test coverage tracking tool that integrates with your continuous integration servers (e.g. [TravisCI](https://travis-ci.org/)) or with HTTP POSTs from your very own computer at home.
 
-1. Enable [Codecov.io](https://codecov.io) for your repository. If it is public on GitHub and you are using using TravisCI, this is all you need to do. You can sign into Codecov using your Github identity. You will be served a `REPO_TOKEN`. You'll need this if you're not using a CI solution.
+1. Enable [Codecov.io](https://codecov.io) for your repository.
+  * If it is public on GitHub and you are using using Travis, CircleCI or Appveyor, this is all you need to do. You can sign into Codecov using your Github identity.
+  * Otherwise you will need to define a `CODECOV_TOKEN` environment variable with the Repository Upload Token available under the Codecov settings.
 2. Use the command line option when you run your tests
   * Either with something like `julia --code-coverage test/runtests.jl`, or
   * with something like  `julia -e 'Pkg.test("MyPkg", coverage=true)'`
@@ -115,7 +117,7 @@ CODECOV_TOKEN=$YOUR_TOKEN_HERE julia -e 'cd(Pkg.dir("MyPkg")); using Coverage; C
 
 [Coveralls.io](https://coveralls.io) is a test coverage tracking tool that integrates with your continuous integration solution (e.g. [TravisCI](https://travis-ci.org/)).
 
-1. Enable [Coveralls.io](https://coveralls.io) for your repository. If it is public on GitHub and you are using TravisCI, this is all you need to do. If you are using AppVeyor, you need to add a secure environment variable called `REPO_TOKEN` to your `.appveyor.yml` (see [here](https://www.appveyor.com/docs/build-configuration/#secure-variables)). Your repo token can be found in your Coveralls repo settings. If neither of these are true, please submit an issue, and we can work on adding additional functionality for your use case.
+1. Enable [Coveralls.io](https://coveralls.io) for your repository. If it is public on GitHub and you are using TravisCI, this is all you need to do. If you are using AppVeyor, you need to add a secure environment variable called `COVERALLS_TOKEN` to your `.appveyor.yml` (see [here](https://www.appveyor.com/docs/build-configuration/#secure-variables)). Your repo token can be found in your Coveralls repo settings. If neither of these are true, please submit an issue, and we can work on adding additional functionality for your use case.
 2. You must be using `Julia 0.3` or higher, which added the `--code-coverage` command line argument.
 3. Use the command line option when you run your tests
   * Either with something like `julia --code-coverage test/runtests.jl`, or
