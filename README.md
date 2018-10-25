@@ -154,6 +154,7 @@ CODECOV_TOKEN=$YOUR_TOKEN_HERE julia -e 'cd(Pkg.dir("MyPkg")); using Coverage; C
 * [ExtractMacro.jl](https://github.com/carlobaldassi/ExtractMacro.jl/blob/master/.travis.yml)
 * [FastaIO.jl](https://github.com/carlobaldassi/FastaIO.jl/blob/master/.travis.yml)
 * [FiniteStateMachine.jl](https://github.com/tensorjack/FiniteStateMachine.jl/blob/master/.travis.yml)
+* [FourierFlows.jl](https://github.com/FourierFlows/FourierFlows.jl/blob/master/.travis.yml)
 * [Gadfly.jl](https://github.com/dcjones/Gadfly.jl/blob/master/.travis.yml)
 * [GeometricalPredicates.jl](https://github.com/skariel/GeometricalPredicates.jl/blob/master/.travis.yml)
 * [Glob.jl](https://github.com/vtjnash/Glob.jl/blob/master/.travis.yml)

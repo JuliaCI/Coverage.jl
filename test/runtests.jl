@@ -41,13 +41,11 @@ end
         lcov = IOBuffer()
         # we only have a single file, but we want to test on the Vector of file results
         LCOV.write(lcov, FileCoverage[r])
-        fn = "expected.info"
-        if VERSION >= v"0.7.0-DEV.3481"
-            fn = "expected07.info"
+        expected = read(joinpath(datadir, "expected.info"), String)
+        if Compat.Sys.iswindows()
+            expected = replace(expected, "SF:test/data/Coverage.jl\n" => "SF:test\\data\\Coverage.jl\n")
         end
-        open(joinpath(datadir, fn)) do f
-            @test String(take!(lcov)) == read(f, String)
-        end
+        @test String(take!(lcov)) == expected
 
         # Test a file from scratch
         srcname = joinpath("test", "data","testparser.jl")
@@ -67,13 +65,15 @@ end
         # another VERSION check.
 
         if (VERSION.major == 0 && VERSION.minor == 7 && VERSION < v"0.7.0-DEV.468") || VERSION < v"0.6.1-pre.93"
-            target = Union{Int64,Nothing}[nothing, 1, nothing, 0, nothing, 0, nothing, nothing, nothing, 0, nothing, nothing, nothing, nothing, nothing, nothing, 0, nothing, nothing, 0, nothing, nothing, nothing, nothing]
+            target = Union{Int64,Nothing}[nothing, 1, nothing, 0, nothing, 0, nothing, nothing, nothing, 0, nothing, nothing, nothing, nothing, nothing, nothing, 0, nothing, nothing, 0, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing]
         elseif (VERSION.major == 0 && VERSION.minor == 6)
-            target = Union{Int64,Void}[nothing, 1, nothing, 0, nothing, 0, nothing, nothing, nothing, nothing, 0, nothing, nothing, nothing, nothing, nothing, 0, nothing, nothing, 0, nothing, nothing, nothing, nothing]
+            target = Union{Int64,Void}[nothing, 1, nothing, 0, nothing, 0, nothing, nothing, nothing, nothing, 0, nothing, nothing, nothing, nothing, nothing, 0, nothing, nothing, 0, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing]
+        elseif VERSION < v"1.0.0"
+            target = Union{Int64,Nothing}[nothing, 2, nothing, 0, nothing, 0, nothing, nothing, nothing, nothing, 0, nothing, nothing, nothing, nothing, nothing, 0, nothing, nothing, 0, nothing, nothing, 3, nothing, nothing, nothing, nothing, nothing, nothing]
         else
-            target = Union{Int64,Nothing}[nothing, 1, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing]
+            target = Union{Int64,Nothing}[nothing, 2, nothing, 0, nothing, 0, nothing, nothing, nothing, nothing, 0, nothing, nothing, nothing, nothing, nothing, 0, nothing, nothing, 0, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing]
         end
-        @test r.coverage[1:length(target)] == target
+        @test r.coverage == target
 
         covtarget = (sum(x->x != nothing && x > 0, target), sum(x->x != nothing, target))
         @test get_summary(r) == covtarget
@@ -85,7 +85,11 @@ end
 
         #json_data = Codecov.build_json_data(Codecov.process_folder("data"))
         #@test typeof(json_data["coverage"]["data/Coverage.jl"]) == Array{Union{Int64,Nothing},1}
-        open("fakefile",true,true,true,false,false)
+        if VERSION < v"0.7.0"
+            close(open("fakefile",true,true,true,false,false))
+        else
+            close(open("fakefile",read=true,write=true,create=true,truncate=false,append=false))
+        end
         @test isempty(Coverage.process_cov("fakefile",datadir))
         rm("fakefile")
     end

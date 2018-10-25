@@ -51,10 +51,6 @@ find_malloc_files(file::String) = find_malloc_files([file])
 analyze_malloc(dirs) = analyze_malloc_files(find_malloc_files(dirs))
 analyze_malloc(dir::String) = analyze_malloc([dir])
 
-isfuncexpr(ex::Expr) =
-    ex.head == :function || (ex.head == :(=) && typeof(ex.args[1]) == Expr && ex.args[1].head == :call)
-isfuncexpr(arg) = false
-
 # Support Unix command line usage like `julia Coverage.jl $(find ~/.julia/v0.6 -name "*.jl.mem")`
 if abspath(PROGRAM_FILE) == joinpath(@__DIR__, "Coverage.jl")
     bc = analyze_malloc_files(ARGS)

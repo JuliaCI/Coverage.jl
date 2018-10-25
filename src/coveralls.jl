@@ -64,7 +64,6 @@ module Coveralls
             end
         end
 
-        url = "https://coveralls.io/api/v1/jobs"
         if lowercase(get(ENV, "APPVEYOR", "false")) == "true"
             #
             data = Dict("service_job_id"    => ENV["APPVEYOR_JOB_ID"],
@@ -76,28 +75,10 @@ module Coveralls
                             end
                         end)
 
-            if verbose
-                println("Submitting data to Coveralls...")
-            end
-            req = HTTP.post(url, body=makebody(data))
-
-            if verbose
-                println("Result of submission:")
-                println(String(req.body))
-            end
         elseif lowercase(get(ENV, "TRAVIS", "false")) == "true"
             data = Dict("service_job_id"    => ENV["TRAVIS_JOB_ID"],
                         "service_name"      => "travis-ci",
                         "source_files"      => map(to_json, fcs))
-            if verbose
-                println("Submitting data to Coveralls...")
-            end
-            req = HTTP.post(url, body=makebody(data))
-
-            if verbose
-                println("Result of submission:")
-                println(String(req.body))
-            end
         elseif lowercase(get(ENV, "JENKINS", "false")) == "true"
             data = Dict("service_job_id"    => ENV["BUILD_ID"],
                         "service_name"      => "jenkins-ci",
@@ -114,18 +95,22 @@ module Coveralls
             if get(ENV, "CI_PULL_REQUEST", "false") == "false"
                 data["git"]["branch"] = split(ENV["GIT_BRANCH"], "/")[2]
             end
-
-            if verbose
-                println("Submitting data to Coveralls...")
-            end
-            req = HTTP.post(url, body=makebody(data))
-
-            if verbose
-                println("Result of submission:")
-                println(String(req.body))
-            end
         else
             error("No compatible CI platform detected")
+        end
+
+        if verbose
+            println("Submitting data to Coveralls...")
+        end
+
+        url = "https://coveralls.io/api/v1/jobs"
+        body = HTTP.Form(makebody(data))
+        headers = ["Content-Type" => "multipart/form-data; boundary=$(body.boundary)"]
+        req = HTTP.post(url, headers, body)
+
+        if verbose
+            println("Result of submission:")
+            println(String(req.body))
         end
     end
 
