@@ -110,7 +110,7 @@ module Coveralls
     # Pulls information about the repository that isn't available if we
     # are running somewhere other than TravisCI
     function query_git_info(dir=pwd())
-        repo            = LibGit2.GitRepo(dir)
+        repo            = LibGit2.GitRepoExt(dir)
         head            = LibGit2.head(repo)
         head_cmt        = LibGit2.peel(head)
         head_oid        = LibGit2.GitHash(head_cmt)
