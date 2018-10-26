@@ -148,48 +148,50 @@ end
 
         # test local submission process (but only if we are in a git repo)
 
-        LibGit2.with(LibGit2.GitRepoExt(pwd())) do repo
+        _dotgit = joinpath(dirname(@__DIR__), ".git")
 
-            # default values
-            codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit_local(fcs; dry_run = true) )
-            @test occursin("codecov.io", codecov_url)
-            @test occursin("commit", codecov_url)
-            @test occursin("branch", codecov_url)
-            @test !occursin("service", codecov_url)
-
-            # env var url override
-            withenv( "CODECOV_URL" => "https://enterprise-codecov-1.com" ) do
-
+        if isdir(_dotgit) || isfile(_dotgit)
+            LibGit2.with(LibGit2.GitRepoExt(pwd())) do repo
+                # default values
                 codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit_local(fcs; dry_run = true) )
-                @test occursin("enterprise-codecov-1.com", codecov_url)
+                @test occursin("codecov.io", codecov_url)
                 @test occursin("commit", codecov_url)
                 @test occursin("branch", codecov_url)
                 @test !occursin("service", codecov_url)
 
-                # function argument url override
-                codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit_local(fcs; dry_run = true, codecov_url = "https://enterprise-codecov-2.com") )
-                @test occursin("enterprise-codecov-2.com", codecov_url)
-                @test occursin("commit", codecov_url)
-                @test occursin("branch", codecov_url)
-                @test !occursin("service", codecov_url)
-
-                # env var token
-                withenv( "CODECOV_TOKEN" => "token_name_1" ) do
+                # env var url override
+                withenv( "CODECOV_URL" => "https://enterprise-codecov-1.com" ) do
 
                     codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit_local(fcs; dry_run = true) )
                     @test occursin("enterprise-codecov-1.com", codecov_url)
-                    @test occursin("token=token_name_1", codecov_url)
+                    @test occursin("commit", codecov_url)
+                    @test occursin("branch", codecov_url)
                     @test !occursin("service", codecov_url)
 
-                    # function argument token url override
-                    codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit_local(fcs; dry_run = true, token="token_name_2") )
-                    @test occursin("enterprise-codecov-1.com", codecov_url)
-                    @test occursin("token=token_name_2", codecov_url)
+                    # function argument url override
+                    codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit_local(fcs; dry_run = true, codecov_url = "https://enterprise-codecov-2.com") )
+                    @test occursin("enterprise-codecov-2.com", codecov_url)
+                    @test occursin("commit", codecov_url)
+                    @test occursin("branch", codecov_url)
                     @test !occursin("service", codecov_url)
+
+                    # env var token
+                    withenv( "CODECOV_TOKEN" => "token_name_1" ) do
+
+                        codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit_local(fcs; dry_run = true) )
+                        @test occursin("enterprise-codecov-1.com", codecov_url)
+                        @test occursin("token=token_name_1", codecov_url)
+                        @test !occursin("service", codecov_url)
+
+                        # function argument token url override
+                        codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit_local(fcs; dry_run = true, token="token_name_2") )
+                        @test occursin("enterprise-codecov-1.com", codecov_url)
+                        @test occursin("token=token_name_2", codecov_url)
+                        @test !occursin("service", codecov_url)
+                    end
                 end
             end
         end
-
 
         # test faulty non-CI submission
 
