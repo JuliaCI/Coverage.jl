@@ -163,7 +163,6 @@ module Coveralls
 
     git_info can be either a `Dict` or a function that returns a `Dict`.
     """
-
     function submit_local(fcs::Vector{FileCoverage}, git_info=query_git_info; kwargs...)
         data = Dict("repo_token" => get(ENV,"COVERALLS_TOKEN") do
                             get(ENV, "REPO_TOKEN") do #backward compatibility
