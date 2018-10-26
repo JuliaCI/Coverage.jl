@@ -64,23 +64,17 @@ module Coveralls
             end
         end
 
+        data = Dict{String,Any}("source_files" => map(to_json, fcs))
+
         if lowercase(get(ENV, "APPVEYOR", "false")) == "true"
-            # Submission from AppVeyor requires a REPO_TOKEN environment variable
-            data = Dict("service_job_id"    => ENV["APPVEYOR_JOB_ID"],
-                        "service_name"      => "appveyor",
-                        "source_files"      => map(to_json, fcs),
-                        "repo_token"        => ENV["REPO_TOKEN"])
-
+            data["service_job_id"] = ENV["APPVEYOR_JOB_ID"]
+            data["service_name"] = "appveyor"
         elseif lowercase(get(ENV, "TRAVIS", "false")) == "true"
-            data = Dict("service_job_id"    => ENV["TRAVIS_JOB_ID"],
-                        "service_name"      => "travis-ci",
-                        "source_files"      => map(to_json, fcs))
+            data["service_job_id"] = ENV["TRAVIS_JOB_ID"]
+            data["service_name"] = "travis-ci"
         elseif lowercase(get(ENV, "JENKINS", "false")) == "true"
-            data = Dict("service_job_id"    => ENV["BUILD_ID"],
-                        "service_name"      => "jenkins-ci",
-                        "source_files"      => map(to_json, fcs),
-                        "repo_token"        => ENV["REPO_TOKEN"])
-
+            data["service_job_id"] = ENV["BUILD_ID"]
+            data["service_name"] = "jenkins-ci"
             data["git"] = query_git_info()
 
             # get the name of the branch if not a pull request
@@ -89,6 +83,18 @@ module Coveralls
             end
         else
             error("No compatible CI platform detected")
+        end
+
+        repo_token =
+                get(ENV,"COVERALLS_TOKEN") do
+                    get(ENV, "REPO_TOKEN") do #backward compatibility
+                        if data["service_name"] != "travis-ci"
+                            error("Coveralls submission requires a COVERALLS_TOKEN environment variable")
+                        end
+                    end
+                end
+        if repo_token != nothing
+            data["repo_token"] = repo_token
         end
 
         if verbose
@@ -158,7 +164,11 @@ module Coveralls
     git_info can be either a `Dict` or a function that returns a `Dict`.
     """
     function submit_token(fcs::Vector{FileCoverage}, git_info=query_git_info; kwargs...)
-        data = Dict("repo_token" => ENV["REPO_TOKEN"],
+        data = Dict("repo_token" => get(ENV,"COVERALLS_TOKEN") do
+                            get(ENV, "REPO_TOKEN") do #backward compatibility
+                                error("Coveralls submission requires a COVERALLS_TOKEN environment variable")
+                            end
+                        end,
                     "source_files" => map(to_json, fcs))
 
         verbose = true
