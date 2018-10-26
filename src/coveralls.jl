@@ -4,7 +4,7 @@ export Coveralls
 Coverage.Coveralls Module
 
 This module provides functionality to push coverage information to the Coveralls
-web service. It exports the `submit` and `submit_token` methods.
+web service. It exports the `submit` and `submit_local` methods.
 """
 module Coveralls
     using Coverage
@@ -14,7 +14,7 @@ module Coveralls
     using Compat.LibGit2
     using MbedTLS
 
-    export submit, submit_token
+    export submit, submit_token, submit_local
 
     #=
     JSON structure for Coveralls
@@ -54,7 +54,7 @@ module Coveralls
 
     Take a vector of file coverage results (produced by `process_folder`),
     and submits them to Coveralls. Assumes that this code is being run
-    on TravisCI or AppVeyor. If running locally, use `submit_token`.
+    on TravisCI or AppVeyor. If running locally, use `submit_local`.
     """
     function submit(fcs::Vector{FileCoverage}; kwargs...)
         verbose = true
@@ -156,14 +156,14 @@ module Coveralls
     end
 
     """
-        submit_token(fcs::Vector{FileCoverage}, git_info=query_git_info; kwargs...)
+        submit_local(fcs::Vector{FileCoverage}, git_info=query_git_info; kwargs...)
 
     Take a `Vector` of file coverage results (produced by `process_folder`),
     and submits them to Coveralls. For submissions not from TravisCI.
 
     git_info can be either a `Dict` or a function that returns a `Dict`.
     """
-    function submit_token(fcs::Vector{FileCoverage}, git_info=query_git_info; kwargs...)
+    function submit_local(fcs::Vector{FileCoverage}, git_info=query_git_info; kwargs...)
         data = Dict("repo_token" => get(ENV,"COVERALLS_TOKEN") do
                             get(ENV, "REPO_TOKEN") do #backward compatibility
                                 error("Coveralls submission requires a COVERALLS_TOKEN environment variable")
@@ -195,4 +195,7 @@ module Coveralls
             println(String(r.body))
         end
     end
+
+    @deprecate submit_token submit_local
+
 end  # module Coveralls
