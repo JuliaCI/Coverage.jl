@@ -39,7 +39,7 @@ function find_malloc_files(dirs)
             file = joinpath(dir, file)
             if isdir(file)
                 append!(files, find_malloc_files(file))
-            elseif endswith(file, "jl.mem")
+            elseif endswith(file, ".mem")
                 push!(files, file)
             end
         end
