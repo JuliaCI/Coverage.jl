@@ -56,13 +56,7 @@ module Coveralls
     on TravisCI or AppVeyor. If running locally, use `submit_local`.
     """
     function submit(fcs::Vector{FileCoverage}; kwargs...)
-        verbose = true
-        for (k,v) in kwargs
-            if k == :verbose
-                verbose = v
-            end
-        end
-
+        verbose = get(kwargs, :verbose, true)
         data = Dict{String,Any}("source_files" => map(to_json, fcs))
 
         if lowercase(get(ENV, "APPVEYOR", "false")) == "true"
@@ -85,7 +79,7 @@ module Coveralls
         end
 
         repo_token =
-                get(ENV,"COVERALLS_TOKEN") do
+                get(ENV, "COVERALLS_TOKEN") do
                     get(ENV, "REPO_TOKEN") do #backward compatibility
                         if data["service_name"] != "travis-ci"
                             error("Coveralls submission requires a COVERALLS_TOKEN environment variable")
@@ -109,6 +103,7 @@ module Coveralls
             println("Result of submission:")
             println(String(req.body))
         end
+        return
     end
 
     # query_git_info
@@ -163,36 +158,35 @@ module Coveralls
     git_info can be either a `Dict` or a function that returns a `Dict`.
     """
     function submit_local(fcs::Vector{FileCoverage}, git_info=query_git_info; kwargs...)
-        data = Dict("repo_token" => get(ENV,"COVERALLS_TOKEN") do
-                            get(ENV, "REPO_TOKEN") do #backward compatibility
-                                error("Coveralls submission requires a COVERALLS_TOKEN environment variable")
-                            end
-                        end,
-                    "source_files" => map(to_json, fcs))
-
-        verbose = true
-        for (k,v) in kwargs
-            if k == :verbose
-                verbose = v
+        verbose = get(kwargs, :verbose, true)
+        data = Dict{String,Any}("source_files" => map(to_json, fcs))
+        data["repo_token"] = get(ENV, "COVERALLS_TOKEN") do
+                get(ENV, "REPO_TOKEN") do #backward compatibility
+                    error("Coveralls submission requires a COVERALLS_TOKEN environment variable")
+                end
             end
-        end
 
         # Attempt to parse git info via git_info, unless the user explicitly disables it by setting git_info to nothing
-        try
-            if isa(git_info, Function)
+        if isa(git_info, Function)
+            try
                 data["git"] = git_info()
-            elseif isa(git_info, Dict)
-                data["git"] = git_info
+            catch ex
+                @warn "Parse of git information failed" exception=e,catch_backtrace()
             end
-        catch
+        elseif isa(git_info, Dict)
+            data["git"] = git_info
         end
 
-        r = HTTP.post("https://coveralls.io/api/v1/jobs", body=makebody(data))
+        url = "https://coveralls.io/api/v1/jobs"
+        body = HTTP.Form(makebody(data))
+        headers = ["Content-Type" => "multipart/form-data; boundary=$(body.boundary)"]
+        req = HTTP.post(url, headers, body)
 
         if verbose
             println("Result of submission:")
             println(String(r.body))
         end
+        return
     end
 
     @deprecate submit_token submit_local
