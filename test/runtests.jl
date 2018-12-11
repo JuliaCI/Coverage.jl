@@ -4,7 +4,7 @@
 # https://github.com/JuliaCI/Coverage.jl
 #######################################################################
 
-using Coverage, Compat, Compat.Test, Compat.LibGit2
+using Coverage, Test, LibGit2
 using Suppressor
 
 @testset "Coverage" begin
@@ -42,7 +42,7 @@ end
         # we only have a single file, but we want to test on the Vector of file results
         LCOV.write(lcov, FileCoverage[r])
         expected = read(joinpath(datadir, "expected.info"), String)
-        if Compat.Sys.iswindows()
+        if Sys.iswindows()
             expected = replace(expected, "SF:test/data/Coverage.jl\n" => "SF:test\\data\\Coverage.jl\n")
         end
         @test String(take!(lcov)) == expected
@@ -53,8 +53,8 @@ end
         # clean out any previous coverage files. Don't use clean_folder because we
         # need to preserve the pre-baked coverage file Coverage.jl.cov
         clean_file(srcname)
-        cmdstr = "include(\"$(escape_string(srcname))\"); using Compat, Compat.Test; @test f2(2) == 4"
-        run(`$(Compat.Sys.BINDIR)/julia --code-coverage=user -e $cmdstr`)
+        cmdstr = "include(\"$(escape_string(srcname))\"); using Test; @test f2(2) == 4"
+        run(`$(Sys.BINDIR)/julia --code-coverage=user -e $cmdstr`)
         r = process_file(srcname, datadir)
 
         # Parsing seems to have changed slightly in Julia (or JuliaParser?) between v0.6 and v0.7.

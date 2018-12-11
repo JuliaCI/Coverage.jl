@@ -6,7 +6,6 @@
         - module Coverage
         - 
         -     import JuliaParser.Parser
-        -     using Compat
         - 
         -     # process_cov
         -     # Given a .cov file, return the counts for each line, where the
@@ -108,7 +107,6 @@
         -         using Requests
         -         using Coverage
         -         using JSON
-        -         using Compat
         - 
         -         # coveralls_process_file
         -         # Given a .jl file, return the Coveralls.io dictionary for this

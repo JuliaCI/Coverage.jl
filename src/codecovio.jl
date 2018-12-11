@@ -10,8 +10,7 @@ module Codecov
     using HTTP
     using Coverage
     using JSON
-    using Compat
-    using Compat.LibGit2
+    using LibGit2
 
     export submit, submit_token, submit_local, submit_generic
 

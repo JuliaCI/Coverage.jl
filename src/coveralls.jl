@@ -10,8 +10,7 @@ module Coveralls
     using Coverage
     using HTTP
     using JSON
-    using Compat
-    using Compat.LibGit2
+    using LibGit2
     using MbedTLS
 
     export submit, submit_token, submit_local
