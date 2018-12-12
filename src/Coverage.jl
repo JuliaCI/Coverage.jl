@@ -10,9 +10,9 @@ module Coverage
     # lines as "null" (cannot be run), when they could have been run
     # but were not (should be 0). We use JuliaParser to augment the
     # coverage results by identifying this code.
+    # this file coverage will be checked by test/data/expected.info
 
-    using Compat
-    using Compat.LibGit2
+    using LibGit2
 
     export process_folder, process_file
     export clean_folder, clean_file
