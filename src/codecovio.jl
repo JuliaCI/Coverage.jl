@@ -41,40 +41,20 @@ module Codecov
     end
 
 
-    if VERSION >= v"0.7"
-        """
-        kwargs provides default values to insert into args_array, only if they are
-        not already specified in args_array.
-        """
-        function set_defaults(args_array; kwargs...)
-            defined_names = keys(pairs(args_array))
-            is_args_array = Pair{Symbol, Any}[]
-            if args_array isa Base.Iterators.Pairs
-                is_args_array = vcat(is_args_array, collect(Pair(k, v) for (k,v) in args_array))
-            else
-                is_args_array = vcat(is_args_array, vec(args_array))
+    """
+    kwargs provides default values to insert into args_array, only if they are
+    not already specified in args_array.
+    """
+    function set_defaults(args_array; kwargs...)
+        defined_names = keys(args_array)
+        is_args_array = Pair{Symbol, Any}[]
+        is_args_array = append!(is_args_array, args_array)
+        for kwarg in kwargs
+            if !(kwarg[1] in defined_names)
+                push!(is_args_array, kwarg)
             end
-            for kwarg in kwargs
-                if !(kwarg[1] in defined_names)
-                    push!(is_args_array, Pair(kwarg[1], kwarg[2]))
-                end
-            end
-            return is_args_array
         end
-    else
-        """
-        kwargs provides default values to insert into args_array, only if they are
-        not already specified in args_array.
-        """
-        function set_defaults(args_array; kwargs...)
-            defined_names = [k for (k, v) in args_array]
-            for kwarg in kwargs
-                if !(kwarg[1] in defined_names)
-                    push!(args_array, kwarg)
-                end
-            end
-            return args_array
-        end
+        return is_args_array
     end
 
     """

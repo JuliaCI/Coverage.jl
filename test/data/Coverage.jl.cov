@@ -1,7 +1,7 @@
         - #######################################################################
-        - # Coverage.jl
-        - # Take Julia test coverage results and bundle them up in JSONs
-        - # https://github.com/IainNZ/Coverage.jl
+        - # This file is not executed, but is used as comparison input
+        - # against expected.info to verify LCOV.readfile/LCOV.writefile
+        - #
         - #######################################################################
         - module Coverage
         - 

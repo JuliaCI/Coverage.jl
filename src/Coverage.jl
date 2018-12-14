@@ -5,13 +5,6 @@
 # https://github.com/JuliaCI/Coverage.jl
 #######################################################################
 module Coverage
-
-    # The code coverage results produced by Julia itself report some
-    # lines as "null" (cannot be run), when they could have been run
-    # but were not (should be 0). We use JuliaParser to augment the
-    # coverage results by identifying this code.
-    # this file coverage will be checked by test/data/expected.info
-
     using LibGit2
 
     export process_folder, process_file
