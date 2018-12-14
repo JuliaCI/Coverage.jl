@@ -12,13 +12,13 @@ module Coverage
     export process_cov, amend_coverage_from_src!
     export get_summary
     export analyze_malloc, merge_coverage_counts
+    export FileCoverage
 
     # The unit for line counts. Counts can be >= 0 or nothing, where
     # the nothing means it doesn't make sense to have a count for this
     # line (e.g. a comment), but 0 means it could have run but didn't.
     const CovCount = Union{Nothing,Int}
 
-    export FileCoverage
     """
     FileCoverage
 
@@ -51,6 +51,7 @@ module Coverage
         end
         return cov_lines, tot_lines
     end
+
     function get_summary(fcs::Vector{FileCoverage})
         cov_lines, tot_lines = 0, 0
         for fc in fcs
@@ -62,30 +63,57 @@ module Coverage
     end
 
     """
-        merge_coverage_counts(a1::Vector{CovCount}, a2::Vector{CovCount})
+        merge_coverage_counts(a1::Vector{CovCount}, a2::Vector{CovCount}) -> Vector{CovCount}
 
-    Given two vectors of line coverage counts, take the pairwise
-    maximum of both vectors, preseving null counts if both are null.
+    Given two vectors of line coverage counts, sum together the results,
+    preseving null counts if both are null.
     """
     function merge_coverage_counts(a1::Vector{CovCount},
                                    a2::Vector{CovCount})
-        n = max(length(a1),length(a2))
+        n = max(length(a1), length(a2))
         a = Vector{CovCount}(undef, n)
         for i in 1:n
             a1v = isassigned(a1, i) ? a1[i] : nothing
             a2v = isassigned(a2, i) ? a2[i] : nothing
-            a[i] = a1v == nothing ? a2v :
-                   a2v == nothing ? a1v : max(a1v, a2v)
+            a[i] = a1v === nothing ? a2v :
+                   a2v === nothing ? a1v :
+                   a1v + a2v
         end
         return a
     end
 
     """
-        process_cov(filename, folder)
+        merge_coverage_counts(as::Vector{CovCount}...) -> Vector{CovCount}
+
+    Given vectors of line coverage counts, sum together the results,
+    preseving null counts if both are null.
+    """
+    function merge_coverage_counts(as::Vector{FileCoverage}...)
+        source_files = FileCoverage[]
+        seen = Dict{AbstractString, FileCoverage}()
+        for a in as
+            for a in a
+                if a.filename in keys(seen)
+                    coverage = seen[a.filename]
+                    if isempty(coverage.source)
+                        coverage.source = a.source
+                    end
+                    coverage.coverage = merge_coverage_counts(coverage.coverage, a.coverage)
+                else
+                    coverage = FileCoverage(a.filename, a.source, a.coverage)
+                    seen[a.filename] = coverage
+                    push!(source_files, coverage)
+                end
+            end
+        end
+        return source_files
+    end
+
+    """
+        process_cov(filename, folder) -> Vector{CovCount}
 
     Given a filename for a Julia source file, produce an array of
     line coverage counts by reading in all matching .{pid}.cov files.
-    On Julia 0.3 there was just a .cov file, but this code works fine.
     """
     function process_cov(filename, folder)
         # Find all coverage files in the folder that match the file we
@@ -99,10 +127,7 @@ module Coverage
             # just never run. We'll report the coverage as all null.
             println( """Coverage.process_cov: Coverage file(s) for $filename do not exist.
                                               Assuming file has no coverage.""")
-            nlines = 0
-            for line in eachline(filename)
-                nlines += 1
-            end
+            nlines = countlines(filename)
             return fill!(Vector{CovCount}(undef, nlines), nothing)
         end
         # Keep track of the combined coverage
@@ -129,6 +154,11 @@ module Coverage
     a Julia code file, and updates the coverage vector in place.
     """
     function amend_coverage_from_src!(coverage::Vector{CovCount}, srcname)
+        # The code coverage results produced by Julia itself report some
+        # lines as "null" (cannot be run), when they could have been run
+        # but were never compiled (thus should be 0).
+        # We use the Julia parser to augment the coverage results by identifying this code.
+        #
         # To make sure things stay in sync, parse the file position
         # corresonding to each new line
         linepos = Int[]
@@ -152,7 +182,7 @@ module Coverage
                     if l > length(coverage)
                         error("source file is longer than .cov file; source might have changed")
                     end
-                    if coverage[l] == nothing
+                    if coverage[l] === nothing
                         coverage[l] = 0
                     end
                 end

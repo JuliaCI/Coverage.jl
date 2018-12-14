@@ -7,6 +7,11 @@
 using Coverage, Test, LibGit2
 using Suppressor
 
+if VERSION < v"1.1"
+isnothing(x) = false
+isnothing(x::Nothing) = true
+end
+
 @testset "Coverage" begin
 
 @testset "iscovfile" begin
@@ -41,11 +46,39 @@ end
         lcov = IOBuffer()
         # we only have a single file, but we want to test on the Vector of file results
         LCOV.write(lcov, FileCoverage[r])
-        expected = read(joinpath(datadir, "expected.info"), String)
+        expected = read(joinpath(datadir, "tracefiles", "expected.info"), String)
         if Sys.iswindows()
             expected = replace(expected, "SF:test/data/Coverage.jl\n" => "SF:test\\data\\Coverage.jl\n")
         end
         @test String(take!(lcov)) == expected
+        # test that reading the LCOV file gives the same data
+        lcov = LCOV.readfolder(datadir)
+        @test length(lcov) == 1
+        r2 = lcov[1]
+        r2_filename = r2.filename
+        if Sys.iswindows()
+            r2_filename = replace(r2_filename, '/' => '\\')
+        end
+        @test r2_filename == r.filename
+        @test r2.source == ""
+        @test r2.coverage == r.coverage[1:length(r2.coverage)]
+        @test all(isnothing, r.coverage[(length(r2.coverage) + 1):end])
+        lcov2 = [FileCoverage(r2.filename, "sourcecode", Coverage.CovCount[nothing, 1, 0, nothing, 3]),
+                 FileCoverage("file2.jl", "moresource2", Coverage.CovCount[1, nothing, 0, nothing, 2]),]
+        lcov = merge_coverage_counts(lcov, lcov2, lcov)
+        @test length(lcov) == 2
+        r3 = lcov[1]
+        @test r3.filename == r2.filename
+        @test r3.source == "sourcecode"
+        r3cov = Coverage.CovCount[x === nothing ? nothing : x * 2 for x in r2.coverage]
+        r3cov[2] += 1
+        r3cov[3] = 0
+        r3cov[5] = 3
+        @test r3.coverage == r3cov
+        r4 = lcov[2]
+        @test r4.filename == "file2.jl"
+        @test r4.source == "moresource2"
+        @test r4.coverage == lcov2[2].coverage
 
         # Test a file from scratch
         srcname = joinpath("test", "data", "testparser.jl")

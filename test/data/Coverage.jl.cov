@@ -1,7 +1,7 @@
         - #######################################################################
-        - # This file is not executed, but is used as comparison input
+        6 # This file is not executed, but is used as comparison input
         - # against expected.info to verify LCOV.readfile/LCOV.writefile
-        - #
+        7 #
         - #######################################################################
         - module Coverage
         - 
