@@ -184,7 +184,7 @@ module Coveralls
 
         if verbose
             println("Result of submission:")
-            println(String(r.body))
+            println(String(req.body))
         end
         return
     end
