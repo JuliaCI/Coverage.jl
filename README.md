@@ -16,9 +16,10 @@ Coverage.jl
 
 ### Code coverage
 
-*Step 1:* Navigate to your test directory, and start julia like this:
+*Step 1:* Navigate to your test directory, and run julia with the `--code-coverage` option:
 ```sh
-julia --code-coverage=tracefile-%p.info --code-coverage=user
+julia --code-coverage=user
+julia --code-coverage=tracefile-%p.info --code-coverage=user  # available in Julia v1.1+
 ```
 
 *Step 2:* Run your tests (e.g., `include("runtests.jl")`) and quit Julia.
@@ -27,9 +28,10 @@ julia --code-coverage=tracefile-%p.info --code-coverage=user
 
 ```julia
 using Coverage
-# defaults to src/; alternatively, supply the folder name as argument
-coverage = process_folder()
+# process '*.cov' files
+coverage = process_folder() # defaults to src/; alternatively, supply the folder name as argument
 coverage = append!(coverage, process_folder("deps"))
+# process '*.info' files
 coverage = merge_coverage_counts(coverage, filter!(
     let prefixes = (joinpath(pwd(), "src", ""),
                     joinpath(pwd(), "deps", ""))

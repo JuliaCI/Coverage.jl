@@ -1,7 +1,7 @@
         - #######################################################################
-        6 # This file is not executed, but is used as comparison input
-        - # against expected.info to verify LCOV.readfile/LCOV.writefile
-        7 #
+        6 # This file is not the result of a real test execution, but is used as
+        - # comparison input during tests of '*.cov' input and against
+        7 # the tracefile 'expected.info' to verify LCOV.readfile/LCOV.writefile
         - #######################################################################
         - module Coverage
         - 
