@@ -1,9 +1,10 @@
 SF:test/data/Coverage.jl
+DA:2,6
+DA:4,7
 DA:15,8
 DA:16,3
 DA:17,3
 DA:18,3
-DA:19,0
 DA:20,3
 DA:21,3
 DA:23,5
@@ -98,6 +99,6 @@ DA:230,1
 DA:234,1
 DA:238,1
 DA:239,1
-LH:95
-LF:99
+LH:97
+LF:100
 end_of_record

@@ -7,6 +7,11 @@
 using Coverage, Test, LibGit2
 using Suppressor
 
+if VERSION < v"1.1"
+isnothing(x) = false
+isnothing(x::Nothing) = true
+end
+
 @testset "Coverage" begin
 
 @testset "iscovfile" begin
@@ -35,44 +40,57 @@ end
     cd(dirname(@__DIR__)) do
         datadir = joinpath("test", "data")
         # Process a saved set of coverage data...
-        r = process_file(joinpath(datadir,"Coverage.jl"))
+        r = process_file(joinpath(datadir, "Coverage.jl"))
         # ... and memory data
         analyze_malloc(datadir)
         lcov = IOBuffer()
         # we only have a single file, but we want to test on the Vector of file results
         LCOV.write(lcov, FileCoverage[r])
-        expected = read(joinpath(datadir, "expected.info"), String)
+        expected = read(joinpath(datadir, "tracefiles", "expected.info"), String)
         if Sys.iswindows()
             expected = replace(expected, "SF:test/data/Coverage.jl\n" => "SF:test\\data\\Coverage.jl\n")
         end
         @test String(take!(lcov)) == expected
+        # test that reading the LCOV file gives the same data
+        lcov = LCOV.readfolder(datadir)
+        @test length(lcov) == 1
+        r2 = lcov[1]
+        r2_filename = r2.filename
+        if Sys.iswindows()
+            r2_filename = replace(r2_filename, '/' => '\\')
+        end
+        @test r2_filename == r.filename
+        @test r2.source == ""
+        @test r2.coverage == r.coverage[1:length(r2.coverage)]
+        @test all(isnothing, r.coverage[(length(r2.coverage) + 1):end])
+        lcov2 = [FileCoverage(r2.filename, "sourcecode", Coverage.CovCount[nothing, 1, 0, nothing, 3]),
+                 FileCoverage("file2.jl", "moresource2", Coverage.CovCount[1, nothing, 0, nothing, 2]),]
+        lcov = merge_coverage_counts(lcov, lcov2, lcov)
+        @test length(lcov) == 2
+        r3 = lcov[1]
+        @test r3.filename == r2.filename
+        @test r3.source == "sourcecode"
+        r3cov = Coverage.CovCount[x === nothing ? nothing : x * 2 for x in r2.coverage]
+        r3cov[2] += 1
+        r3cov[3] = 0
+        r3cov[5] = 3
+        @test r3.coverage == r3cov
+        r4 = lcov[2]
+        @test r4.filename == "file2.jl"
+        @test r4.source == "moresource2"
+        @test r4.coverage == lcov2[2].coverage
 
         # Test a file from scratch
-        srcname = joinpath("test", "data","testparser.jl")
+        srcname = joinpath("test", "data", "testparser.jl")
         covname = srcname*".cov"
         # clean out any previous coverage files. Don't use clean_folder because we
         # need to preserve the pre-baked coverage file Coverage.jl.cov
         clean_file(srcname)
         cmdstr = "include(\"$(escape_string(srcname))\"); using Test; @test f2(2) == 4"
-        run(`$(Sys.BINDIR)/julia --code-coverage=user -e $cmdstr`)
+        run(`$(Base.julia_cmd()) --startup-file=no --code-coverage=user -e $cmdstr`)
         r = process_file(srcname, datadir)
 
-        # Parsing seems to have changed slightly in Julia (or JuliaParser?) between v0.6 and v0.7.
-        # Line 10 is the end of a @doc string (`""" ->`), and Line 11 is an expression (`f6(x) = 6x`)
-        # In v0.6, the zero count goes to line 10, and in v0.7, the zero count goes (more correctly?)
-        # to line 11
-        # NOTE: The commit that made this change in Base was backported to 0.6.1, which necessitates
-        # another VERSION check.
-
-        if (VERSION.major == 0 && VERSION.minor == 7 && VERSION < v"0.7.0-DEV.468") || VERSION < v"0.6.1-pre.93"
-            target = Union{Int64,Nothing}[nothing, 1, nothing, 0, nothing, 0, nothing, nothing, nothing, 0, nothing, nothing, nothing, nothing, nothing, nothing, 0, nothing, nothing, 0, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing]
-        elseif (VERSION.major == 0 && VERSION.minor == 6)
-            target = Union{Int64,Void}[nothing, 1, nothing, 0, nothing, 0, nothing, nothing, nothing, nothing, 0, nothing, nothing, nothing, nothing, nothing, 0, nothing, nothing, 0, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing]
-        elseif VERSION < v"1.0.0"
-            target = Union{Int64,Nothing}[nothing, 2, nothing, 0, nothing, 0, nothing, nothing, nothing, nothing, 0, nothing, nothing, nothing, nothing, nothing, 0, nothing, nothing, 0, nothing, nothing, 3, nothing, nothing, nothing, nothing, nothing, nothing]
-        else
-            target = Union{Int64,Nothing}[nothing, 2, nothing, 0, nothing, 0, nothing, nothing, nothing, nothing, 0, nothing, nothing, nothing, nothing, nothing, 0, nothing, nothing, 0, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing]
-        end
+        target = Union{Int64,Nothing}[nothing, 2, nothing, 0, nothing, 0, nothing, nothing, nothing, nothing, 0, nothing, nothing, nothing, nothing, nothing, 0, nothing, nothing, 0, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing]
         @test r.coverage == target
 
         covtarget = (sum(x->x != nothing && x > 0, target), sum(x->x != nothing, target))
@@ -85,12 +103,8 @@ end
 
         #json_data = Codecov.build_json_data(Codecov.process_folder("data"))
         #@test typeof(json_data["coverage"]["data/Coverage.jl"]) == Array{Union{Int64,Nothing},1}
-        if VERSION < v"0.7.0"
-            close(open("fakefile",true,true,true,false,false))
-        else
-            close(open("fakefile",read=true,write=true,create=true,truncate=false,append=false))
-        end
-        @test isempty(Coverage.process_cov("fakefile",datadir))
+        close(open("fakefile", read=true, write=true, create=true, truncate=false, append=false))
+        @test isempty(Coverage.process_cov("fakefile", datadir))
         rm("fakefile")
     end
 end

@@ -11,8 +11,9 @@ Julia coverage data. It exports the `writefile` function.
 module LCOV
 
 using Coverage
+using Coverage: CovCount
 
-export writefile
+export writefile, readfile
 
 """
     writefile(outfile::AbstractString, fcs)
@@ -23,7 +24,9 @@ be a `FileCoverage` instance or a vector of `FileCoverage` instances.
 function writefile(outfile::AbstractString, fcs)
     open(outfile, "w") do f
         write(f, fcs)
+        nothing
     end
+    nothing
 end
 
 """
@@ -71,6 +74,70 @@ end
 function writeline(io::IO, line::Int, count::Nothing)
     # skipped line, nothing to do here
     (0, 0)
+end
+
+
+"""
+    readfile(infofile::AbstractString) -> Vector{FileCoverage}
+
+Read coverage data from a file in LCOV info format.
+"""
+function readfile(infofile::AbstractString)
+    source_files = FileCoverage[]
+    coverage = nothing
+    for line in eachline(infofile)
+        if startswith(line, "end_of_record")
+            coverage = nothing
+        elseif (m = match(r"^SF:(.+)", line)) !== nothing
+            sf = String(m[1])
+            coverage = FileCoverage(sf, "", CovCount[])
+            push!(source_files, coverage)
+        elseif (m = match(r"^DA:(\d+),(-?\d+)(,[^,\s]+)?", line)) !== nothing
+            if coverage !== nothing
+                ln = parse(Int, m[1])
+                da = parse(Int, m[2])
+                cv = coverage.coverage
+                lc = length(cv)
+                if ln > 0
+                    if lc < ln
+                        resize!(cv, ln)
+                        cv[(lc + 1):ln] .= nothing
+                    end
+                    cv[ln] = something(cv[ln], 0) + da
+                end
+            end
+        end
+        nothing
+    end
+    return source_files
+end
+
+"""
+    readfolder(folder) -> Vector{FileCoverage}
+
+Process the contents of a folder of LCOV files to collect coverage statistics.
+Will recursively traverse child folders.
+Post-process with `merge_coverage_counts(coverages)` to combine duplicates.
+"""
+function readfolder(folder)
+    println("""Coverage.LCOV.readfolder: Searching $folder for .info files...""")
+    source_files = FileCoverage[]
+    files = readdir(folder)
+    for file in files
+        fullfile = joinpath(folder, file)
+        if isfile(fullfile)
+            # Is it a tracefile?
+            if endswith(fullfile, ".info")
+                append!(source_files, readfile(fullfile))
+            else
+                println("Coverage.LCOV.readfolder: Skipping $file, not a .info file")
+            end
+        elseif isdir(fullfile)
+            # If it is a folder, recursively traverse
+            append!(source_files, readfolder(fullfile))
+        end
+    end
+    return source_files
 end
 
 end

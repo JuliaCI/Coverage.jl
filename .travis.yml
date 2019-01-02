@@ -7,7 +7,6 @@ notifications:
     email: false
 
 script:
-  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
   - julia --check-bounds=yes etc/travis-test.jl
   # submit coverage data, and collect new coverage data on that
   - julia --code-coverage=user etc/travis-coverage.jl
