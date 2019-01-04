@@ -111,6 +111,15 @@ module Codecov
                 slug         = circle_slug,
                 build        = ENV["CIRCLE_BUILD_NUM"],
             )
+        elseif lowercase(get(ENV, "CIRRUS_CI", "false")) == "true"
+            kwargs = set_defaults(kwargs,
+                service      = "cirrus",
+                branch       = ENV["CIRRUS_BRANCH"],
+                commit       = ENV["CIRRUS_CHANGE_IN_REPO"],
+                pull_request = get(ENV, "CIRRUS_PR", "false"),
+                slug         = ENV["CIRRUS_REPO_FULL_NAME"],
+                build        = ENV["CIRRUS_BUILD_ID"],
+            )
         elseif lowercase(get(ENV, "JENKINS", "false")) == "true"
             kwargs = set_defaults(kwargs,
                 service      = "jenkins",

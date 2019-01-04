@@ -74,6 +74,9 @@ module Coveralls
             if get(ENV, "CI_PULL_REQUEST", "false") == "false"
                 data["git"]["branch"] = split(ENV["GIT_BRANCH"], "/")[2]
             end
+        elseif lowercase(get(ENV, "CIRRUS_CI", "false")) == "true"
+            data["service_job_id"] = ENV["CIRRUS_BUILD_ID"]
+            data["service_name"] = "cirrus"
         else
             error("No compatible CI platform detected")
         end

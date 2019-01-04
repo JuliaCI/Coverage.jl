@@ -1,0 +1,21 @@
+freebsd_instance:
+  image: freebsd-11-2-release-amd64
+task:
+  name: FreeBSD
+  env:
+    matrix:
+      - JULIA_VERSION: 1.0
+        COVERALLS_TOKEN: "e3NzCKR7to16VWKJtXcNk4QKOPfz3GwZH"
+      - JULIA_VERSION: 1.1
+        COVERALLS_TOKEN: "e3NzCKR7to16VWKJtXcNk4QKOPfz3GwZH"
+      - JULIA_VERSION: nightly
+        COVERALLS_TOKEN: "e3NzCKR7to16VWKJtXcNk4QKOPfz3GwZH"
+  install_script:
+    - sh -c "$(fetch https://raw.githubusercontent.com/ararslan/CirrusCI.jl/master/bin/install.sh -o -)"
+  build_script:
+    - cirrusjl build
+  test_script:
+    - cirrusjl test
+  coverage_script:
+    - julia --project=. --code-coverage=user etc/travis-coverage.jl
+    - julia --project=. etc/travis-coverage.jl
