@@ -48,6 +48,7 @@ end
         LCOV.write(lcov, FileCoverage[r])
         expected = read(joinpath(datadir, "tracefiles", "expected.info"), String)
         if Sys.iswindows()
+            expected = replace(expected, "\r\n" => "\n")
             expected = replace(expected, "SF:test/data/Coverage.jl\n" => "SF:test\\data\\Coverage.jl\n")
         end
         @test String(take!(lcov)) == expected
