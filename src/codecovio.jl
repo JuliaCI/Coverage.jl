@@ -65,6 +65,11 @@ module Codecov
     on TravisCI or AppVeyor. If running locally, use `submit_local`.
     """
     function submit(fcs::Vector{FileCoverage}; kwargs...)
+        submit_generic(fcs; add_ci_to_kwargs(;kwargs...)...)
+    end
+
+
+    function add_ci_to_kwargs(;kwargs...)
         if lowercase(get(ENV, "APPVEYOR", "false")) == "true"
             appveyor_pr = get(ENV, "APPVEYOR_PULL_REQUEST_NUMBER", "")
             appveyor_job = join(
@@ -125,9 +130,8 @@ module Codecov
             error("No compatible CI platform detected")
         end
 
-        submit_generic(fcs; kwargs...)
+        return kwargs
     end
-
 
     """
         submit_local(fcs::Vector{FileCoverage}, dir::AbstractString=pwd())
@@ -138,6 +142,10 @@ module Codecov
     `token` keyword argument or the `CODECOV_TOKEN` environment variable.
     """
     function submit_local(fcs::Vector{FileCoverage}, dir::AbstractString=pwd(); kwargs...)
+        submit_generic(fcs; add_local_to_kwargs(dir; kwargs...)...)
+    end
+
+    function add_local_to_kwargs(dir; kwargs...)
         LibGit2.with(LibGit2.GitRepoExt(dir)) do repo
             LibGit2.with(LibGit2.head(repo)) do headref
                 branch_name = LibGit2.shortname(headref) # this function returns a String
@@ -154,7 +162,7 @@ module Codecov
             kwargs = set_defaults(kwargs, token = ENV["REPO_TOKEN"])
         end
 
-        submit_generic(fcs; kwargs...)
+        return kwargs
     end
 
     @deprecate submit_token submit_local
@@ -170,26 +178,13 @@ module Codecov
     The `codecov_url` keyword argument or the CODECOV_URL environment variable
     can be used to specify the base path of the uri.
     The `dry_run` keyword can be used to prevent the http request from
-    being generated
+    being generated.
     """
     function submit_generic(fcs::Vector{FileCoverage}; kwargs...)
         @assert length(kwargs) > 0
-
-        if haskey(ENV, "CODECOV_URL")
-            kwargs = set_defaults(kwargs, codecov_url = ENV["CODECOV_URL"])
-        end
-
-        if haskey(ENV, "CODECOV_TOKEN")
-            kwargs = set_defaults(kwargs, token = ENV["CODECOV_TOKEN"])
-        end
-
-        codecov_url = "https://codecov.io"
         dry_run = false
         verbose = true
         for (k,v) in kwargs
-            if k == :codecov_url
-                codecov_url = v
-            end
             if k == :dry_run
                 dry_run = true
             end
@@ -197,14 +192,7 @@ module Codecov
                 verbose = v
             end
         end
-        @assert codecov_url[end] != "/" "the codecov_url should not end with a /, given url $(codecov_url)"
-
-        uri_str = "$(codecov_url)/upload/v2?"
-        for (k,v) in kwargs
-            if k != :codecov_url && k != :dry_run && k != :verbose
-                uri_str = "$(uri_str)&$(k)=$(v)"
-            end
-        end
+        uri_str = construct_uri_string(;kwargs...)
 
         if verbose
             @info "Codecov.io API URL:\n" * uri_str
@@ -216,6 +204,33 @@ module Codecov
             req     = HTTP.post(uri_str; body = JSON.json(data), headers = heads)
             @info "Result of submission:" * String(req)
         end
+    end
+
+    function construct_uri_string(;kwargs...)
+        if haskey(ENV, "CODECOV_URL")
+            kwargs = set_defaults(kwargs, codecov_url = ENV["CODECOV_URL"])
+        end
+
+        if haskey(ENV, "CODECOV_TOKEN")
+            kwargs = set_defaults(kwargs, token = ENV["CODECOV_TOKEN"])
+        end
+
+        codecov_url = "https://codecov.io"
+        for (k,v) in kwargs
+            if k == :codecov_url
+                codecov_url = v
+            end
+        end
+        @assert codecov_url[end] != "/" "the codecov_url should not end with a /, given url $(codecov_url)"
+
+        uri_str = "$(codecov_url)/upload/v2?"
+        for (k,v) in kwargs
+            if k != :codecov_url && k != :dry_run && k != :verbose
+                uri_str = "$(uri_str)&$(k)=$(v)"
+            end
+        end
+
+        return uri_str
     end
 
 end  # module Codecov
