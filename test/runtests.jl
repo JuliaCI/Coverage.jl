@@ -433,4 +433,14 @@ end
     end
 end
 
+
+@testset "coveralls" begin
+    # NOTE: this only returns actual content if this package is devved.
+    # Hence the test is basically on this function returning something
+    # (rather than erroring)
+    git = Coverage.Coveralls.query_git_info()
+    @test git["remotes"][1]["name"] == "origin"
+    @test haskey(git["remotes"][1], "url")
+end
+
 end

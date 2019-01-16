@@ -78,28 +78,9 @@ module Coveralls
             error("No compatible CI platform detected")
         end
 
-        repo_token =
-                get(ENV, "COVERALLS_TOKEN") do
-                    get(ENV, "REPO_TOKEN") do #backward compatibility
-                        if data["service_name"] != "travis-ci"
-                            error("Coveralls submission requires a COVERALLS_TOKEN environment variable")
-                        end
-                    end
-                end
-        if repo_token != nothing
-            data["repo_token"] = repo_token
-        end
+        data = add_repo_token(data, false)
 
-        if verbose
-            @info "Submitting data to Coveralls..."
-        end
-
-        req = HTTP.post("https://coveralls.io/api/v1/jobs", HTTP.Form(makebody(data)))
-
-        if verbose
-            @info "Result of submission:\n" * String(req.body)
-        end
-        return
+        post_request(data, verbose)
     end
 
     # query_git_info
@@ -116,12 +97,14 @@ module Coveralls
         committer_name  = string(LibGit2.committer(head_cmt).name)
         committer_email = string(LibGit2.committer(head_cmt).email)
         message         = LibGit2.message(head_cmt)
-        remote          = ""
+        remote_name     = "origin"
         branch          = LibGit2.shortname(head)
 
-        if branch != "HEAD" # if repo is not in detached state
-            LibGit2.with(LibGit2.get(LibGit2.GitRemote, repo, branch)) do remote
-                remote = LibGit2.url(remote)
+        # determine remote url, but only if repo is not in detached state
+        remote = ""
+        if branch != "HEAD"
+            LibGit2.with(LibGit2.get(LibGit2.GitRemote, repo, remote_name)) do rmt
+                remote = LibGit2.url(rmt)
             end
         end
         LibGit2.close(repo)
@@ -130,7 +113,7 @@ module Coveralls
             "branch"    => branch,
             "remotes"   => [
                 Dict(
-                    "name"  => "origin",
+                    "name"  => remote_name,
                     "url"   => remote
                 )
             ],
@@ -156,11 +139,7 @@ module Coveralls
     function submit_local(fcs::Vector{FileCoverage}, git_info=query_git_info; kwargs...)
         verbose = get(kwargs, :verbose, true)
         data = Dict{String,Any}("source_files" => map(to_json, fcs))
-        data["repo_token"] = get(ENV, "COVERALLS_TOKEN") do
-                get(ENV, "REPO_TOKEN") do #backward compatibility
-                    error("Coveralls submission requires a COVERALLS_TOKEN environment variable")
-                end
-            end
+        data = add_repo_token(data, true)
 
         # Attempt to parse git info via git_info, unless the user explicitly disables it by setting git_info to nothing
         if isa(git_info, Function)
@@ -173,14 +152,41 @@ module Coveralls
             data["git"] = git_info
         end
 
-        req = HTTP.post("https://coveralls.io/api/v1/jobs", HTTP.Form(makebody(data)))
+        post_request(data, verbose)
+    end
+
+    # posts the actual request given the data
+    function post_request(data, verbose)
+        if verbose
+            @info "Submitting data to Coveralls..."
+        end
+
+        url = "https://coveralls.io/api/v1/jobs"
+        body = HTTP.Form(makebody(data))
+        headers = ["Content-Type" => "multipart/form-data; boundary=$(body.boundary)"]
+        req = HTTP.post(url, headers, body)
 
         if verbose
             @info "Result of submission:\n" * String(req.body)
         end
-        return
     end
 
+    # adds the repo token to the data
+    function add_repo_token(data, local_submission)
+        repo_token =
+                get(ENV, "COVERALLS_TOKEN") do
+                    get(ENV, "REPO_TOKEN") do #backward compatibility
+                        # error unless we are on Travis
+                        if local_submission || (data["service_name"] != "travis-ci")
+                            error("Coveralls submission requires a COVERALLS_TOKEN environment variable")
+                        end
+                    end
+                end
+        if repo_token != nothing
+            data["repo_token"] = repo_token
+        end
+        return data
+    end
     @deprecate submit_token submit_local
 
 end  # module Coveralls
