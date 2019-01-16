@@ -5,7 +5,6 @@
 #######################################################################
 
 using Coverage, Test, LibGit2
-using Suppressor
 
 if VERSION < v"1.1"
 isnothing(x) = false
@@ -111,30 +110,13 @@ end
 end
 
 @testset "codecovio.jl" begin
-    """
-    extracts the api URL from stdout in a codecov.io submit call
-    very helpful for testing codecovio.jl
-    """
-    function extract_codecov_url(fun)
-        # use Suppresor @capture_err to capture the Logging.@info message
-        data = @capture_err fun()
-        lines = split(data, "\n")
+    # these methods are only used for testing the token generation for local repos
+    # and CI whilst not breaking the current API
+    construct_uri_string_local(dir=pwd(); kwargs...) = Coverage.Codecov.construct_uri_string(
+        ;Coverage.Codecov.add_local_to_kwargs(dir; kwargs...)...)
 
-        url = "None"
-        get_next = false
-        for line in lines
-            if get_next
-                url = line
-                get_next = false
-            end
-            if occursin("Codecov.io API URL", line)
-                get_next = true
-            end
-        end
-
-        @assert url != "None" "unable to find codecov api url in stdout, check for changes in codecovio.jl"
-        return url
-    end
+    construct_uri_string_ci(;kwargs...) = Coverage.Codecov.construct_uri_string(
+        ;Coverage.Codecov.add_ci_to_kwargs(;kwargs...)...)
 
     # empty file coverage for testing
     fcs = FileCoverage[]
@@ -168,7 +150,7 @@ end
         if isdir(_dotgit) || isfile(_dotgit)
             LibGit2.with(LibGit2.GitRepoExt(pwd())) do repo
                 # default values
-                codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit_local(fcs; dry_run = true) )
+                codecov_url = construct_uri_string_local()
                 @test occursin("codecov.io", codecov_url)
                 @test occursin("commit", codecov_url)
                 @test occursin("branch", codecov_url)
@@ -177,14 +159,14 @@ end
                 # env var url override
                 withenv( "CODECOV_URL" => "https://enterprise-codecov-1.com" ) do
 
-                    codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit_local(fcs; dry_run = true) )
+                    codecov_url = construct_uri_string_local()
                     @test occursin("enterprise-codecov-1.com", codecov_url)
                     @test occursin("commit", codecov_url)
                     @test occursin("branch", codecov_url)
                     @test !occursin("service", codecov_url)
 
                     # function argument url override
-                    codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit_local(fcs; dry_run = true, codecov_url = "https://enterprise-codecov-2.com") )
+                    codecov_url = construct_uri_string_local(codecov_url = "https://enterprise-codecov-2.com")
                     @test occursin("enterprise-codecov-2.com", codecov_url)
                     @test occursin("commit", codecov_url)
                     @test occursin("branch", codecov_url)
@@ -193,13 +175,13 @@ end
                     # env var token
                     withenv( "CODECOV_TOKEN" => "token_name_1" ) do
 
-                        codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit_local(fcs; dry_run = true) )
+                        codecov_url = construct_uri_string_local()
                         @test occursin("enterprise-codecov-1.com", codecov_url)
                         @test occursin("token=token_name_1", codecov_url)
                         @test !occursin("service", codecov_url)
 
                         # function argument token url override
-                        codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit_local(fcs; dry_run = true, token="token_name_2") )
+                        codecov_url = construct_uri_string_local(token="token_name_2")
                         @test occursin("enterprise-codecov-1.com", codecov_url)
                         @test occursin("token=token_name_2", codecov_url)
                         @test !occursin("service", codecov_url)
@@ -210,7 +192,7 @@ end
 
         # test faulty non-CI submission
 
-        @test_throws ErrorException extract_codecov_url( () -> Coverage.Codecov.submit(fcs; dry_run = true) )
+        @test_throws ErrorException Coverage.Codecov.submit(fcs; dry_run = true)
 
         # test travis-ci submission process
 
@@ -226,7 +208,7 @@ end
             ) do
 
             # default values
-            codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit(fcs; dry_run = true) )
+            codecov_url = construct_uri_string_ci()
             @test occursin("codecov.io", codecov_url)
             @test occursin("service=travis-org", codecov_url)
             @test occursin("branch=t_branch", codecov_url)
@@ -239,7 +221,7 @@ end
             # env var url override
             withenv( "CODECOV_URL" => "https://enterprise-codecov-1.com" ) do
 
-                codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit(fcs; dry_run = true) )
+                codecov_url = construct_uri_string_ci()
                 @test occursin("enterprise-codecov-1.com", codecov_url)
                 @test occursin("service=travis-org", codecov_url)
                 @test occursin("branch=t_branch", codecov_url)
@@ -250,7 +232,7 @@ end
                 @test occursin("build=t_job_num", codecov_url)
 
                 # function argument url override
-                codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit(fcs; dry_run = true, codecov_url = "https://enterprise-codecov-2.com") )
+                codecov_url = construct_uri_string_ci(;codecov_url = "https://enterprise-codecov-2.com")
                 @test occursin("enterprise-codecov-2.com", codecov_url)
                 @test occursin("service=travis-org", codecov_url)
                 @test occursin("branch=t_branch", codecov_url)
@@ -263,7 +245,7 @@ end
                 # env var token
                 withenv( "CODECOV_TOKEN" => "token_name_1" ) do
 
-                    codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit(fcs; dry_run = true) )
+                    codecov_url = construct_uri_string_ci()
                     @test occursin("enterprise-codecov-1.com", codecov_url)
                     @test occursin("token=token_name_1", codecov_url)
                     @test occursin("branch=t_branch", codecov_url)
@@ -274,7 +256,7 @@ end
                     @test occursin("build=t_job_num", codecov_url)
 
                     # function argument token url override
-                    codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit(fcs; dry_run = true, token="token_name_2") )
+                    codecov_url = construct_uri_string_ci(token="token_name_2")
                     @test occursin("enterprise-codecov-1.com", codecov_url)
                     @test occursin("token=token_name_2", codecov_url)
                     @test occursin("branch=t_branch", codecov_url)
@@ -303,7 +285,7 @@ end
             ) do
 
                 # default values
-                codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit(fcs; dry_run = true) )
+                codecov_url = construct_uri_string_ci()
                 @test occursin("codecov.io", codecov_url)
                 @test occursin("service=appveyor", codecov_url)
                 @test occursin("branch=t_branch", codecov_url)
@@ -315,7 +297,7 @@ end
                 # env var url override
                 withenv( "CODECOV_URL" => "https://enterprise-codecov-1.com" ) do
 
-                    codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit(fcs; dry_run = true) )
+                    codecov_url = construct_uri_string_ci()
                     @test occursin("enterprise-codecov-1.com", codecov_url)
                     @test occursin("service=appveyor", codecov_url)
                     @test occursin("branch=t_branch", codecov_url)
@@ -325,7 +307,7 @@ end
                     @test occursin("build=t_job_num", codecov_url)
 
                     # function argument url override
-                    codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit(fcs; dry_run = true, codecov_url = "https://enterprise-codecov-2.com") )
+                    codecov_url = construct_uri_string_ci(codecov_url = "https://enterprise-codecov-2.com")
                     @test occursin("enterprise-codecov-2.com", codecov_url)
                     @test occursin("service=appveyor", codecov_url)
                     @test occursin("branch=t_branch", codecov_url)
@@ -337,7 +319,7 @@ end
                     # env var token
                     withenv( "CODECOV_TOKEN" => "token_name_1" ) do
 
-                        codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit(fcs; dry_run = true) )
+                        codecov_url = construct_uri_string_ci()
                         @test occursin("enterprise-codecov-1.com", codecov_url)
                         @test occursin("token=token_name_1", codecov_url)
                         @test occursin("branch=t_branch", codecov_url)
@@ -347,7 +329,7 @@ end
                         @test occursin("build=t_job_num", codecov_url)
 
                         # function argument token url override
-                        codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit(fcs; dry_run = true, token="token_name_2") )
+                        codecov_url = construct_uri_string_ci(token="token_name_2")
                         @test occursin("enterprise-codecov-1.com", codecov_url)
                         @test occursin("token=token_name_2", codecov_url)
                         @test occursin("branch=t_branch", codecov_url)
@@ -374,7 +356,7 @@ end
             ) do
 
             # default values
-            codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit(fcs; dry_run = true) )
+            codecov_url = construct_uri_string_ci()
             @test occursin("codecov.io", codecov_url)
             @test occursin("service=circleci", codecov_url)
             @test occursin("branch=t_branch", codecov_url)
@@ -386,7 +368,7 @@ end
             # env var url override
             withenv( "CODECOV_URL" => "https://enterprise-codecov-1.com" ) do
 
-                codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit(fcs; dry_run = true) )
+                codecov_url = construct_uri_string_ci()
                 @test occursin("enterprise-codecov-1.com", codecov_url)
                 @test occursin("service=circleci", codecov_url)
                 @test occursin("branch=t_branch", codecov_url)
@@ -396,7 +378,7 @@ end
                 @test occursin("build=t_num", codecov_url)
 
                 # function argument url override
-                codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit(fcs; dry_run = true, codecov_url = "https://enterprise-codecov-2.com") )
+                codecov_url = construct_uri_string_ci(codecov_url="https://enterprise-codecov-2.com")
                 @test occursin("enterprise-codecov-2.com", codecov_url)
                 @test occursin("service=circleci", codecov_url)
                 @test occursin("branch=t_branch", codecov_url)
@@ -408,7 +390,7 @@ end
                 # env var token
                 withenv( "CODECOV_TOKEN" => "token_name_1" ) do
 
-                    codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit(fcs; dry_run = true) )
+                    codecov_url = construct_uri_string_ci()
                     @test occursin("enterprise-codecov-1.com", codecov_url)
                     @test occursin("token=token_name_1", codecov_url)
                     @test occursin("service=circleci", codecov_url)
@@ -419,7 +401,7 @@ end
                     @test occursin("build=t_num", codecov_url)
 
                     # function argument token url override
-                    codecov_url = extract_codecov_url( () -> Coverage.Codecov.submit(fcs; dry_run = true, token="token_name_2") )
+                    codecov_url = construct_uri_string_ci(token="token_name_2")
                     @test occursin("enterprise-codecov-1.com", codecov_url)
                     @test occursin("service=circleci", codecov_url)
                     @test occursin("branch=t_branch", codecov_url)
