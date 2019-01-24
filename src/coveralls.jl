@@ -174,10 +174,7 @@ module Coveralls
             data["git"] = git_info
         end
 
-        url = "https://coveralls.io/api/v1/jobs"
-        body = HTTP.Form(makebody(data))
-        headers = ["Content-Type" => "multipart/form-data; boundary=$(body.boundary)"]
-        req = HTTP.post(url, headers, body)
+        req = HTTP.post("https://coveralls.io/api/v1/jobs", HTTP.Form(makebody(data)))
 
         if verbose
             println("Result of submission:")
