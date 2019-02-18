@@ -32,9 +32,17 @@ function function_body_lines!(flines, ast::Expr, infunction)
     else
         args = ast.args
     end
-    infunction |= isfuncexpr(ast)
-    for arg in args
-        flines = function_body_lines!(flines, arg, infunction)
+
+    if isfuncexpr(ast) && length(args)>=2 && args[2] isa Expr
+        # Only look in function body
+        for arg in args[2].args
+            flines = function_body_lines!(flines, arg, true)
+        end
+    else
+        for arg in args
+            flines = function_body_lines!(flines, arg, infunction)
+        end
     end
+
     flines
 end
