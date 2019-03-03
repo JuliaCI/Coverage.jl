@@ -88,47 +88,90 @@ When using Coverage.jl locally, over time a lot of `.cov` files can accumulate. 
 [Codecov.io](https://codecov.io) is a test coverage tracking tool that integrates with your continuous integration servers (e.g. [TravisCI](https://travis-ci.org/)) or with HTTP POSTs from your very own computer at home.
 
 1. Enable [Codecov.io](https://codecov.io) for your repository.
-  * If it is public on GitHub and you are using using Travis, CircleCI or Appveyor, this is all you need to do. You can sign into Codecov using your Github identity.
-  * Otherwise you will need to define a `CODECOV_TOKEN` environment variable with the Repository Upload Token available under the Codecov settings.
-2. Use the command line option when you run your tests
-  * Either with something like `julia --code-coverage test/runtests.jl`, or
-  * with something like  `julia -e 'Pkg.test("MyPkg", coverage=true)'`
-3. Add the following to the end of your `.travis.yml` or `.appveyor.yml` file. This line downloads this package, collects the per-file coverage data, then bundles it up and submits to Codecov. Coverage.jl assumes that the working directory is the package directory, so it changes to that first (so don't forget to replace `MyPkg` with your package's name!
-  * On Travis CI:
-  ```yml
-  after_success:
-  - julia -e 'cd(Pkg.dir("MyPkg")); Pkg.add("Coverage"); using Coverage; Codecov.submit(process_folder())'
-  ```
-  * On AppVeyor:
-  ```yml
-  after_test:
-  - C:\projects\julia\bin\julia -e "cd(Pkg.dir(\"MyPkg\")); Pkg.add(\"Coverage\"); using Coverage; Codecov.submit(process_folder())"
-  ```
-If you're running coverage on your own machine and want to upload results to Codecov, make a bash script like the following:
-```bash
-#!/bin/bash
-CODECOV_TOKEN=$YOUR_TOKEN_HERE julia -e 'cd(Pkg.dir("MyPkg")); using Coverage; Codecov.submit_local(process_folder())'
-```
+   - If it is public on GitHub and you are using using Travis, CircleCI or
+     Appveyor, this is all you need to do. You can sign into Codecov using your
+     Github identity.
+   - Otherwise you will need to define a `CODECOV_TOKEN` environment variable
+     with the Repository Upload Token available under the Codecov settings.
+
+2. Use the command line option when you run your tests:
+   - Either with something like `julia --code-coverage test/runtests.jl`, or
+   - with something like  `julia -e 'Pkg.test("MyPkg", coverage=true)'`
+
+3. Configure your CI service to upload coverage data:
+
+   - If you are using Travis with `language: julia`, simply add `codecov: true`
+     to your `.travis.yml`.
+
+   - You can also add the following to the end of your `.travis.yml`. This
+     line downloads this package, collects the per-file coverage data, then
+     bundles it up and submits to Codecov. Coverage.jl assumes that the
+     working directory is the package directory, so it changes to that first
+     (so don't forget to replace `MyPkg` with your package's name!
+
+   - On Travis CI:
+
+       ```yml
+       after_success:
+       - julia -e 'cd(Pkg.dir("MyPkg")); Pkg.add("Coverage"); using Coverage; Codecov.submit(process_folder())'
+       ```
+
+   - On AppVeyor:
+
+       ```yml
+       after_test:
+       - C:\projects\julia\bin\julia -e "cd(Pkg.dir(\"MyPkg\")); Pkg.add(\"Coverage\"); using Coverage; Codecov.submit(process_folder())"
+       ```
+
+   - If you're running coverage on your own machine and want to upload results
+     to Codecov, make a bash script like the following:
+
+       ```bash
+       #!/bin/bash
+       CODECOV_TOKEN=$YOUR_TOKEN_HERE julia -e 'cd(Pkg.dir("MyPkg")); using Coverage; Codecov.submit_local(process_folder())'
+       ```
 
 ## Tracking Coverage with [Coveralls.io](https://coveralls.io)
 
 [Coveralls.io](https://coveralls.io) is a test coverage tracking tool that integrates with your continuous integration solution (e.g. [TravisCI](https://travis-ci.org/)).
 
-1. Enable [Coveralls.io](https://coveralls.io) for your repository. If it is public on GitHub and you are using TravisCI, this is all you need to do. If you are using AppVeyor, you need to add a secure environment variable called `COVERALLS_TOKEN` to your `.appveyor.yml` (see [here](https://www.appveyor.com/docs/build-configuration/#secure-variables)). Your repo token can be found in your Coveralls repo settings. If neither of these are true, please submit an issue, and we can work on adding additional functionality for your use case.
+1. Enable [Coveralls.io](https://coveralls.io) for your repository. If it is
+   public on GitHub and you are using TravisCI, this is all you need to do. If
+   you are using AppVeyor, you need to add a secure environment variable
+   called `COVERALLS_TOKEN` to your `.appveyor.yml` (see
+   [here](https://www.appveyor.com/docs/build-configuration/#secure-variables)).
+   Your repo token can be found in your Coveralls repo settings. If neither of
+   these are true, please submit an issue, and we can work on adding
+   additional functionality for your use case.
+
 2. Activate the `--code-coverage` command line option when you run your tests
-  * Either with something like `julia --code-coverage test/runtests.jl`, or
-  * with something like  `julia -e 'Pkg.test("MyPkg", coverage=true)'`
-3. Add the following to the end of your `.travis.yml` or `.appveyor.yml` file. This line downloads this package, collects the per-file coverage data, then bundles it up and submits to Coveralls. Coverage.jl assumes that the working directory is the package directory, so it changes to that first (so don't forget to replace `MyPkg` with your package's name!
-  * On Travis CI:
-  ```yml
-  after_success:
-  - julia -e 'cd(Pkg.dir("MyPkg")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(process_folder())'
-  ```
-  * On AppVeyor:
-  ```yml
-  after_test:
-  - C:\projects\julia\bin\julia -e "cd(Pkg.dir(\"MyPkg\")); Pkg.add(\"Coverage\"); using Coverage; Coveralls.submit(process_folder())"
-  ```
+   - Either with something like `julia --code-coverage test/runtests.jl`, or
+   - with something like  `julia -e 'Pkg.test("MyPkg", coverage=true)'`
+
+3. Configure your CI service to upload coverage data:
+
+   - If you are using Travis with `language: julia`, simply add `coveralls: true`
+     to your `.travis.yml`.
+
+   - You can also add the following to the end of your `.travis.yml`. This
+     line downloads this package, collects the per-file coverage data, then
+     bundles it up and submits to Coveralls. Coverage.jl assumes that the
+     working directory is the package directory, so it changes to that first
+     (so don't forget to replace `MyPkg` with your package's name!
+
+   - On Travis CI:
+
+       ```yml
+       after_success:
+       - julia -e 'cd(Pkg.dir("MyPkg")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(process_folder())'
+       ```
+
+   - On AppVeyor:
+
+       ```yml
+       after_test:
+       - C:\projects\julia\bin\julia -e "cd(Pkg.dir(\"MyPkg\")); Pkg.add(\"Coverage\"); using Coverage; Coveralls.submit(process_folder())"
+       ```
 
 
 ## Some Julia packages using Coverage.jl
