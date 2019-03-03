@@ -116,7 +116,8 @@ end
     very helpful for testing codecovio.jl
     """
     function extract_codecov_url(fun)
-        data = @capture_out fun()
+        # use Suppresor @capture_err to capture the Logging.@info message
+        data = @capture_err fun()
         lines = split(data, "\n")
 
         url = "None"
@@ -131,7 +132,6 @@ end
             end
         end
 
-        # println("url: $(url)")
         @assert url != "None" "unable to find codecov api url in stdout, check for changes in codecovio.jl"
         return url
     end

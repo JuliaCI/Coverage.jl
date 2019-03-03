@@ -120,7 +120,7 @@ Will recursively traverse child folders.
 Post-process with `merge_coverage_counts(coverages)` to combine duplicates.
 """
 function readfolder(folder)
-    println("""Coverage.LCOV.readfolder: Searching $folder for .info files...""")
+    @info """Coverage.LCOV.readfolder: Searching $folder for .info files..."""
     source_files = FileCoverage[]
     files = readdir(folder)
     for file in files
@@ -130,7 +130,7 @@ function readfolder(folder)
             if endswith(fullfile, ".info")
                 append!(source_files, readfile(fullfile))
             else
-                println("Coverage.LCOV.readfolder: Skipping $file, not a .info file")
+                @info "Coverage.LCOV.readfolder: Skipping $file, not a .info file"
             end
         elseif isdir(fullfile)
             # If it is a folder, recursively traverse

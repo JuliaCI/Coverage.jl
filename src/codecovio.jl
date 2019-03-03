@@ -150,7 +150,7 @@ module Codecov
         end
 
         if haskey(ENV, "REPO_TOKEN")
-            println("the environment variable REPO_TOKEN is deprecated, use CODECOV_TOKEN instead")
+            @warn "the environment variable REPO_TOKEN is deprecated, use CODECOV_TOKEN instead"
             kwargs = set_defaults(kwargs, token = ENV["REPO_TOKEN"])
         end
 
@@ -207,16 +207,14 @@ module Codecov
         end
 
         if verbose
-            println("Codecov.io API URL:")
-            println(uri_str)
+            @info "Codecov.io API URL:\n" * uri_str
         end
 
         if !dry_run
             heads   = Dict("Content-Type" => "application/json")
             data    = to_json(fcs)
             req     = HTTP.post(uri_str; body = JSON.json(data), headers = heads)
-            println("Result of submission:")
-            println(String(req))
+            @info "Result of submission:" * String(req)
         end
     end
 

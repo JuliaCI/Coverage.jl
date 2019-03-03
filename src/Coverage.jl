@@ -125,8 +125,8 @@ module Coverage
         if isempty(files)
             # ... we will assume that, as there is a .jl file, it was
             # just never run. We'll report the coverage as all null.
-            println( """Coverage.process_cov: Coverage file(s) for $filename do not exist.
-                                              Assuming file has no coverage.""")
+            @info """Coverage.process_cov: Coverage file(s) for $filename do not exist.
+                                              Assuming file has no coverage."""
             nlines = countlines(filename)
             return fill!(Vector{CovCount}(undef, nlines), nothing)
         end
@@ -203,7 +203,7 @@ module Coverage
     function process_file end
 
     function process_file(filename, folder)
-        println("Coverage.process_file: Detecting coverage for $filename")
+        @info "Coverage.process_file: Detecting coverage for $filename"
         coverage = process_cov(filename,folder)
         amend_coverage_from_src!(coverage, filename)
         return FileCoverage(filename, read(filename, String), coverage)
@@ -219,7 +219,7 @@ module Coverage
     where Coverage is called from the root directory of a package.
     """
     function process_folder(folder="src")
-        println("""Coverage.process_folder: Searching $folder for .jl files...""")
+        @info """Coverage.process_folder: Searching $folder for .jl files..."""
         source_files = FileCoverage[]
         files = readdir(folder)
         for file in files
@@ -229,7 +229,7 @@ module Coverage
                 if splitext(fullfile)[2] == ".jl"
                     push!(source_files, process_file(fullfile,folder))
                 else
-                    println("Coverage.process_folder: Skipping $file, not a .jl file")
+                    @info "Coverage.process_folder: Skipping $file, not a .jl file"
                 end
             elseif isdir(fullfile)
                 # If it is a folder, recursively traverse
@@ -262,7 +262,7 @@ module Coverage
             fullfile = joinpath(folder, file)
             if isfile(fullfile) && iscovfile(file)
                 # we have ourselves a coverage file. eliminate it
-                println("Removing $fullfile")
+                @info "Removing $fullfile"
                 rm(fullfile)
             elseif isdir(fullfile)
                 clean_folder(fullfile)
@@ -284,7 +284,7 @@ module Coverage
         for file in files
             fullfile = joinpath(folder, file)
             if isfile(fullfile) && iscovfile(fullfile, filename)
-                println("Removing $fullfile")
+                @info "Removing $fullfile"
                 rm(fullfile)
             end
         end

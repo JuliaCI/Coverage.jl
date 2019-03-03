@@ -91,14 +91,13 @@ module Coveralls
         end
 
         if verbose
-            println("Submitting data to Coveralls...")
+            @info "Submitting data to Coveralls..."
         end
 
         req = HTTP.post("https://coveralls.io/api/v1/jobs", HTTP.Form(makebody(data)))
 
         if verbose
-            println("Result of submission:")
-            println(String(req.body))
+            @info "Result of submission:\n" * String(req.body)
         end
         return
     end
@@ -177,8 +176,7 @@ module Coveralls
         req = HTTP.post("https://coveralls.io/api/v1/jobs", HTTP.Form(makebody(data)))
 
         if verbose
-            println("Result of submission:")
-            println(String(req.body))
+            @info "Result of submission:\n" * String(req.body)
         end
         return
     end
