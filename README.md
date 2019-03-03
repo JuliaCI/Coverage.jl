@@ -113,14 +113,14 @@ When using Coverage.jl locally, over time a lot of `.cov` files can accumulate. 
 
        ```yml
        after_success:
-       - julia -e 'cd(Pkg.dir("MyPkg")); Pkg.add("Coverage"); using Coverage; Codecov.submit(process_folder())'
+       - julia -e 'using Pkg; Pkg.add("Coverage"); using Coverage; Codecov.submit(process_folder())'
        ```
 
    - On AppVeyor:
 
        ```yml
        after_test:
-       - C:\projects\julia\bin\julia -e "cd(Pkg.dir(\"MyPkg\")); Pkg.add(\"Coverage\"); using Coverage; Codecov.submit(process_folder())"
+       - C:\projects\julia\bin\julia -e "using Pkg; Pkg.add(\"Coverage\"); using Coverage; Codecov.submit(process_folder())"
        ```
 
    - If you're running coverage on your own machine and want to upload results
@@ -128,7 +128,7 @@ When using Coverage.jl locally, over time a lot of `.cov` files can accumulate. 
 
        ```bash
        #!/bin/bash
-       CODECOV_TOKEN=$YOUR_TOKEN_HERE julia -e 'cd(Pkg.dir("MyPkg")); using Coverage; Codecov.submit_local(process_folder())'
+       CODECOV_TOKEN=$YOUR_TOKEN_HERE julia -e 'using Pkg; using Coverage; Codecov.submit_local(process_folder())'
        ```
 
 ## Tracking Coverage with [Coveralls.io](https://coveralls.io)
@@ -163,14 +163,14 @@ When using Coverage.jl locally, over time a lot of `.cov` files can accumulate. 
 
        ```yml
        after_success:
-       - julia -e 'cd(Pkg.dir("MyPkg")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(process_folder())'
+       - julia -e 'using Pkg; Pkg.add("Coverage"); using Coverage; Coveralls.submit(process_folder())'
        ```
 
    - On AppVeyor:
 
        ```yml
        after_test:
-       - C:\projects\julia\bin\julia -e "cd(Pkg.dir(\"MyPkg\")); Pkg.add(\"Coverage\"); using Coverage; Coveralls.submit(process_folder())"
+       - C:\projects\julia\bin\julia -e "using Pkg; Pkg.add(\"Coverage\"); using Coverage; Coveralls.submit(process_folder())"
        ```
 
 
