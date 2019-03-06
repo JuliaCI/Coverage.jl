@@ -10,16 +10,19 @@ isfuncexpr(ex::Expr) =
     ex.head == :function || (ex.head == :(=) && typeof(ex.args[1]) == Expr && ex.args[1].head == :call)
 isfuncexpr(arg) = false
 
-function_body_lines(ast) = function_body_lines!(Int[], ast, false)
-function_body_lines!(flines, arg, infunction) = flines
-function function_body_lines!(flines, node::LineNumberNode, infunction)
+function_body_lines(ast, coverage, lineoffset) = function_body_lines!(Int[], ast, coverage, lineoffset, false)
+
+function_body_lines!(flines, arg, coverage, lineoffset, infunction) = flines
+
+function function_body_lines!(flines, node::LineNumberNode, coverage, lineoffset, infunction)
     line = node.line
     if infunction
         push!(flines, line)
     end
     flines
 end
-function function_body_lines!(flines, ast::Expr, infunction)
+
+function function_body_lines!(flines, ast::Expr, coverage::Vector{CovCount}, lineoffset, infunction)
     if ast.head == :line
         line = ast.args[1]
         if infunction
@@ -50,12 +53,25 @@ function function_body_lines!(flines, ast::Expr, infunction)
         # and we don't want those lines to be identified as runnable code.
         # In this context, ast.args[1] is the function signature and
         # ast.args[2] is the method body
+        #
+        # now compute all lines in the body of this function, but for now,
+        # track them separately from flines
+        flines_new = Int[]
         for arg in ast.args[2].args
-            flines = function_body_lines!(flines, arg, true)
+            function_body_lines!(flines_new, arg, coverage, lineoffset, true)
+        end
+
+        # if any of the lines in the body of the function already has
+        # coverage, we assume that the function was executed, generally
+        # speaking, and so we should *not* apply our heuristic (which is mean
+        # to mark functions which were never executed as code, which the
+        # coverage data returned by Julia normally does not)
+        if all(l -> coverage[l+lineoffset] === nothing, flines_new)
+            append!(flines, flines_new)
         end
     else
         for arg in args
-            flines = function_body_lines!(flines, arg, infunction)
+            function_body_lines!(flines, arg, coverage, lineoffset, infunction)
         end
     end
 
