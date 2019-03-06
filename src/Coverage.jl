@@ -175,7 +175,7 @@ module Coverage
             linestart = minimum(searchsorted(linepos, pos - 1))
             ast, pos = Meta.parse(content, pos)
             isa(ast, Expr) || continue
-            flines = function_body_lines(ast)
+            flines = function_body_lines(ast, coverage, linestart - 1)
             if !isempty(flines)
                 flines .+= linestart-1
                 for l in flines
