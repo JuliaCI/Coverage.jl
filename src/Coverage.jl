@@ -190,8 +190,6 @@ module Coverage
         end
         nothing
     end
-    # function_body_lines is located in parser.jl
-    include("parser.jl")
 
     """
         process_file(filename[, folder]) -> FileCoverage
@@ -294,4 +292,5 @@ module Coverage
     include("codecovio.jl")
     include("lcov.jl")
     include("memalloc.jl")
+    include("parser.jl")
 end
