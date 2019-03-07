@@ -40,8 +40,12 @@ end
         datadir = joinpath("test", "data")
         # Process a saved set of coverage data...
         r = process_file(joinpath(datadir, "Coverage.jl"))
+
         # ... and memory data
-        analyze_malloc(datadir)
+        malloc_results = analyze_malloc(datadir)
+        filename = joinpath(datadir, "testparser.jl.9172.mem")
+        @test malloc_results == [Coverage.MallocInfo(96669, filename, 2)]
+
         lcov = IOBuffer()
         # we only have a single file, but we want to test on the Vector of file results
         LCOV.write(lcov, FileCoverage[r])
