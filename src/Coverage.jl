@@ -203,7 +203,9 @@ module Coverage
     function process_file(filename, folder)
         @info "Coverage.process_file: Detecting coverage for $filename"
         coverage = process_cov(filename,folder)
-        amend_coverage_from_src!(coverage, filename)
+        if get(ENV, "DISABLE_AMEND_COVERAGE_FROM_SRC", "no") != "yes"
+            amend_coverage_from_src!(coverage, filename)
+        end
         return FileCoverage(filename, read(filename, String), coverage)
     end
     process_file(filename) = process_file(filename,splitdir(filename)[1])

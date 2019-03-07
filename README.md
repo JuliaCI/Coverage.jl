@@ -173,6 +173,50 @@ When using Coverage.jl locally, over time a lot of `.cov` files can accumulate. 
        - C:\projects\julia\bin\julia -e "using Pkg; Pkg.add(\"Coverage\"); using Coverage; Coveralls.submit(process_folder())"
        ```
 
+## A note for advanced users
+
+Coverage tracking in Julia is not yet quite perfect. One problem is that (at
+least in certain scenarios), the coverage data emitted by Julia does not mark
+functions which are never called (and thus are not covered) as code. Thus,
+they end up being treated like comments, and are *not* counted as uncovered
+code, even though they clearly are. This can arbitrarily inflate coverage
+scores, and in the extreme case could even result in a project showing 100%
+coverage even though it contains not a single test.
+
+To overcome this, Coverage.jl applies a workaround which ensures that all
+lines of code in all functions of your project are properly marked as "this is
+code". This resolves the problem of over reporting coverage.
+
+Unfortunately, this workaround itself can have negative consequences, and lead
+to under reporting coverage, for the following reason: when Julia compiles
+code with inlining and optimizations, it can happen that some lines of Julia
+code do not correspond to any generated machine code; in that case, Julia's
+code coverage tracking will never mark these lines as executed, and also won't
+mark them as code. One may now argue whether this is a bug in itself or not,
+but that's how it is, and normally would be fine -- except that our workaround
+now does mark these lines as code, but code which now never has a chance as
+being marked as executed.
+
+We may be able to improve our workaround to deal with this better in the
+future (see also <https://github.com/JuliaCI/Coverage.jl/pull/188>), but this
+has not yet been done and it is unclear whether it will take care of all
+instances. Even better would be if Julia improved the coverage information it
+produces to be on par with what e.g. C compilers like GCC and clang produce.
+Since it is unclear when or if any of these will happen, we have added an
+expert option which allows Julia module owners to disable our workaround code,
+by setting the environment variable `DISABLE_AMEND_COVERAGE_FROM_SRC` to
+`yes`.
+
+For Travis, this can be achieved by adding the following to `.travis.yml`:
+
+    env:
+      global:
+        - DISABLE_AMEND_COVERAGE_FROM_SRC=yes
+
+For AppVeyor, add this to `.appveyor.yml`:
+
+    environment:
+      DISABLE_AMEND_COVERAGE_FROM_SRC: yes
 
 ## Some Julia packages using Coverage.jl
 
