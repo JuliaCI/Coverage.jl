@@ -427,6 +427,67 @@ end
     git = Coverage.Coveralls.query_git_info()
     @test git["remotes"][1]["name"] == "origin"
     @test haskey(git["remotes"][1], "url")
+
+    # for testing submit_***()
+    fcs = FileCoverage[]
+
+    withenv("COVERALLS_TOKEN" => "token_name_1",
+            "APPVEYOR" => nothing,
+            "APPVEYOR_JOB_ID" => nothing,
+            "TRAVIS" => nothing,
+            "TRAVIS_JOB_ID" => nothing,
+            "JENKINS" => nothing,
+            "BUILD_ID" => nothing,
+            "CI_PULL_REQUEST" => nothing,
+            "GIT_BRANCH" => nothing) do
+
+        # test local submission, when we are local
+        _dotgit = joinpath(dirname(@__DIR__), ".git")
+        if isdir(_dotgit) || isfile(_dotgit)
+                request = Coverage.Coveralls.prepare_request(fcs, true)
+                @test request["repo_token"] == "token_name_1"
+                @test isempty(request["source_files"])
+                @test haskey(request, "git")
+                @test request["git"]["remotes"][1]["name"] == "origin"
+        end
+
+        # test APPVEYOR
+        withenv("APPVEYOR" => "true",
+                "APPVEYOR_JOB_ID" => "my_job_id") do
+                request = Coverage.Coveralls.prepare_request(fcs, false)
+                @test request["repo_token"] == "token_name_1"
+                @test request["service_job_id"] == "my_job_id"
+                @test request["service_name"] == "appveyor"
+        end
+
+        # test Travis
+        withenv("TRAVIS" => "true",
+                "TRAVIS_JOB_ID" => "my_job_id") do
+                request = Coverage.Coveralls.prepare_request(fcs, false)
+                @test request["repo_token"] == "token_name_1"
+                @test request["service_job_id"] == "my_job_id"
+                @test request["service_name"] == "travis-ci"
+        end
+
+        # test Jenkins
+        withenv("JENKINS" => "true",
+                "BUILD_ID" => "my_job_id",
+                "CI_PULL_REQUEST" => true) do
+                my_git_info = Dict("remote_name" => "my_origin")
+                request = Coverage.Coveralls.prepare_request(fcs, false)
+                @test request["repo_token"] == "token_name_1"
+                @test request["service_job_id"] == "my_job_id"
+                @test request["service_name"] == "jenkins-ci"
+
+                withenv("CI_PULL_REQUEST" => "false",
+                        "GIT_BRANCH" => "my_remote/my_branch") do
+                        request = Coverage.Coveralls.prepare_request(fcs, false)
+                        @test haskey(request, "git")
+                        @test request["git"]["branch"] == "my_branch"
+                end
+        end
+
+    end
 end
 
 end
