@@ -53,13 +53,21 @@ module Coveralls
 
     Take a vector of file coverage results (produced by `process_folder`),
     and submits them to Coveralls. Assumes that this code is being run
-    on TravisCI or AppVeyor. If running locally, use `submit_local`.
+    on TravisCI, AppVeyor or Jenkins. If running locally, use `submit_local`.
     """
     function submit(fcs::Vector{FileCoverage}; kwargs...)
         verbose = get(kwargs, :verbose, true)
+        data = prepare_request(fcs, false)
+        post_request(data, verbose)
+    end
+
+    function prepare_request(fcs::Vector{FileCoverage}, local_env, git_info=query_git_info)
         data = Dict{String,Any}("source_files" => map(to_json, fcs))
 
-        if lowercase(get(ENV, "APPVEYOR", "false")) == "true"
+        if local_env
+            # Attempt to parse git info via git_info, unless the user explicitly disables it by setting git_info to nothing
+            data["git"] = parse_git_info(git_info)
+        elseif lowercase(get(ENV, "APPVEYOR", "false")) == "true"
             data["service_job_id"] = ENV["APPVEYOR_JOB_ID"]
             data["service_name"] = "appveyor"
         elseif lowercase(get(ENV, "TRAVIS", "false")) == "true"
@@ -68,7 +76,7 @@ module Coveralls
         elseif lowercase(get(ENV, "JENKINS", "false")) == "true"
             data["service_job_id"] = ENV["BUILD_ID"]
             data["service_name"] = "jenkins-ci"
-            data["git"] = query_git_info()
+            data["git"] = parse_git_info(git_info)
 
             # get the name of the branch if not a pull request
             if get(ENV, "CI_PULL_REQUEST", "false") == "false"
@@ -78,10 +86,22 @@ module Coveralls
             error("No compatible CI platform detected")
         end
 
-        data = add_repo_token(data, false)
-
-        post_request(data, verbose)
+        data = add_repo_token(data, local_env)
+        return data
     end
+
+    function parse_git_info(git_info::Function)
+        result = nothing
+        try
+            result = git_info()
+        catch ex
+            @warn "Parse of git information failed" exception=e, catch_backtrace()
+        end
+        return result
+    end
+
+    parse_git_info(git_info::Dict) = git_info
+
 
     # query_git_info
     # Pulls information about the repository that isn't available if we
@@ -132,40 +152,21 @@ module Coveralls
         submit_local(fcs::Vector{FileCoverage}, git_info=query_git_info; kwargs...)
 
     Take a `Vector` of file coverage results (produced by `process_folder`),
-    and submits them to Coveralls. For submissions not from TravisCI.
+    and submits them to Coveralls. For submissions not from CI.
 
     git_info can be either a `Dict` or a function that returns a `Dict`.
     """
     function submit_local(fcs::Vector{FileCoverage}, git_info=query_git_info; kwargs...)
+        data = prepare_request(fcs, true, git_info)
         verbose = get(kwargs, :verbose, true)
-        data = Dict{String,Any}("source_files" => map(to_json, fcs))
-        data = add_repo_token(data, true)
-
-        # Attempt to parse git info via git_info, unless the user explicitly disables it by setting git_info to nothing
-        if isa(git_info, Function)
-            try
-                data["git"] = git_info()
-            catch ex
-                @warn "Parse of git information failed" exception=e,catch_backtrace()
-            end
-        elseif isa(git_info, Dict)
-            data["git"] = git_info
-        end
-
         post_request(data, verbose)
     end
 
     # posts the actual request given the data
     function post_request(data, verbose)
-        if verbose
-            @info "Submitting data to Coveralls..."
-        end
-
+        verbose && @info "Submitting data to Coveralls..."
         req = HTTP.post("https://coveralls.io/api/v1/jobs", HTTP.Form(makebody(data)))
-
-        if verbose
-            @info "Result of submission:\n" * String(req.body)
-        end
+        verbose && @info "Result of submission:\n" * String(req.body)
     end
 
     # adds the repo token to the data
