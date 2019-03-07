@@ -178,10 +178,19 @@ module Coverage
             flines = function_body_lines(ast)
             if !isempty(flines)
                 flines .+= linestart-1
+
+                if any(l -> l > length(coverage), flines)
+                    error("source file is longer than .cov file; source might have changed")
+                end
+
+                # If any line has coverage, assume that Julia executed this code, and
+                # don't modify any coverage data. This works around issues with inlined
+                # code, see https://github.com/JuliaCI/Coverage.jl/issues/187
+                if any(l -> coverage[l] != nothing, flines)
+                    continue
+                end
+
                 for l in flines
-                    if l > length(coverage)
-                        error("source file is longer than .cov file; source might have changed")
-                    end
                     if coverage[l] === nothing
                         coverage[l] = 0
                     end
