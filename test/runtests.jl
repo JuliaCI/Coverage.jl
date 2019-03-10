@@ -32,7 +32,15 @@ end
 end
 
 @testset "isfuncexpr" begin
+    @test Coverage.isfuncexpr(:(f() = x))
+    @test Coverage.isfuncexpr(:(function() end))
+    @test Coverage.isfuncexpr(:(function g() end))
+    @test Coverage.isfuncexpr(:(function g() where {T} end))
     @test !Coverage.isfuncexpr("2")
+    @test !Coverage.isfuncexpr(:(f = x))
+    @test Coverage.isfuncexpr(:(() -> x))
+    @test Coverage.isfuncexpr(:(x -> x))
+    @test Coverage.isfuncexpr(:(g() where {T} = 3))
 end
 
 @testset "Processing coverage" begin
