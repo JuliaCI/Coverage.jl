@@ -55,6 +55,19 @@ end
             expected = replace(expected, "SF:test/data/Coverage.jl\n" => "SF:test\\data\\Coverage.jl\n")
         end
         @test String(take!(lcov)) == expected
+
+        # LCOV.writefile is a short-hand for writing to a file
+        lcov = joinpath(datadir, "lcov_output_temp.info")
+        LCOV.writefile(lcov, FileCoverage[r])
+        expected = read(joinpath(datadir, "tracefiles", "expected.info"), String)
+        if Sys.iswindows()
+            expected = replace(expected, "\r\n" => "\n")
+            expected = replace(expected, "SF:test/data/Coverage.jl\n" => "SF:test\\data\\Coverage.jl\n")
+        end
+        @test String(read(lcov)) == expected
+        # tear down test file
+        rm(lcov)
+
         # test that reading the LCOV file gives the same data
         lcov = LCOV.readfolder(datadir)
         @test length(lcov) == 1
@@ -110,6 +123,19 @@ end
         close(open("fakefile", read=true, write=true, create=true, truncate=false, append=false))
         @test isempty(Coverage.process_cov("fakefile", datadir))
         rm("fakefile")
+
+        # test clean_folder
+        # set up the test folder
+        datadir_temp = joinpath("test", "data_temp")
+        cp(datadir, datadir_temp)
+        # run clean_folder
+        clean_folder(datadir_temp)
+        # .cov files should be deleted
+        @test !isfile(joinpath(datadir_temp, "Coverage.jl.cov"))
+        # other files should remain untouched
+        @test isfile(joinpath(datadir_temp, "Coverage.jl"))
+        # tear down test data
+        rm(datadir_temp; recursive=true)
     end
 end
 
@@ -416,6 +442,72 @@ end
                 end
             end
         end
+
+        # test Jenkins ci submission process
+
+        # set up Jenkins ci env
+        withenv(
+            "JENKINS" => "true",
+            "GIT_BRANCH" => "t_branch",
+            "GIT_COMMIT" => "t_commit",
+            "JOB_NAME" => "t_job",
+            "BUILD_ID" => "t_num",
+            "BUILD_URL" => "t_url",
+            "JENKINS_URL" => "t_jenkins_url",
+            ) do
+
+            # default values
+            codecov_url = construct_uri_string_ci()
+            @test occursin("codecov.io", codecov_url)
+            @test occursin("service=jenkins", codecov_url)
+            @test occursin("branch=t_branch", codecov_url)
+            @test occursin("commit=t_commit", codecov_url)
+            @test occursin("build_url=t_url", codecov_url)
+            @test occursin("build=t_num", codecov_url)
+
+            # env var url override
+            withenv( "CODECOV_URL" => "https://enterprise-codecov-1.com" ) do
+
+                codecov_url = construct_uri_string_ci()
+                @test occursin("enterprise-codecov-1.com", codecov_url)
+                @test occursin("service=jenkins", codecov_url)
+                @test occursin("branch=t_branch", codecov_url)
+                @test occursin("commit=t_commit", codecov_url)
+                @test occursin("build_url=t_url", codecov_url)
+                @test occursin("build=t_num", codecov_url)
+
+                # function argument url override
+                codecov_url = construct_uri_string_ci(codecov_url="https://enterprise-codecov-2.com")
+                @test occursin("enterprise-codecov-2.com", codecov_url)
+                @test occursin("service=jenkins", codecov_url)
+                @test occursin("branch=t_branch", codecov_url)
+                @test occursin("commit=t_commit", codecov_url)
+                @test occursin("build_url=t_url", codecov_url)
+                @test occursin("build=t_num", codecov_url)
+
+                # env var token
+                withenv( "CODECOV_TOKEN" => "token_name_1" ) do
+
+                    codecov_url = construct_uri_string_ci()
+                    @test occursin("enterprise-codecov-1.com", codecov_url)
+                    @test occursin("token=token_name_1", codecov_url)
+                    @test occursin("service=jenkins", codecov_url)
+                    @test occursin("branch=t_branch", codecov_url)
+                    @test occursin("commit=t_commit", codecov_url)
+                    @test occursin("build_url=t_url", codecov_url)
+                    @test occursin("build=t_num", codecov_url)
+
+                    # function argument token url override
+                    codecov_url = construct_uri_string_ci(token="token_name_2")
+                    @test occursin("enterprise-codecov-1.com", codecov_url)
+                    @test occursin("service=jenkins", codecov_url)
+                    @test occursin("branch=t_branch", codecov_url)
+                    @test occursin("commit=t_commit", codecov_url)
+                    @test occursin("build_url=t_url", codecov_url)
+                    @test occursin("build=t_num", codecov_url)
+                end
+            end
+        end
     end
 end
 
@@ -431,6 +523,14 @@ end
     # for testing submit_***()
     fcs = FileCoverage[]
 
+    # an error should be raised if there is no coveralls token set
+    withenv("COVERALLS_TOKEN" => nothing,
+            "REPO_TOKEN" => nothing,  # this is deprecrated, use COVERALLS_TOKEN
+            "APPVEYOR" => "true",  # use APPVEYOR as an example to make the test reach the repo token check
+            "APPVEYOR_JOB_ID" => "my_job_id") do
+            @test_throws ErrorException Coverage.Coveralls.prepare_request(fcs, false)
+    end
+
     withenv("COVERALLS_TOKEN" => "token_name_1",
             "APPVEYOR" => nothing,
             "APPVEYOR_JOB_ID" => nothing,
@@ -440,6 +540,9 @@ end
             "BUILD_ID" => nothing,
             "CI_PULL_REQUEST" => nothing,
             "GIT_BRANCH" => nothing) do
+
+        # test error if not local and no CI platform can be detected from ENV
+        @test_throws ErrorException Coverage.Coveralls.prepare_request(fcs, false)
 
         # test local submission, when we are local
         _dotgit = joinpath(dirname(@__DIR__), ".git")
@@ -487,6 +590,19 @@ end
                 end
         end
 
+        # test git_info (only works with Jenkins & local at the moment)
+        withenv("JENKINS" => "true",
+                "BUILD_ID" => "my_job_id",
+                "CI_PULL_REQUEST" => true) do
+                # we can pass in our own function, that returns a dict
+                my_git_info() = Dict("test" => "test")
+                request = Coverage.Coveralls.prepare_request(fcs, false, my_git_info)
+                @test haskey(request, "git")
+
+                # or directly a dict
+                request = Coverage.Coveralls.prepare_request(fcs, false, Dict("test" => "test"))
+                @test haskey(request, "git")
+            end
     end
 end
 
