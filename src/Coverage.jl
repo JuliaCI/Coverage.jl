@@ -6,6 +6,7 @@
 #######################################################################
 module Coverage
     using LibGit2
+    import YAML
 
     export process_folder, process_file
     export clean_folder, clean_file
@@ -136,10 +137,9 @@ module Coverage
             @info "Coverage.process_cov: processing $file"
             coverage = CovCount[]
             for line in eachline(file)
-                # Columns 1:9 contain the coverage count
-                cov_segment = line[1:9]
                 # If coverage is NA, there will be a dash
-                push!(coverage, cov_segment[9] == '-' ? nothing : parse(Int, cov_segment))
+                # Columns 1:9 contain the coverage count
+                push!(coverage, line[9] == '-' ? nothing : parse(Int, line[1:9]))
             end
             full_coverage = merge_coverage_counts(full_coverage, coverage)
         end
@@ -156,8 +156,8 @@ module Coverage
     This function takes an existing result and updates the coverage vector
     in-place to mark source lines that may be inside a function.
     """
-    amend_coverage_from_src!(coverage::Vector{CovCount}, srcname) = amend_coverage_from_src!(FileCoverage(srcname, read(srcname, String), coverage))
-    function amend_coverage_from_src!(fc::FileCoverage)
+    amend_coverage_from_src!(coverage::Vector{CovCount}, srcname, excluded_line_patterns::Vector{Regex}=Regex[]) = amend_coverage_from_src!(FileCoverage(srcname, read(srcname, String), coverage), excluded_line_patterns)
+    function amend_coverage_from_src!(fc::FileCoverage, excluded_line_patterns::Vector{Regex}=Regex[])
         # The code coverage results produced by Julia itself report some
         # lines as "null" (cannot be run), when they could have been run
         # but were never compiled (thus should be 0).
@@ -201,11 +201,25 @@ module Coverage
                 end
             end
         end
+
+        # check for excluded lines
+        l = 1
+        let io = IOBuffer(content)
+            while !eof(io)
+                line = readline(io)
+                # Verify that there is no line exclusion tag
+                if any(pat -> occursin(pat, line[10:end]), excluded_line_patterns)
+                    @debug "removing with regex $excluded_line_patterns line $l: $line"
+                    coverage[l] = nothing
+                end
+                l += 1
+            end
+        end
         nothing
     end
 
     """
-        process_file(filename[, folder]) -> FileCoverage
+        process_file(filename[, folder], excluded_line_patterns) -> FileCoverage
 
     Given a .jl file and its containing folder, produce a corresponding
     `FileCoverage` instance from the source and matching coverage files. If the
@@ -213,12 +227,12 @@ module Coverage
     """
     function process_file end
 
-    function process_file(filename, folder)
+    function process_file(filename, folder, excluded_line_patterns::Vector{Regex}=Regex[])
         @info "Coverage.process_file: Detecting coverage for $filename"
         coverage = process_cov(filename, folder)
         fc = FileCoverage(filename, read(filename, String), coverage)
         if get(ENV, "DISABLE_AMEND_COVERAGE_FROM_SRC", "no") != "yes"
-            amend_coverage_from_src!(fc)
+            amend_coverage_from_src!(fc, excluded_line_patterns)
         end
         return fc
     end
@@ -231,26 +245,86 @@ module Coverage
     statistics for all the files contained within. Will recursively traverse
     child folders. Default folder is "src", which is useful for the primary case
     where Coverage is called from the root directory of a package.
+
+    In case there is a `.coverage.yml` present within `folder`, the indicated
+    file and line exclusion tags will be used.
     """
     function process_folder(folder="src")
-        @info "Coverage.process_folder: Searching $folder for .jl files..."
+        # get coverage file
+        excl_file = joinpath(folder, ".coverage.yml")
+        excluded_files, excluded_line_patterns = get_exclusions(excl_file)
+        return process_folder(folder, excluded_files, excluded_line_patterns)
+    end
+    function process_folder(folder, excluded_files, excluded_line_patterns)
+        @info """Coverage.process_folder: Searching $folder for .jl files..."""
         source_files = FileCoverage[]
         files = readdir(folder)
+
         for file in files
-            fullfile = joinpath(folder, file)
+            if file in excluded_files
+                @info "Coverage.process_folder: Skipping $file, in exclusion list"
+                continue
+            end
+
+            fullfile = joinpath(folder,file)
             if isfile(fullfile)
                 # Is it a Julia file?
                 if splitext(fullfile)[2] == ".jl"
-                    push!(source_files, process_file(fullfile, folder))
+                    push!(source_files, process_file(fullfile, folder, excluded_line_patterns))
                 else
                     @debug "Coverage.process_folder: Skipping $file, not a .jl file"
                 end
             elseif isdir(fullfile)
                 # If it is a folder, recursively traverse
-                append!(source_files, process_folder(fullfile))
+                # pass on the same excluded_files & excluded_line_patterns from root
+                append!(source_files, process_folder(fullfile, excluded_files, excluded_line_patterns))
             end
         end
         return source_files
+    end
+
+    """
+        get_exclusions(file::AbstractString) -> (excluded_files, excluded_line_patterns)
+
+    Parse the provided file as a coverage exclusions file (named
+    `.coverage.yml`). This file should have a format like the following:
+    ```
+    # exclude files in the directory with these names
+    exclude_files:
+      - foo.jl
+      - bar.jl
+
+    # exclude any lines that match any of the following regexes
+    exclude_patterns:
+      - "[NO COVERAGE]"
+    ```
+    Note that both `exclude_files` and `exclude_patterns` should be lists.
+    """
+    function get_exclusions(file)
+        excluded_files = Set{String}()
+        excluded_line_patterns = Regex[]
+        if isfile(file)
+            # read file
+            config = YAML.load_file(file)
+
+            # if exclude_files entry is present, try to parse
+            if haskey(config, "exclude_files")
+                if !isa(config["exclude_files"], Array{String})
+                    error("'exclude_files' in $file must be a list of strings")
+                end
+                excluded_files = config["exclude_files"]
+            end
+
+            # if exclude_patterns entry is present, try to parse
+            if haskey(config, "exclude_patterns")
+                if !isa(config["exclude_patterns"], Array{String})
+                    error("'exclude_patterns' in $file must be a list of strings")
+                end
+                excluded_line_patterns = Regex.(config["exclude_patterns"])
+            end
+        end
+
+        return excluded_files, excluded_line_patterns
     end
 
     # matches julia coverage files with and without the PID

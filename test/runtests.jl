@@ -49,7 +49,7 @@ end
     cd(dirname(@__DIR__)) do
         datadir = joinpath("test", "data")
         # Process a saved set of coverage data...
-        r = process_file(joinpath(datadir, "Coverage.jl"))
+        r = process_file(joinpath(datadir, "no_exclusions", "Coverage.jl"))
 
         # ... and memory data
         malloc_results = analyze_malloc(datadir)
@@ -67,7 +67,7 @@ end
         @test String(take!(lcov)) == expected
 
         # LCOV.writefile is a short-hand for writing to a file
-        lcov = joinpath(datadir, "lcov_output_temp.info")
+        lcov = joinpath(datadir, "no_exclusions", "lcov_output_temp.info")
         LCOV.writefile(lcov, FileCoverage[r])
         expected = read(joinpath(datadir, "tracefiles", "expected.info"), String)
         if Sys.iswindows()
@@ -79,7 +79,7 @@ end
         rm(lcov)
 
         # test that reading the LCOV file gives the same data
-        lcov = LCOV.readfolder(datadir)
+        lcov = LCOV.readfolder(joinpath(datadir))
         @test length(lcov) == 1
         r2 = lcov[1]
         r2_filename = r2.filename
@@ -108,14 +108,14 @@ end
         @test r4.coverage == lcov2[2].coverage
 
         # Test a file from scratch
-        srcname = joinpath("test", "data", "testparser.jl")
+        srcname = joinpath("test", "data", "no_exclusions", "testparser.jl")
         covname = srcname*".cov"
         # clean out any previous coverage files. Don't use clean_folder because we
         # need to preserve the pre-baked coverage file Coverage.jl.cov
         clean_file(srcname)
         cmdstr = "include($(repr(srcname))); using Test; @test f2(2) == 4"
         run(`$(Base.julia_cmd()) --startup-file=no --code-coverage=user -e $cmdstr`)
-        r = process_file(srcname, datadir)
+        r = process_file(srcname, joinpath(datadir, "no_exclusions"))
 
         target = Coverage.CovCount[nothing, 2, nothing, 0, nothing, 0, nothing, nothing, nothing, nothing, 0, nothing, nothing, nothing, nothing, nothing, 0, nothing, nothing, 0, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing]
         target_disabled = map(x -> (x !== nothing && x > 0) ? x : nothing, target)
@@ -123,10 +123,10 @@ end
 
         covtarget = (sum(x->x !== nothing && x > 0, target), sum(x->x !== nothing, target))
         @test get_summary(r) == covtarget
-        @test get_summary(process_folder(datadir)) == (98, 106)
+        @test get_summary(process_folder(joinpath(datadir, "no_exclusions"))) == (98, 106)
 
         r_disabled = withenv("DISABLE_AMEND_COVERAGE_FROM_SRC" => "yes") do
-            process_file(srcname, datadir)
+            process_file(srcname, joinpath(datadir, "no_exclusions"))
         end
 
         @test r_disabled.coverage == target_disabled
@@ -142,7 +142,7 @@ end
         # test clean_folder
         # set up the test folder
         datadir_temp = joinpath("test", "data_temp")
-        cp(datadir, datadir_temp)
+        cp(joinpath(datadir, "no_exclusions"), datadir_temp)
         # run clean_folder
         clean_folder(datadir_temp)
         # .cov files should be deleted
@@ -151,6 +151,23 @@ end
         @test isfile(joinpath(datadir_temp, "Coverage.jl"))
         # tear down test data
         rm(datadir_temp; recursive=true)
+
+        close(open("fakefile", read=true, write=true, create=true, truncate=false, append=false))
+        @test isempty(Coverage.process_cov("fakefile", datadir))
+        rm("fakefile")
+
+        # test exclusions parsing
+        datadir_exclusions = joinpath(datadir, "folder_with_exclusions")
+        excl_files, excl_lines = Coverage.get_exclusions(joinpath(datadir_exclusions, ".coverage.yml"))
+        @test excl_files == ["testparser_excluded.jl", "bar.jl"]
+        @test excl_lines == [Regex("[NO COVERAGE]")]
+
+        # test that excluded files are indeed skipped
+        out = process_folder(datadir_exclusions)
+        @test length(out) == 1  # only testparser.jl should be here, not testparser_excluded.jl
+
+        # verify that the second line is now indeed skipped
+        @test out[1].coverage[2] === nothing
     end
 end
 

@@ -1,0 +1,8 @@
+# exclude files in the directory with these names
+exclude_files:
+  - testparser_excluded.jl
+  - bar.jl
+
+# exclude any lines that match any of the following regexes
+exclude_patterns:
+  - "[NO COVERAGE]"
