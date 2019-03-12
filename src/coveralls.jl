@@ -180,7 +180,7 @@ module Coveralls
                         end
                     end
                 end
-        if repo_token != nothing
+        if repo_token !== nothing
             data["repo_token"] = repo_token
         end
         return data

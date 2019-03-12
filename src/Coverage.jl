@@ -160,7 +160,7 @@ module Coverage
         # We use the Julia parser to augment the coverage results by identifying this code.
         #
         # To make sure things stay in sync, parse the file position
-        # corresonding to each new line
+        # corresponding to each new line
         linepos = Int[]
         open(srcname) do io
             while !eof(io)
@@ -172,12 +172,12 @@ module Coverage
         content = read(srcname, String)
         pos = 1
         while pos <= length(content)
-            linestart = minimum(searchsorted(linepos, pos - 1))
+            lineoffset = searchsortedfirst(linepos, pos - 1) - 1
             ast, pos = Meta.parse(content, pos)
             isa(ast, Expr) || continue
-            flines = function_body_lines(ast, coverage, linestart - 1)
+            flines = function_body_lines(ast, coverage, lineoffset)
             if !isempty(flines)
-                flines .+= linestart-1
+                flines .+= lineoffset
                 for l in flines
                     if l > length(coverage)
                         error("source file is longer than .cov file; source might have changed")
@@ -202,13 +202,13 @@ module Coverage
 
     function process_file(filename, folder)
         @info "Coverage.process_file: Detecting coverage for $filename"
-        coverage = process_cov(filename,folder)
+        coverage = process_cov(filename, folder)
         if get(ENV, "DISABLE_AMEND_COVERAGE_FROM_SRC", "no") != "yes"
             amend_coverage_from_src!(coverage, filename)
         end
         return FileCoverage(filename, read(filename, String), coverage)
     end
-    process_file(filename) = process_file(filename,splitdir(filename)[1])
+    process_file(filename) = process_file(filename, splitdir(filename)[1])
 
     """
         process_folder(folder="src") -> Vector{FileCoverage}
@@ -223,11 +223,11 @@ module Coverage
         source_files = FileCoverage[]
         files = readdir(folder)
         for file in files
-            fullfile = joinpath(folder,file)
+            fullfile = joinpath(folder, file)
             if isfile(fullfile)
                 # Is it a Julia file?
                 if splitext(fullfile)[2] == ".jl"
-                    push!(source_files, process_file(fullfile,folder))
+                    push!(source_files, process_file(fullfile, folder))
                 else
                     @info "Coverage.process_folder: Skipping $file, not a .jl file"
                 end
