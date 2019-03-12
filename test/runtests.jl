@@ -12,6 +12,7 @@ isnothing(x::Nothing) = true
 end
 
 @testset "Coverage" begin
+withenv("DISABLE_AMEND_COVERAGE_FROM_SRC" => nothing) do
 
 @testset "iscovfile" begin
     # test our filename matching. These aren't exported functions but it's probably
@@ -111,26 +112,26 @@ end
         # clean out any previous coverage files. Don't use clean_folder because we
         # need to preserve the pre-baked coverage file Coverage.jl.cov
         clean_file(srcname)
-        cmdstr = "include(\"$(escape_string(srcname))\"); using Test; @test f2(2) == 4"
+        cmdstr = "include($(repr(srcname))); using Test; @test f2(2) == 4"
         run(`$(Base.julia_cmd()) --startup-file=no --code-coverage=user -e $cmdstr`)
         r = process_file(srcname, datadir)
 
         target = Union{Int64,Nothing}[nothing, 2, nothing, 0, nothing, 0, nothing, nothing, nothing, nothing, 0, nothing, nothing, nothing, nothing, nothing, 0, nothing, nothing, 0, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing]
         @test r.coverage == target
 
-        covtarget = (sum(x->x != nothing && x > 0, target), sum(x->x != nothing, target))
+        covtarget = (sum(x->x !== nothing && x > 0, target), sum(x->x !== nothing, target))
         @test get_summary(r) == covtarget
-        @test get_summary(process_folder(datadir)) != covtarget
+        @test get_summary(process_folder(datadir)) == (98, 106)
+
+        r_disabled = withenv("DISABLE_AMEND_COVERAGE_FROM_SRC" => "yes") do
+            process_file(srcname, datadir)
+        end
 
         # Handle an empty coverage vector
         emptycov = FileCoverage("", "", [])
         @test get_summary(emptycov) == (0, 0)
 
-        #json_data = Codecov.build_json_data(Codecov.process_folder("data"))
-        #@test typeof(json_data["coverage"]["data/Coverage.jl"]) == Array{Union{Int64,Nothing},1}
-        close(open("fakefile", read=true, write=true, create=true, truncate=false, append=false))
-        @test isempty(Coverage.process_cov("fakefile", datadir))
-        rm("fakefile")
+        @test isempty(Coverage.process_cov(joinpath("test", "fakefile"), datadir))
 
         # test clean_folder
         # set up the test folder
@@ -614,4 +615,6 @@ end
     end
 end
 
-end
+end # of withenv("DISABLE_AMEND_COVERAGE_FROM_SRC" => nothing)
+
+end # of @testset "Coverage"
