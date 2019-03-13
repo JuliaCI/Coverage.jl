@@ -41,7 +41,8 @@ end
     @test !Coverage.isfuncexpr(:(f = x))
     @test Coverage.isfuncexpr(:(() -> x))
     @test Coverage.isfuncexpr(:(x -> x))
-    @test Coverage.isfuncexpr(:(g() where {T} = 3))
+    @test Coverage.isfuncexpr(:(f() where A = x))
+    @test Coverage.isfuncexpr(:(f() where A where B = x))
 end
 
 @testset "Processing coverage" begin
