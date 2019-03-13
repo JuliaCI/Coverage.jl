@@ -8,10 +8,10 @@ isevaldef(x) = Base.Meta.isexpr(x, :(=)) && Base.Meta.isexpr(x.args[1], :call) &
 # - those that are defined as `f = x -> expr`
 # - those that are defined as `f() = expr`
 # - those that are defined as `f() where {T} = expr`
+# - ... and various more
 isfuncexpr(ex::Expr) =
     ex.head == :function || ex.head == :-> ||
-        (ex.head == :(=) && typeof(ex.args[1]) == Expr &&
-            (ex.args[1].head == :call || (ex.args[1].head == :where && ex.args[1].args[1].head == :call)))
+        Base.is_short_function_def(ex)
 isfuncexpr(arg) = false
 
 function_body_lines(ast, coverage, lineoffset) = function_body_lines!(Int[], ast, coverage, lineoffset, false)
