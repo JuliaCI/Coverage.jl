@@ -172,7 +172,16 @@ module Coverage
         content = read(srcname, String)
         pos = 1
         while pos <= length(content)
-            lineoffset = searchsortedfirst(linepos, pos - 1) - 1
+            # We now want to convert the one-based offset pos into a line
+            # number, by looking it up in linepos. But linepos[i] contains the
+            # zero-based offset of the start of line i; since pos is
+            # one-based, we have to subtract 1 before searching through
+            # linepos. The result is a one-based line number; since we use
+            # that later on to shift other one-based line numbers, we must
+            # subtract 1 from the offset to make it zero-based.
+            lineoffset = searchsortedlast(linepos, pos - 1) - 1
+
+            # now we can parse the next chunk of the input
             ast, pos = Meta.parse(content, pos)
             isa(ast, Expr) || continue
             flines = function_body_lines(ast, coverage, lineoffset)
