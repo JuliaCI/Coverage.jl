@@ -147,13 +147,16 @@ module Coverage
 
     """
         amend_coverage_from_src!(coverage::Vector{CovCount}, srcname)
+        amend_coverage_from_src!(fc::FileCoverage)
 
-    The code coverage functionality in Julia can miss code lines, which
-    will be incorrectly recorded as `nothing` but should instead be 0
-    This function takes a coverage count vector and a the filename for
-    a Julia code file, and updates the coverage vector in place.
+    The code coverage functionality in Julia only reports lines that have been
+    compiled. Unused functions (or discarded lines) therefore may be incorrectly
+    recorded as `nothing` but should instead be 0.
+    This function takes an existing result and updates the coverage vector
+    in-place to mark source lines that may be inside a function.
     """
-    function amend_coverage_from_src!(coverage::Vector{CovCount}, srcname)
+    amend_coverage_from_src!(coverage::Vector{CovCount}, srcname) = amend_coverage_from_src!(FileCoverage(srcname, read(srcname, String), coverage))
+    function amend_coverage_from_src!(fc::FileCoverage)
         # The code coverage results produced by Julia itself report some
         # lines as "null" (cannot be run), when they could have been run
         # but were never compiled (thus should be 0).
@@ -161,15 +164,15 @@ module Coverage
         #
         # To make sure things stay in sync, parse the file position
         # corresponding to each new line
+        content, coverage = fc.source, fc.coverage
         linepos = Int[]
-        open(srcname) do io
+        let io = IOBuffer(content)
             while !eof(io)
                 push!(linepos, position(io))
                 readline(io)
             end
             push!(linepos, position(io))
         end
-        content = read(srcname, String)
         pos = 1
         while pos <= length(content)
             # We now want to convert the one-based offset pos into a line
@@ -189,7 +192,7 @@ module Coverage
                 flines .+= lineoffset
                 for l in flines
                     if l > length(coverage)
-                        error("source file is longer than .cov file; source might have changed")
+                        resize!(coverage, l)
                     end
                     if coverage[l] === nothing
                         coverage[l] = 0
@@ -212,10 +215,11 @@ module Coverage
     function process_file(filename, folder)
         @info "Coverage.process_file: Detecting coverage for $filename"
         coverage = process_cov(filename, folder)
+        fc = FileCoverage(filename, read(filename, String), coverage)
         if get(ENV, "DISABLE_AMEND_COVERAGE_FROM_SRC", "no") != "yes"
-            amend_coverage_from_src!(coverage, filename)
+            amend_coverage_from_src!(fc)
         end
-        return FileCoverage(filename, read(filename, String), coverage)
+        return fc
     end
     process_file(filename) = process_file(filename, splitdir(filename)[1])
 
