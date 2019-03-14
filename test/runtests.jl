@@ -117,7 +117,8 @@ end
         run(`$(Base.julia_cmd()) --startup-file=no --code-coverage=user -e $cmdstr`)
         r = process_file(srcname, datadir)
 
-        target = Union{Int64,Nothing}[nothing, 2, nothing, 0, nothing, 0, nothing, nothing, nothing, nothing, 0, nothing, nothing, nothing, nothing, nothing, 0, nothing, nothing, 0, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing]
+        target = Coverage.CovCount[nothing, 2, nothing, 0, nothing, 0, nothing, nothing, nothing, nothing, 0, nothing, nothing, nothing, nothing, nothing, 0, nothing, nothing, 0, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing]
+        target_disabled = map(x -> (x !== nothing && x > 0) ? x : nothing, target)
         @test r.coverage == target
 
         covtarget = (sum(x->x !== nothing && x > 0, target), sum(x->x !== nothing, target))
@@ -127,6 +128,10 @@ end
         r_disabled = withenv("DISABLE_AMEND_COVERAGE_FROM_SRC" => "yes") do
             process_file(srcname, datadir)
         end
+
+        @test r_disabled.coverage == target_disabled
+        amend_coverage_from_src!(r_disabled.coverage, r_disabled.filename)
+        @test r_disabled.coverage == target
 
         # Handle an empty coverage vector
         emptycov = FileCoverage("", "", [])
