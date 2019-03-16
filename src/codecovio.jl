@@ -195,7 +195,7 @@ module Codecov
         uri_str = construct_uri_string(;kwargs...)
 
         if verbose
-            @info "Codecov.io API URL:\n" * uri_str
+            @info "Codecov.io API URL:\n" * mask_token(uri_str)
         end
 
         if !dry_run
@@ -231,6 +231,10 @@ module Codecov
         end
 
         return uri_str
+    end
+
+    function mask_token(uri_string)
+        return replace(uri_string, r"token=[^&]*" => "token=<HIDDEN>")
     end
 
 end  # module Codecov

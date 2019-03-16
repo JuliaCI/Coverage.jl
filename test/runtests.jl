@@ -523,6 +523,32 @@ end
                 end
             end
         end
+
+        # test codecov token masking
+        withenv(
+            "APPVEYOR" => "true",
+            "APPVEYOR_PULL_REQUEST_NUMBER" => "t_pr",
+            "APPVEYOR_ACCOUNT_NAME" => "t_account",
+            "APPVEYOR_PROJECT_SLUG" => "t_slug",
+            "APPVEYOR_BUILD_VERSION" => "t_version",
+            "APPVEYOR_REPO_BRANCH" => "t_branch",
+            "APPVEYOR_REPO_COMMIT" => "t_commit",
+            "APPVEYOR_REPO_NAME" => "t_repo",
+            "APPVEYOR_JOB_ID" => "t_job_num",
+            "CODECOV_URL" => "https://enterprise-codecov-1.com",
+            "CODECOV_TOKEN" => "token_name_1"
+            ) do
+                codecov_url = construct_uri_string_ci()
+                masked = Coverage.Codecov.mask_token(codecov_url)
+                @test !occursin("token_name_1", masked)
+                @test occursin("token=<HIDDEN>", masked)
+        end
+
+        # in the case above, the token is at the end. Let's test explicitly,
+        # that this also works if the token occurs earlier in the url
+        url = "https://enterprise-codecov-1.com/upload/v2?token=token_name_1&build=t_job_num"
+        masked = Coverage.Codecov.mask_token(url)
+        @test masked == "https://enterprise-codecov-1.com/upload/v2?token=<HIDDEN>&build=t_job_num"
     end
 end
 
