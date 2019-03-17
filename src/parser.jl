@@ -70,7 +70,8 @@ function function_body_lines!(flines, ast::Expr, coverage::Vector{CovCount}, lin
         # speaking, and so we should *not* apply our heuristic (which is mean
         # to mark functions which were never executed as code, which the
         # coverage data returned by Julia normally does not)
-        if all(l -> coverage[l+lineoffset] === nothing, flines_new)
+        not_covered(l) = (l > length(coverage) || coverage[l + lineoffset] === nothing)
+        if all(not_covered, flines_new)
             append!(flines, flines_new)
         end
     else
