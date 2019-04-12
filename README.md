@@ -41,7 +41,7 @@ coverage = merge_coverage_counts(coverage, filter!(
 # Get total coverage for all Julia files
 covered_lines, total_lines = get_summary(coverage)
 # Or process a single file
-@show get_summary(process_file("src/MyPkg.jl"))
+@show get_summary(process_file(joinpath("src", "MyPkg.jl")))
 ```
 The fraction of total coverage is equal to `covered_lines/total_lines`.
 
