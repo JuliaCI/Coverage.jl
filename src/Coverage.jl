@@ -133,6 +133,7 @@ module Coverage
         # Keep track of the combined coverage
         full_coverage = CovCount[]
         for file in files
+            @info "Coverage.process_cov: processing $file"
             coverage = CovCount[]
             for line in eachline(file)
                 # Columns 1:9 contain the coverage count
@@ -232,7 +233,7 @@ module Coverage
     where Coverage is called from the root directory of a package.
     """
     function process_folder(folder="src")
-        @info """Coverage.process_folder: Searching $folder for .jl files..."""
+        @info "Coverage.process_folder: Searching $folder for .jl files..."
         source_files = FileCoverage[]
         files = readdir(folder)
         for file in files
@@ -242,7 +243,7 @@ module Coverage
                 if splitext(fullfile)[2] == ".jl"
                     push!(source_files, process_file(fullfile, folder))
                 else
-                    @info "Coverage.process_folder: Skipping $file, not a .jl file"
+                    @debug "Coverage.process_folder: Skipping $file, not a .jl file"
                 end
             elseif isdir(fullfile)
                 # If it is a folder, recursively traverse
