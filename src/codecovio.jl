@@ -182,27 +182,24 @@ module Codecov
     """
     function submit_generic(fcs::Vector{FileCoverage}; kwargs...)
         @assert length(kwargs) > 0
-        dry_run = false
-        verbose = true
-        for (k,v) in kwargs
-            if k == :dry_run
-                dry_run = true
-            end
-            if k == :verbose
-                verbose = v
-            end
+        dry_run = get(kwargs, :dry_run, false)
+        if haskey(kwargs, :verbose)
+            Base.depwarn("The verbose keyword argument is deprecated, set the environment variable " *
+                         "JULIA_DEBUG=Coverage for verbose output", :submit_generic)
+            verbose = kwargs[:verbose]
+        else
+            verbose = false
         end
         uri_str = construct_uri_string(;kwargs...)
 
-        if verbose
-            @info "Codecov.io API URL:\n" * mask_token(uri_str)
-        end
+        verbose && @info "Submitting data to Codecov..."
+        verbose && @debug "Codecov.io API URL:\n" * mask_token(uri_str)
 
         if !dry_run
             heads   = Dict("Content-Type" => "application/json")
             data    = to_json(fcs)
             req     = HTTP.post(uri_str; body = JSON.json(data), headers = heads)
-            @info "Result of submission:" * String(req)
+            @debug "Result of submission:" * String(req)
         end
     end
 
@@ -225,6 +222,9 @@ module Codecov
 
         uri_str = "$(codecov_url)/upload/v2?"
         for (k,v) in kwargs
+            # add all except a few special key/value pairs to the URL
+            # (:verbose is there for backwards compatibility with versions
+            # of this code that treated it in a special way)
             if k != :codecov_url && k != :dry_run && k != :verbose
                 uri_str = "$(uri_str)&$(k)=$(v)"
             end

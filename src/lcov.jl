@@ -130,7 +130,7 @@ function readfolder(folder)
             if endswith(fullfile, ".info")
                 append!(source_files, readfile(fullfile))
             else
-                @info "Coverage.LCOV.readfolder: Skipping $file, not a .info file"
+                @debug "Coverage.LCOV.readfolder: Skipping $file, not a .info file"
             end
         elseif isdir(fullfile)
             # If it is a folder, recursively traverse
