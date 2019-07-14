@@ -208,7 +208,7 @@ module Coverage
             while !eof(io)
                 line = readline(io)
                 # Verify that there is no line exclusion tag
-                if any(pat -> occursin(pat, line[10:end]), excluded_line_patterns)
+                if any(pat -> occursin(pat, line), excluded_line_patterns)
                     @debug "removing with regex $excluded_line_patterns line $l: $line"
                     coverage[l] = nothing
                 end
