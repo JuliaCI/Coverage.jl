@@ -218,6 +218,19 @@ For AppVeyor, add this to `.appveyor.yml`:
     environment:
       DISABLE_AMEND_COVERAGE_FROM_SRC: yes
 
+To help the coverage tracking, one can put a `.coverage.yml` in the source code
+folder to exclude particular files, or remove particular lines of code from the
+coverage statistic. The file should look like this:
+```
+# exclude files in the directory with these names exclude_files:
+  - file_to_be_excluded.jl
+  - another_file_to_excluded.jl
+
+# exclude any lines that match any of the following regexes exclude_patterns:
+  - "[NO COVERAGE]"
+```
+The exclusions are applied to all files in the folder as well as sub folders.
+
 ## Some Julia packages using Coverage.jl
 
 *Pull requests to add your package welcome (or open an issue)*
