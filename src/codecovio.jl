@@ -126,6 +126,18 @@ module Codecov
                 build_url    = ENV["BUILD_URL"],
                 jenkins_url  = ENV["JENKINS_URL"],
             )
+        elseif haskey(ENV, "BUILD_BUILDURI") # Azure Pipelines
+            ref = get(ENV, "SYSTEM_PULLREQUEST_TARGETBRANCH", ENV["BUILD_SOURCEBRANCHNAME"])
+            branch = startswith(ref, "refs/heads/") ? ref[12:end] : ref
+            kwargs = set_defaults(kwargs,
+                service      = "azure_pipelines",
+                branch       = branch,
+                commit       = ENV["BUILD_SOURCEVERSION"],
+                pull_request = get(ENV, "SYSTEM_PULLREQUEST_PULLREQUESTNUMBER", ""),
+                job          = ENV["BUILD_DEFINITIONNAME"],
+                slug         = ENV["BUILD_REPOSITORY_NAME"],
+                build        = ENV["BUILD_BUILDID"],
+            )            
         else
             error("No compatible CI platform detected")
         end
