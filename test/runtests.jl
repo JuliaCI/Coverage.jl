@@ -49,7 +49,7 @@ end
     cd(dirname(@__DIR__)) do
         datadir = joinpath("test", "data")
         # Process a saved set of coverage data...
-        r = process_file(joinpath(datadir, "no_exclusions", "Coverage.jl"))
+        r = process_file(joinpath(datadir, "no_exclusions", "Coverage.jl"), joinpath(datadir, "no_exclusions"))
 
         # ... and memory data
         malloc_results = analyze_malloc(datadir)
@@ -62,7 +62,7 @@ end
         expected = read(joinpath(datadir, "tracefiles", "expected.info"), String)
         if Sys.iswindows()
             expected = replace(expected, "\r\n" => "\n")
-            expected = replace(expected, "SF:test/data/Coverage.jl\n" => "SF:test\\data\\Coverage.jl\n")
+            expected = replace(expected, "SF:test/data/no_exclusions/Coverage.jl\n" => "SF:test\\data\\no_exclusions\\Coverage.jl\n")
         end
         @test String(take!(lcov)) == expected
 
@@ -72,7 +72,7 @@ end
         expected = read(joinpath(datadir, "tracefiles", "expected.info"), String)
         if Sys.iswindows()
             expected = replace(expected, "\r\n" => "\n")
-            expected = replace(expected, "SF:test/data/Coverage.jl\n" => "SF:test\\data\\Coverage.jl\n")
+            expected = replace(expected, "SF:test/data/no_exclusions/Coverage.jl\n" => "SF:test\\data\\no_exclusions\\Coverage.jl\n")
         end
         @test String(read(lcov)) == expected
         # tear down test file
