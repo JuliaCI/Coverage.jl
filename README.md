@@ -259,6 +259,7 @@ For AppVeyor, add this to `.appveyor.yml`:
 * [OpenCL.jl](https://github.com/JuliaGPU/OpenCL.jl)
 * [OpenStreetMap.jl](https://github.com/tedsteiner/OpenStreetMap.jl)
 * [PValueAdjust.jl](https://github.com/dirkschumacher/PValueAdjust.jl)
+* [PredictMD.jl](https://github.com/bcbi/PredictMD.jl)
 * [QuantEcon.jl](https://github.com/spencerlyon2/QuantEcon.jl)
 * [QuantileRegression.jl](https://github.com/vincentarelbundock/QuantileRegression.jl)
 * [RationalSimplex.jl](https://github.com/IainNZ/RationalSimplex.jl)
