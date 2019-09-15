@@ -137,7 +137,14 @@ module Codecov
                 job          = ENV["BUILD_DEFINITIONNAME"],
                 slug         = ENV["BUILD_REPOSITORY_NAME"],
                 build        = ENV["BUILD_BUILDID"],
-            )            
+            )
+        elseif haskey(ENV, "GITHUB_WORKSPACE") # GitHub Actions
+            kwargs = set_defaults(kwargs,
+                service      = "github",
+                branch       = ENV["GITHUB_REF"],
+                commit       = ENV["GITHUB_SHA"],
+                job          = ENV["GITHUB_WORKFLOW"],
+            )
         else
             error("No compatible CI platform detected")
         end
