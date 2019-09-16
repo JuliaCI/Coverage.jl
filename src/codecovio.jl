@@ -219,9 +219,6 @@ module Codecov
             heads   = Dict("Content-Type" => "application/json")
             data    = to_json(fcs)
             req     = HTTP.post(uri_str; body = JSON.json(data), headers = heads)
-            @show uri_str
-            @show heads
-            @show JSON.json(data)
             @debug "Result of submission:" * String(req)
         end
     end
