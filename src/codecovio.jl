@@ -143,6 +143,7 @@ module Codecov
                 service      = "github",
                 branch       = ENV["GITHUB_REF"],
                 commit       = ENV["GITHUB_SHA"],
+                slug         = ENV["GITHUB_REPOSITORY"],
                 job          = ENV["GITHUB_WORKFLOW"],
             )
         else
