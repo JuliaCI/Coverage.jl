@@ -141,10 +141,8 @@ module Codecov
         elseif haskey(ENV, "GITHUB_WORKSPACE") # GitHub Actions
             kwargs = set_defaults(kwargs,
                 service      = "custom",
-                # branch       = ENV["GITHUB_REF"],
                 commit       = ENV["GITHUB_SHA"],
                 slug         = ENV["GITHUB_REPOSITORY"],
-                # job          = ENV["GITHUB_WORKFLOW"],
             )
         else
             error("No compatible CI platform detected")
