@@ -138,7 +138,7 @@ module Codecov
                 slug         = ENV["BUILD_REPOSITORY_NAME"],
                 build        = ENV["BUILD_BUILDID"],
             )
-        elseif haskey(ENV, "GITHUB_WORKSPACE") # GitHub Actions
+        elseif haskey(ENV, "GITHUB_ACTION") # GitHub Actions
             kwargs = set_defaults(kwargs,
                 service      = "custom",
                 commit       = ENV["GITHUB_SHA"],
