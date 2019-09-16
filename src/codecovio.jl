@@ -140,11 +140,11 @@ module Codecov
             )
         elseif haskey(ENV, "GITHUB_WORKSPACE") # GitHub Actions
             kwargs = set_defaults(kwargs,
-                service      = "github",
-                branch       = ENV["GITHUB_REF"],
+                service      = "custom",
+                # branch       = ENV["GITHUB_REF"],
                 commit       = ENV["GITHUB_SHA"],
                 slug         = ENV["GITHUB_REPOSITORY"],
-                job          = ENV["GITHUB_WORKFLOW"],
+                # job          = ENV["GITHUB_WORKFLOW"],
             )
         else
             error("No compatible CI platform detected")
@@ -219,6 +219,9 @@ module Codecov
             heads   = Dict("Content-Type" => "application/json")
             data    = to_json(fcs)
             req     = HTTP.post(uri_str; body = JSON.json(data), headers = heads)
+            @show uri_str
+            @show heads
+            @show JSON.json(data)
             @debug "Result of submission:" * String(req)
         end
     end
