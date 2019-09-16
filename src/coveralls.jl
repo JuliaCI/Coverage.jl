@@ -88,6 +88,8 @@ module Coveralls
             if get(ENV, "CI_PULL_REQUEST", "false") == "false"
                 data["git"]["branch"] = split(ENV["GIT_BRANCH"], "/")[2]
             end
+        elseif haskey(ENV, "GITHUB_ACTION")
+            data["git"] = parse_git_info(git_info)
         else
             error("No compatible CI platform detected")
         end
