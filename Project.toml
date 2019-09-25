@@ -1,7 +1,7 @@
 name = "Coverage"
 uuid = "a2441757-f6aa-5fb2-8edb-039e3f45d037"
 authors = ["Iain Dunning <iaindunning@gmail.com>"]
-version = "0.9.2"
+version = "0.9.3"
 
 [deps]
 HTTP = "cd3eb016-35fb-5094-929b-558a96fad6f3"
