@@ -186,6 +186,17 @@ end
         "APPVEYOR_REPO_COMMIT" => nothing,
         "APPVEYOR_REPO_NAME" => nothing,
         "APPVEYOR_JOB_ID" => nothing,
+        "BUILD_BUILDURI" => nothing,
+        "SYSTEM_PULLREQUEST_TARGETBRANCH" => nothing,
+        "BUILD_SOURCEBRANCHNAME" => nothing,
+        "BUILD_SOURCEVERSION" => nothing,
+        "SYSTEM_PULLREQUEST_PULLREQUESTNUMBER" => nothing,
+        "BUILD_DEFINITIONNAME" => nothing,
+        "BUILD_REPOSITORY_NAME" => nothing,
+        "BUILD_BUILDID" => nothing,
+        "GITHUB_ACTION" => nothing,
+        "GITHUB_SHA" => nothing,
+        "GITHUB_REPOSITORY" => nothing,
         ) do
 
         # test local submission process (but only if we are in a git repo)
@@ -524,6 +535,28 @@ end
             end
         end
 
+        # set up Azure Pipelines env
+        withenv(
+            "BUILD_BUILDURI" => "BUILD_BUILDURI",
+            "BUILD_SOURCEBRANCHNAME" => "BUILD_SOURCEBRANCHNAME",
+            "BUILD_SOURCEVERSION" => "BUILD_SOURCEVERSION",
+            "SYSTEM_PULLREQUEST_PULLREQUESTNUMBER" => "SYSTEM_PULLREQUEST_PULLREQUESTNUMBER",
+            "BUILD_DEFINITIONNAME" => "BUILD_DEFINITIONNAME",
+            "BUILD_REPOSITORY_NAME" => "BUILD_REPOSITORY_NAME",
+            "BUILD_BUILDID" => "BUILD_BUILDID",
+            ) do
+            codecov_url = construct_uri_string_ci()
+        end
+
+        # set up GitHub Actions env
+        withenv(
+            "GITHUB_ACTION" => "GITHUB_ACTION",
+            "GITHUB_SHA" => "GITHUB_SHA",
+            "GITHUB_REPOSITORY" => "GITHUB_REPOSITORY",
+            ) do
+            codecov_url = construct_uri_string_ci()
+        end
+
         # test codecov token masking
         withenv(
             "APPVEYOR" => "true",
@@ -549,6 +582,19 @@ end
         url = "https://enterprise-codecov-1.com/upload/v2?token=token_name_1&build=t_job_num"
         masked = Coverage.Codecov.mask_token(url)
         @test masked == "https://enterprise-codecov-1.com/upload/v2?token=<HIDDEN>&build=t_job_num"
+    end
+
+    @info("The following \"Warning: The verbose keyword argument is deprecated\" is a normal part of the test suite")
+    Coverage.Codecov.submit_local(FileCoverage[]; dry_run=true)
+    Coverage.Codecov.submit_local(FileCoverage[]; dry_run=true, verbose = false)
+    Coverage.Codecov.submit_local(FileCoverage[]; dry_run=true, verbose = true)
+    Coverage.Codecov.submit_generic(FileCoverage[]; dry_run=true)
+    Coverage.Codecov.submit_generic(FileCoverage[]; dry_run=true, verbose = false)
+    Coverage.Codecov.submit_generic(FileCoverage[]; dry_run=true, verbose = true)
+
+    withenv("REPO_TOKEN" => "") do
+        @info("The following \"Warning: the environment variable REPO_TOKEN is deprecated\" is a normal part of the test suite")
+        Coverage.Codecov.add_local_to_kwargs(pwd())
     end
 end
 
