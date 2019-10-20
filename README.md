@@ -16,7 +16,7 @@ Coverage.jl
 
 ### Code coverage
 
-*Step 1:* Navigate to your test directory, and run julia with the `--code-coverage` option.
+*Step 1:* Navigate to your test directory, and run julia with the `--code-coverage` option:
 ```sh
 julia --code-coverage=user
 julia --code-coverage=tracefile-%p.info --code-coverage=user  # available in Julia v1.1+
