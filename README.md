@@ -16,13 +16,13 @@ Coverage.jl
 
 ### Code coverage
 
-*Step 1:* Navigate to your test directory, and run julia with the `--code-coverage` option:
+*Step 1:* Navigate to your test directory, and run julia with the `--code-coverage` option.
 ```sh
 julia --code-coverage=user
 julia --code-coverage=tracefile-%p.info --code-coverage=user  # available in Julia v1.1+
 ```
 
-*Step 2:* Run your tests (e.g., `include("runtests.jl")`) and quit Julia.
+*Step 2:* Run your tests (e.g., `include("runtests.jl")`) and quit Julia. (If you use `Pkg.test` to run your tests, set the `coverage` keyword argument to `true`, i.e. `Pkg.test("MyPkg"; coverage=true)`.)
 
 *Step 3:* Navigate to the top-level directory of your package, restart Julia (with no special flags) and analyze your code coverage:
 
