@@ -8,6 +8,7 @@ web service. It exports the `submit` and `submit_local` methods.
 """
 module Coveralls
     using Coverage
+    using CoverageTools
     using HTTP
     using JSON
     using LibGit2

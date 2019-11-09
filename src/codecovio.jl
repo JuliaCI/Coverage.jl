@@ -9,6 +9,7 @@ web service. It exports the `submit` and `submit_local` methods.
 module Codecov
     using HTTP
     using Coverage
+    using CoverageTools
     using JSON
     using LibGit2
 

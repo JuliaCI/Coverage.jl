@@ -1,17 +1,21 @@
 name = "Coverage"
 uuid = "a2441757-f6aa-5fb2-8edb-039e3f45d037"
 authors = ["Iain Dunning <iaindunning@gmail.com>"]
-version = "0.9.3"
+version = "1.0.0-DEV"
 
 [deps]
+CoverageTools = "c36e975a-824b-4404-a568-ef97ca766997"
 HTTP = "cd3eb016-35fb-5094-929b-558a96fad6f3"
 JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
 LibGit2 = "76f85450-5226-5b5a-8eaa-529ad045b433"
 MbedTLS = "739be429-bea8-5141-9913-cc70e7f3736d"
 
 [compat]
-HTTP = ">=0.8.0"
-julia = "0.7, 1.0"
+CoverageTools = "1"
+HTTP = "0.8"
+JSON = "0.21"
+MbedTLS = "0.6, 0.7"
+julia = "0.7, 1"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
