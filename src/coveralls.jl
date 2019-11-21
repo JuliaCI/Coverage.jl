@@ -95,6 +95,9 @@ module Coveralls
         end
 
         data = add_repo_token(data, local_env)
+        if get(ENV, "COVERALLS_PARALLEL", "false") == "true"
+            data["parallel"] = "true"
+        end
         return data
     end
 
@@ -181,6 +184,7 @@ module Coveralls
         verbose && @info "Submitting data to Coveralls..."
         req = HTTP.post("https://coveralls.io/api/v1/jobs", HTTP.Form(makebody(data)))
         verbose && @debug "Result of submission:\n" * String(req.body)
+        nothing
     end
 
     # adds the repo token to the data
