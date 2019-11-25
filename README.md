@@ -184,7 +184,6 @@ When using Coverage.jl locally, over time a lot of `.cov` files can accumulate. 
           webhooks: https://coveralls.io/webhook
 
 
-
 ## A note for advanced users
 
 Coverage tracking in Julia is not yet quite perfect. One problem is that (at
