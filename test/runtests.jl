@@ -600,29 +600,34 @@ withenv(
                 @test request["service_job_id"] == "my_job_id"
                 @test request["service_name"] == "appveyor"
                 @test request["service_pull_request"] == "t_pr"
+                @test !haskey(request, "parallel")
         end
 
         # test Travis
         withenv("TRAVIS" => "true",
                 "TRAVIS_JOB_ID" => "my_job_id",
-                "TRAVIS_PULL_REQUEST" => "t_pr") do
+                "TRAVIS_PULL_REQUEST" => "t_pr",
+                "COVERALLS_PARALLEL" => "true") do
                 request = Coverage.Coveralls.prepare_request(fcs, false)
                 @test request["repo_token"] == "token_name_1"
                 @test request["service_job_id"] == "my_job_id"
                 @test request["service_name"] == "travis-ci"
                 @test request["service_pull_request"] == "t_pr"
+                @test request["parallel"] == "true"
         end
 
         # test Jenkins
         withenv("JENKINS" => "true",
                 "BUILD_ID" => "my_job_id",
-                "CI_PULL_REQUEST" => true) do
+                "CI_PULL_REQUEST" => true,
+                "COVERALLS_PARALLEL" => "not") do
                 my_git_info = Dict("remote_name" => "my_origin")
                 request = Coverage.Coveralls.prepare_request(fcs, false)
                 @test request["repo_token"] == "token_name_1"
                 @test request["service_job_id"] == "my_job_id"
                 @test request["service_name"] == "jenkins-ci"
                 @test !haskey(request, "service_pull_request")
+                @test !haskey(request, "parallel")
 
                 withenv("CI_PULL_REQUEST" => "false",
                         "GIT_BRANCH" => "my_remote/my_branch") do
