@@ -76,9 +76,13 @@ module Coveralls
         elseif lowercase(get(ENV, "APPVEYOR", "false")) == "true"
             data["service_job_id"] = ENV["APPVEYOR_JOB_ID"]
             data["service_name"] = "appveyor"
+            appveyor_pr = get(ENV, "APPVEYOR_PULL_REQUEST_NUMBER", "")
+            isempty(appveyor_pr) || (data["service_pull_request"] = appveyor_pr)
         elseif lowercase(get(ENV, "TRAVIS", "false")) == "true"
             data["service_job_id"] = ENV["TRAVIS_JOB_ID"]
             data["service_name"] = "travis-ci"
+            travis_pr = get(ENV, "TRAVIS_PULL_REQUEST", "")
+            isempty(travis_pr) || (data["service_pull_request"] = travis_pr)
         elseif lowercase(get(ENV, "JENKINS", "false")) == "true"
             data["service_job_id"] = ENV["BUILD_ID"]
             data["service_name"] = "jenkins-ci"

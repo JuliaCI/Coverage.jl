@@ -154,44 +154,48 @@ end
     end
 end
 
-@testset "codecovio.jl" begin
-    # these methods are only used for testing the token generation for local repos
-    # and CI whilst not breaking the current API
-    construct_uri_string_local(dir=pwd(); kwargs...) = Coverage.Codecov.construct_uri_string(
-        ;Coverage.Codecov.add_local_to_kwargs(dir; kwargs...)...)
 
-    construct_uri_string_ci(;kwargs...) = Coverage.Codecov.construct_uri_string(
-        ;Coverage.Codecov.add_ci_to_kwargs(;kwargs...)...)
+# set up base system ENV vars for testing
+withenv(
+    "COVERALLS_TOKEN" => "token_name_1",
+    "CODECOV_URL" => nothing,
+    "CODECOV_TOKEN" => nothing,
+    "TRAVIS" => nothing,
+    "TRAVIS_BRANCH" => nothing,
+    "TRAVIS_COMMIT" => nothing,
+    "TRAVIS_PULL_REQUEST" => nothing,
+    "TRAVIS_JOB_ID" => nothing,
+    "TRAVIS_REPO_SLUG" => nothing,
+    "TRAVIS_JOB_NUMBER" => nothing,
+    "APPVEYOR" => nothing,
+    "APPVEYOR_PULL_REQUEST_NUMBER" => nothing,
+    "APPVEYOR_ACCOUNT_NAME" => nothing,
+    "APPVEYOR_PROJECT_SLUG" => nothing,
+    "APPVEYOR_BUILD_VERSION" => nothing,
+    "APPVEYOR_REPO_BRANCH" => nothing,
+    "APPVEYOR_REPO_COMMIT" => nothing,
+    "APPVEYOR_REPO_NAME" => nothing,
+    "APPVEYOR_JOB_ID" => nothing,
+    "JENKINS" => nothing,
+    "BUILD_ID" => nothing,
+    "CI_PULL_REQUEST" => nothing,
+    "GIT_BRANCH" => nothing
+    ) do
 
-    # empty file coverage for testing
-    fcs = FileCoverage[]
+    @testset "codecovio.jl" begin
+        # these methods are only used for testing the token generation for local repos
+        # and CI whilst not breaking the current API
+        construct_uri_string_local(dir=pwd(); kwargs...) = Coverage.Codecov.construct_uri_string(
+            ;Coverage.Codecov.add_local_to_kwargs(dir; kwargs...)...)
 
-    # set up base system ENV vars for testing
-    withenv(
-        "CODECOV_URL" => nothing,
-        "CODECOV_TOKEN" => nothing,
-        "TRAVIS" => nothing,
-        "TRAVIS_BRANCH" => nothing,
-        "TRAVIS_COMMIT" => nothing,
-        "TRAVIS_PULL_REQUEST" => nothing,
-        "TRAVIS_JOB_ID" => nothing,
-        "TRAVIS_REPO_SLUG" => nothing,
-        "TRAVIS_JOB_NUMBER" => nothing,
-        "APPVEYOR" => nothing,
-        "APPVEYOR_PULL_REQUEST_NUMBER" => nothing,
-        "APPVEYOR_ACCOUNT_NAME" => nothing,
-        "APPVEYOR_PROJECT_SLUG" => nothing,
-        "APPVEYOR_BUILD_VERSION" => nothing,
-        "APPVEYOR_REPO_BRANCH" => nothing,
-        "APPVEYOR_REPO_COMMIT" => nothing,
-        "APPVEYOR_REPO_NAME" => nothing,
-        "APPVEYOR_JOB_ID" => nothing,
-        ) do
+        construct_uri_string_ci(;kwargs...) = Coverage.Codecov.construct_uri_string(
+            ;Coverage.Codecov.add_ci_to_kwargs(;kwargs...)...)
+
+        # empty file coverage for testing
+        fcs = FileCoverage[]
 
         # test local submission process (but only if we are in a git repo)
-
         _dotgit = joinpath(dirname(@__DIR__), ".git")
-
         if isdir(_dotgit) || isfile(_dotgit)
             LibGit2.with(LibGit2.GitRepoExt(pwd())) do repo
                 # default values
@@ -550,37 +554,26 @@ end
         masked = Coverage.Codecov.mask_token(url)
         @test masked == "https://enterprise-codecov-1.com/upload/v2?token=<HIDDEN>&build=t_job_num"
     end
-end
+            
 
+    @testset "coveralls" begin
+        # NOTE: this only returns actual content if this package is devved.
+        # Hence the test is basically on this function returning something
+        # (rather than erroring)
+        git = Coverage.Coveralls.query_git_info()
+        @test git["remotes"][1]["name"] == "origin"
+        @test haskey(git["remotes"][1], "url")
 
-@testset "coveralls" begin
-    # NOTE: this only returns actual content if this package is devved.
-    # Hence the test is basically on this function returning something
-    # (rather than erroring)
-    git = Coverage.Coveralls.query_git_info()
-    @test git["remotes"][1]["name"] == "origin"
-    @test haskey(git["remotes"][1], "url")
+        # for testing submit_***()
+        fcs = FileCoverage[]
 
-    # for testing submit_***()
-    fcs = FileCoverage[]
-
-    # an error should be raised if there is no coveralls token set
-    withenv("COVERALLS_TOKEN" => nothing,
-            "REPO_TOKEN" => nothing,  # this is deprecrated, use COVERALLS_TOKEN
-            "APPVEYOR" => "true",  # use APPVEYOR as an example to make the test reach the repo token check
-            "APPVEYOR_JOB_ID" => "my_job_id") do
-            @test_throws ErrorException Coverage.Coveralls.prepare_request(fcs, false)
-    end
-
-    withenv("COVERALLS_TOKEN" => "token_name_1",
-            "APPVEYOR" => nothing,
-            "APPVEYOR_JOB_ID" => nothing,
-            "TRAVIS" => nothing,
-            "TRAVIS_JOB_ID" => nothing,
-            "JENKINS" => nothing,
-            "BUILD_ID" => nothing,
-            "CI_PULL_REQUEST" => nothing,
-            "GIT_BRANCH" => nothing) do
+        # an error should be raised if there is no coveralls token set
+        withenv("COVERALLS_TOKEN" => nothing,
+                "REPO_TOKEN" => nothing,  # this is deprecrated, use COVERALLS_TOKEN
+                "APPVEYOR" => "true",  # use APPVEYOR as an example to make the test reach the repo token check
+                "APPVEYOR_JOB_ID" => "my_job_id") do
+                @test_throws ErrorException Coverage.Coveralls.prepare_request(fcs, false)
+        end
 
         # test error if not local and no CI platform can be detected from ENV
         @test_throws ErrorException Coverage.Coveralls.prepare_request(fcs, false)
@@ -593,26 +586,33 @@ end
                 @test isempty(request["source_files"])
                 @test haskey(request, "git")
                 @test request["git"]["remotes"][1]["name"] == "origin"
+                @test !haskey(request, "service_job_id")
+                @test !haskey(request, "service_name")
+                @test !haskey(request, "service_pull_request")
         end
 
         # test APPVEYOR
         withenv("APPVEYOR" => "true",
+                "APPVEYOR_PULL_REQUEST_NUMBER" => "t_pr",
                 "APPVEYOR_JOB_ID" => "my_job_id") do
                 request = Coverage.Coveralls.prepare_request(fcs, false)
                 @test request["repo_token"] == "token_name_1"
                 @test request["service_job_id"] == "my_job_id"
                 @test request["service_name"] == "appveyor"
+                @test request["service_pull_request"] == "t_pr"
                 @test !haskey(request, "parallel")
         end
 
         # test Travis
         withenv("TRAVIS" => "true",
                 "TRAVIS_JOB_ID" => "my_job_id",
+                "TRAVIS_PULL_REQUEST" => "t_pr",
                 "COVERALLS_PARALLEL" => "true") do
                 request = Coverage.Coveralls.prepare_request(fcs, false)
                 @test request["repo_token"] == "token_name_1"
                 @test request["service_job_id"] == "my_job_id"
                 @test request["service_name"] == "travis-ci"
+                @test request["service_pull_request"] == "t_pr"
                 @test request["parallel"] == "true"
         end
 
@@ -626,6 +626,7 @@ end
                 @test request["repo_token"] == "token_name_1"
                 @test request["service_job_id"] == "my_job_id"
                 @test request["service_name"] == "jenkins-ci"
+                @test !haskey(request, "service_pull_request")
                 @test !haskey(request, "parallel")
 
                 withenv("CI_PULL_REQUEST" => "false",
@@ -648,7 +649,7 @@ end
                 # or directly a dict
                 request = Coverage.Coveralls.prepare_request(fcs, false, Dict("test" => "test"))
                 @test haskey(request, "git")
-            end
+        end
     end
 end
 
