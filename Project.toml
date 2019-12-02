@@ -10,9 +10,10 @@ LibGit2 = "76f85450-5226-5b5a-8eaa-529ad045b433"
 MbedTLS = "739be429-bea8-5141-9913-cc70e7f3736d"
 
 [compat]
-HTTP = ">=0.8.0"
+HTTP = "0.8"
 JSON = "0.21"
-julia = "0.7, 1.0"
+MbedTLS = "0.6, 0.7"
+julia = "0.7, 1"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
