@@ -12,6 +12,7 @@ MbedTLS = "739be429-bea8-5141-9913-cc70e7f3736d"
 [compat]
 HTTP = ">=0.8.0"
 JSON = "0.21"
+MbedTLS = "0.7"
 julia = "0.7, 1.0"
 
 [extras]
