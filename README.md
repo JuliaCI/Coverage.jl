@@ -12,6 +12,12 @@ Coverage.jl
 
 **Memory allocation**: Julia can track how much memory is allocated by each line of your code. This can reveal problems like type instability, or operations that you might have thought were cheap (in terms of memory allocated) but aren't (i.e. accidental copying).
 
+## Comparison of coverage packages
+- [CoverageTools.jl](https://github.com/JuliaCI/CoverageTools.jl): core functionality for processing code coverage and memory allocation results
+- **[Coverage.jl](https://github.com/JuliaCI/Coverage.jl) (this package): allows you to take coverage results and submit them to online web services such as Codecov.io and Coveralls.io**
+
+Most users will want to use [Coverage.jl](https://github.com/JuliaCI/Coverage.jl).
+
 ## Working locally
 
 ### Code coverage
