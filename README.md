@@ -64,7 +64,7 @@ julia --track-allocation=user
 ```
 Then:
 - Run whatever commands you wish to test. This first run is to ensure that everything is compiled (because compilation allocates memory).
-- Call `Profile.clear_malloc_data()`)
+- Call `Profile.clear_malloc_data()`
 - Run your commands again
 - Quit julia
 
