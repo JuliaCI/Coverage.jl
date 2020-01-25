@@ -97,7 +97,8 @@ When using Coverage.jl locally, over time a lot of `.cov` files can accumulate. 
    - If it is public on GitHub and you are using using Travis, CircleCI or
      Appveyor, this is all you need to do. You can sign into Codecov using your
      Github identity.
-   - Otherwise you will need to define a `CODECOV_TOKEN` environment variable
+   - Else it is private, check out [the TravisCI docs for platfrom specific setup.](https://docs.travis-ci.com/user/coveralls/#coveralls-and-private-repositories)
+     You will also need to define a `CODECOV_TOKEN` environment variable
      with the Repository Upload Token available under the Codecov settings.
 
 2. Use the command line option when you run your tests:
