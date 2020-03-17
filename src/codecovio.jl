@@ -145,6 +145,17 @@ module Codecov
                 commit       = ENV["GITHUB_SHA"],
                 slug         = ENV["GITHUB_REPOSITORY"],
             )
+        elseif haskey(ENV, "CODEBUILD_BUILD_ARN") # AWS CodeBuild
+            ref = get(ENV, "CODEBUILD_WEBHOOK_HEAD_REF", "")
+            branch = startswith(ref, "refs/heads/") ? ref[12:end] : ref
+            kwargs = set_defaults(kwargs,
+                service      = "aws_codebuild",
+                branch       = branch,
+                commit       = ENV["CODEBUILD_RESOLVED_SOURCE_VERSION"],
+                pull_request = get(ENV, "CODEBUILD_WEBHOOK_TRIGGER", ""),
+                slug         = ENV["CODEBUILD_BUILD_ID"],
+                build        = ENV["CODEBUILD_BUILD_NUMBER"],
+            )
         else
             error("No compatible CI platform detected")
         end
