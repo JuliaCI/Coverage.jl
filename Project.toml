@@ -1,7 +1,7 @@
 name = "Coverage"
 uuid = "a2441757-f6aa-5fb2-8edb-039e3f45d037"
 authors = ["Iain Dunning <iaindunning@gmail.com>"]
-version = "1.0.1"
+version = "1.1.0"
 
 [deps]
 CoverageTools = "c36e975a-824b-4404-a568-ef97ca766997"
@@ -15,7 +15,7 @@ CoverageTools = "1"
 HTTP = "0.8"
 JSON = "0.21"
 MbedTLS = "0.6, 0.7"
-julia = "0.7, 1"
+julia = "1"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
