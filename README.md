@@ -2,7 +2,6 @@ Coverage.jl
 ===========
 
 [![Build Status](https://travis-ci.org/JuliaCI/Coverage.jl.svg?branch=master)](https://travis-ci.org/JuliaCI/Coverage.jl)
-[![Build status](https://ci.appveyor.com/api/projects/status/07fkrnj70sevoqny?svg=true)](https://ci.appveyor.com/project/JuliaCI/coverage-jl)
 [![Coverage Status](https://coveralls.io/repos/github/JuliaCI/Coverage.jl/badge.svg?branch=master)](https://coveralls.io/github/JuliaCI/Coverage.jl?branch=master)
 [![codecov](https://codecov.io/gh/JuliaCI/Coverage.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/JuliaCI/Coverage.jl)
 
