@@ -27,6 +27,8 @@ julia:
 
 jobs:
   fast_finish: true
+  allow_failures:
+    - julia: nightly
 
   # Test 32-bit only on Linux
   exclude:
