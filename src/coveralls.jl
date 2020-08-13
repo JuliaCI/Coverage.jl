@@ -11,6 +11,7 @@ module Coveralls
     using CoverageTools
     using HTTP
     using JSON
+    using YAML
     using LibGit2
     using MbedTLS
 
@@ -194,15 +195,25 @@ module Coveralls
 
     # adds the repo token to the data
     function add_repo_token(data, local_submission)
-        repo_token =
-                get(ENV, "COVERALLS_TOKEN") do
-                    get(ENV, "REPO_TOKEN") do #backward compatibility
-                        # error unless we are on Travis
-                        if local_submission || (data["service_name"] != "travis-ci")
-                            error("Coveralls submission requires a COVERALLS_TOKEN environment variable")
+        if isfile(".coveralls.yml")
+            config = YAML.load_file(".coveralls.yml")
+            if haskey(config, "repo_token")
+                repo_token = config["repo_token"]
+            else
+                error("expect repo_token in .coveralls.yml")
+            end
+        else
+            repo_token =
+                    get(ENV, "COVERALLS_TOKEN") do
+                        get(ENV, "REPO_TOKEN") do #backward compatibility
+                            # error unless we are on Travis
+                            if local_submission || haskey(data, "service_name") || (data["service_name"] != "travis-ci")
+                                error("Coveralls submission requires a COVERALLS_TOKEN environment variable")
+                            end
                         end
                     end
-                end
+        end
+
         if repo_token !== nothing
             data["repo_token"] = repo_token
         end

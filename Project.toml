@@ -9,11 +9,13 @@ HTTP = "cd3eb016-35fb-5094-929b-558a96fad6f3"
 JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
 LibGit2 = "76f85450-5226-5b5a-8eaa-529ad045b433"
 MbedTLS = "739be429-bea8-5141-9913-cc70e7f3736d"
+YAML = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"
 
 [compat]
 CoverageTools = "1"
 HTTP = "0.8"
 JSON = "0.21"
+YAML = "0.4"
 MbedTLS = "0.6, 0.7, 1"
 julia = "1"
 
