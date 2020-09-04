@@ -74,6 +74,8 @@ module Coveralls
         if local_env
             # Attempt to parse git info via git_info, unless the user explicitly disables it by setting git_info to nothing
             data["git"] = parse_git_info(git_info)
+            pr = get(ENV, "PULL_REQUEST", "")
+            isempty(pr) || (data["service_pull_request"] = pr)
         elseif lowercase(get(ENV, "APPVEYOR", "false")) == "true"
             data["service_job_id"] = ENV["APPVEYOR_JOB_ID"]
             data["service_name"] = "appveyor"

@@ -589,6 +589,10 @@ withenv(
                 @test !haskey(request, "service_job_id")
                 @test !haskey(request, "service_name")
                 @test !haskey(request, "service_pull_request")
+                withenv("PULL_REQUEST" => "7") do
+                    request = Coverage.Coveralls.prepare_request(fcs, true)
+                    @test request["service_pull_request"] == "7"
+                end
         end
 
         # test APPVEYOR
