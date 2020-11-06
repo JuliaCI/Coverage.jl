@@ -38,9 +38,9 @@ notifications:
   email: false
 
 script:
-  - julia --check-bounds=yes etc/travis-test.jl
+  - julia --color=yes --check-bounds=yes etc/travis-test.jl
   - export COVERALLS_PARALLEL=true
   # submit coverage data, and collect new coverage data on that
-  - julia --code-coverage=user etc/travis-coverage.jl
+  - julia --color=yes --code-coverage=user etc/travis-coverage.jl
   # submit coverage data *again*, this time without code coverage
-  - julia etc/travis-coverage.jl
+  - julia --color=yes etc/travis-coverage.jl
