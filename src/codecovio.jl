@@ -139,10 +139,26 @@ module Codecov
                 build        = ENV["BUILD_BUILDID"],
             )
         elseif haskey(ENV, "GITHUB_ACTION") # GitHub Actions
+            ref = ENV["GITHUB_REF"]
+            if startswith(ref, "refs/heads/")
+                branch = ref[12:end]
+                ga_pr = "false"
+            elseif startswith(ref, "refs/tags/")
+                branch = ref[11:end]
+                ga_pr = "false"
+            elseif startswith(ref, "refs/pull/")
+                branch = ENV["GITHUB_HEAD_REF"]
+                ga_pr = first(split(ref[11:end], "/"))
+            end
+            ga_build_url = "https://github.com/$(ENV["GITHUB_REPOSITORY"])/actions/runs/$(ENV["GITHUB_RUN_ID"])"
             kwargs = set_defaults(kwargs,
-                service      = "custom",
+                service      = "github-actions",
+                branch       = branch,
                 commit       = ENV["GITHUB_SHA"],
+                pull_request = ga_pr,
                 slug         = ENV["GITHUB_REPOSITORY"],
+                build        = ENV["GITHUB_RUN_ID"],
+                build_url    = ga_build_url,
             )
         else
             error("No compatible CI platform detected")
