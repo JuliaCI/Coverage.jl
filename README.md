@@ -1,7 +1,7 @@
 Coverage.jl
 ===========
 
-[![Build Status](https://travis-ci.org/JuliaCI/Coverage.jl.svg?branch=master)](https://travis-ci.org/JuliaCI/Coverage.jl)
+[![Build Status](https://travis-ci.com/JuliaCI/Coverage.jl.svg?branch=master)](https://travis-ci.com/JuliaCI/Coverage.jl)
 [![Coverage Status](https://coveralls.io/repos/github/JuliaCI/Coverage.jl/badge.svg?branch=master)](https://coveralls.io/github/JuliaCI/Coverage.jl?branch=master)
 [![codecov](https://codecov.io/gh/JuliaCI/Coverage.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/JuliaCI/Coverage.jl)
 
@@ -90,7 +90,7 @@ When using Coverage.jl locally, over time a lot of `.cov` files can accumulate. 
 
 ## Tracking Coverage with [Codecov.io](https://codecov.io)
 
-[Codecov.io](https://codecov.io) is a test coverage tracking tool that integrates with your continuous integration servers (e.g. [TravisCI](https://travis-ci.org/)) or with HTTP POSTs from your very own computer at home.
+[Codecov.io](https://codecov.io) is a test coverage tracking tool that integrates with your continuous integration servers (e.g. [TravisCI](https://travis-ci.com/)) or with HTTP POSTs from your very own computer at home.
 
 1. Enable [Codecov.io](https://codecov.io) for your repository.
    - If it is public on GitHub and you are using using Travis, CircleCI or
@@ -138,7 +138,7 @@ When using Coverage.jl locally, over time a lot of `.cov` files can accumulate. 
 
 ## Tracking Coverage with [Coveralls.io](https://coveralls.io)
 
-[Coveralls.io](https://coveralls.io) is a test coverage tracking tool that integrates with your continuous integration solution (e.g. [TravisCI](https://travis-ci.org/)).
+[Coveralls.io](https://coveralls.io) is a test coverage tracking tool that integrates with your continuous integration solution (e.g. [TravisCI](https://travis-ci.com/)).
 
 1. Enable [Coveralls.io](https://coveralls.io) for your repository. If it is
    public on GitHub and you are using TravisCI, this is all you need to do. If
