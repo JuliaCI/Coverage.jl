@@ -46,16 +46,14 @@ module Codecov
     kwargs provides default values to insert into args_array, only if they are
     not already specified in args_array.
     """
-    function set_defaults(args_array; kwargs...)
-        defined_names = keys(args_array)
-        is_args_array = Pair{Symbol, Any}[]
-        is_args_array = append!(is_args_array, args_array)
+    function set_defaults(args_array::Dict; kwargs...)
+        args_array = copy(args_array)
         for kwarg in kwargs
-            if !(kwarg[1] in defined_names)
-                push!(is_args_array, kwarg)
+            if !haskey(args_array, kwarg[1])
+                push!(args_array, kwarg)
             end
         end
-        return is_args_array
+        return args_array
     end
 
     """
@@ -66,11 +64,12 @@ module Codecov
     on TravisCI or AppVeyor. If running locally, use `submit_local`.
     """
     function submit(fcs::Vector{FileCoverage}; kwargs...)
-        submit_generic(fcs; add_ci_to_kwargs(;kwargs...)...)
+        submit_generic(fcs, add_ci_to_kwargs(; kwargs...))
     end
 
 
-    function add_ci_to_kwargs(;kwargs...)
+    add_ci_to_kwargs(; kwargs...) = add_ci_to_kwargs(Dict{Symbol,Any}(kwargs))
+    function add_ci_to_kwargs(kwargs::Dict)
         if lowercase(get(ENV, "APPVEYOR", "false")) == "true"
             appveyor_pr = get(ENV, "APPVEYOR_PULL_REQUEST_NUMBER", "")
             appveyor_job = join(
@@ -161,10 +160,11 @@ module Codecov
     `token` keyword argument or the `CODECOV_TOKEN` environment variable.
     """
     function submit_local(fcs::Vector{FileCoverage}, dir::AbstractString=pwd(); kwargs...)
-        submit_generic(fcs; add_local_to_kwargs(dir; kwargs...)...)
+        submit_generic(fcs, add_local_to_kwargs(dir; kwargs...))
     end
 
-    function add_local_to_kwargs(dir; kwargs...)
+    add_local_to_kwargs(dir; kwargs...) = add_local_to_kwargs(dir, Dict{Symbol,Any}(kwargs))
+    function add_local_to_kwargs(dir, kwargs::Dict)
         LibGit2.with(LibGit2.GitRepoExt(dir)) do repo
             LibGit2.with(LibGit2.head(repo)) do headref
                 branch_name = LibGit2.shortname(headref) # this function returns a String
@@ -199,7 +199,9 @@ module Codecov
     The `dry_run` keyword can be used to prevent the http request from
     being generated.
     """
-    function submit_generic(fcs::Vector{FileCoverage}; kwargs...)
+    submit_generic(fcs::Vector{FileCoverage}; kwargs...) =
+        submit_generic(fcs, Dict{Symbol,Any}(kwargs))
+    function submit_generic(fcs::Vector{FileCoverage}, kwargs::Dict)
         @assert length(kwargs) > 0
         dry_run = get(kwargs, :dry_run, false)
         if haskey(kwargs, :verbose)
@@ -209,7 +211,7 @@ module Codecov
         else
             verbose = false
         end
-        uri_str = construct_uri_string(;kwargs...)
+        uri_str = construct_uri_string(kwargs)
 
         verbose && @info "Submitting data to Codecov..."
         verbose && @debug "Codecov.io API URL:\n" * mask_token(uri_str)
@@ -222,7 +224,7 @@ module Codecov
         end
     end
 
-    function construct_uri_string(;kwargs...)
+    function construct_uri_string(kwargs::Dict)
         if haskey(ENV, "CODECOV_URL")
             kwargs = set_defaults(kwargs, codecov_url = ENV["CODECOV_URL"])
         end
@@ -231,16 +233,11 @@ module Codecov
             kwargs = set_defaults(kwargs, token = ENV["CODECOV_TOKEN"])
         end
 
-        codecov_url = "https://codecov.io"
-        for (k,v) in kwargs
-            if k == :codecov_url
-                codecov_url = v
-            end
-        end
-        @assert codecov_url[end] != "/" "the codecov_url should not end with a /, given url $(codecov_url)"
+        codecov_url = get(kwargs, :codecov_url, "https://codecov.io")
+        codecov_url[end] == "/" && error("the codecov_url should not end with a /, given url $(repr(codecov_url))")
 
         uri_str = "$(codecov_url)/upload/v2?"
-        for (k,v) in kwargs
+        for (k, v) in kwargs
             # add all except a few special key/value pairs to the URL
             # (:verbose is there for backwards compatibility with versions
             # of this code that treated it in a special way)
