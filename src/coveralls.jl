@@ -68,18 +68,21 @@ module Coveralls
         post_request(data, verbose)
     end
 
-    function prepare_request(fcs::Vector{FileCoverage}, local_env, git_info=query_git_info)
+    function prepare_request(fcs::Vector{FileCoverage}, local_env::Bool, git_info=query_git_info)
         data = Dict{String,Any}("source_files" => map(to_json, fcs))
 
         if local_env
             # Attempt to parse git info via git_info, unless the user explicitly disables it by setting git_info to nothing
+            data["service_name"] = "local"
             data["git"] = parse_git_info(git_info)
         elseif lowercase(get(ENV, "APPVEYOR", "false")) == "true"
-            data["service_job_id"] = ENV["APPVEYOR_JOB_ID"]
+            data["service_job_number"] = ENV["APPVEYOR_BUILD_NUMBER"]
+            data["service_job_id"] = ENV["APPVEYOR_BUILD_ID"]
             data["service_name"] = "appveyor"
             appveyor_pr = get(ENV, "APPVEYOR_PULL_REQUEST_NUMBER", "")
             isempty(appveyor_pr) || (data["service_pull_request"] = appveyor_pr)
         elseif lowercase(get(ENV, "TRAVIS", "false")) == "true"
+            data["service_number"] = ENV["TRAVIS_BUILD_NUMBER"]
             data["service_job_id"] = ENV["TRAVIS_JOB_ID"]
             data["service_name"] = "travis-ci"
             travis_pr = get(ENV, "TRAVIS_PULL_REQUEST", "")
@@ -94,8 +97,31 @@ module Coveralls
                 data["git"]["branch"] = split(ENV["GIT_BRANCH"], "/")[2]
             end
         elseif haskey(ENV, "GITHUB_ACTION")
+            data["service_name"] = "github"
             data["git"] = parse_git_info(git_info)
         else
+            data["git"] = parse_git_info(git_info)
+        end
+
+        service_name = get(ENV, "COVERALLS_SERVICE_NAME", "")
+        isempty(service_name) || (data["service_name"] = service_name)
+
+        service_number = get(ENV, "COVERALLS_SERVICE_NUMBER", "")
+        isempty(service_number) || (data["service_number"] = service_number)
+
+        service_job_number = get(ENV, "COVERALLS_SERVICE_JOB_NUMBER", "")
+        isempty(service_job_number) || (data["service_job_number"] = service_job_number)
+
+        jobid = get(ENV, "COVERALLS_SERVICE_JOB_ID", "")
+        isempty(jobid) || (data["service_job_id"] = jobid)
+
+        flag_name = get(ENV, "COVERALLS_FLAG_NAME", "")
+        isempty(flag_name) || (data["flag_name"] = flag_name)
+
+        ci_pr = get(ENV, "COVERALLS_PULL_REQUEST", "")
+        isempty(ci_pr) || (data["service_pull_request"] = ci_pr)
+
+        if !haskey(data, "service_name")
             error("No compatible CI platform detected")
         end
 
