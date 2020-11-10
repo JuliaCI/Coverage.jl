@@ -211,6 +211,7 @@ module Codecov
         else
             verbose = false
         end
+
         uri_str = construct_uri_string(kwargs)
 
         verbose && @info "Submitting data to Codecov..."
@@ -225,13 +226,17 @@ module Codecov
     end
 
     function construct_uri_string(kwargs::Dict)
-        if haskey(ENV, "CODECOV_URL")
-            kwargs = set_defaults(kwargs, codecov_url = ENV["CODECOV_URL"])
-        end
+        url = get(ENV, "CODECOV_URL", "")
+        isempty(url) || (kwargs = set_defaults(kwargs, codecov_url = url))
 
-        if haskey(ENV, "CODECOV_TOKEN")
-            kwargs = set_defaults(kwargs, token = ENV["CODECOV_TOKEN"])
-        end
+        token = get(ENV, "CODECOV_TOKEN", "")
+        isempty(token) || (kwargs = set_defaults(kwargs, token = token))
+
+        flags = get(ENV, "CODECOV_FLAGS", "")
+        isempty(flags) || (kwargs = set_defaults(kwargs; flags = flags))
+
+        name = get(ENV, "CODECOV_NAME", "")
+        isempty(name) || (kwargs = set_defaults(kwargs; name = name))
 
         codecov_url = get(kwargs, :codecov_url, "https://codecov.io")
         codecov_url[end] == "/" && error("the codecov_url should not end with a /, given url $(repr(codecov_url))")
