@@ -195,10 +195,10 @@ withenv(
         # these methods are only used for testing the token generation for local repos
         # and CI whilst not breaking the current API
         construct_uri_string_local(dir=pwd(); kwargs...) = Coverage.Codecov.construct_uri_string(
-            ;Coverage.Codecov.add_local_to_kwargs(dir; kwargs...)...)
+            Coverage.Codecov.add_local_to_kwargs(dir; kwargs...))
 
-        construct_uri_string_ci(;kwargs...) = Coverage.Codecov.construct_uri_string(
-            ;Coverage.Codecov.add_ci_to_kwargs(;kwargs...)...)
+        construct_uri_string_ci(; kwargs...) = Coverage.Codecov.construct_uri_string(
+            Coverage.Codecov.add_ci_to_kwargs(; kwargs...))
 
         # empty file coverage for testing
         fcs = FileCoverage[]
