@@ -117,13 +117,21 @@ end
         run(`$(Base.julia_cmd()) --startup-file=no --code-coverage=user -e $cmdstr`)
         r = process_file(srcname, datadir)
 
-        target = Coverage.CovCount[nothing, 2, nothing, 0, nothing, 0, nothing, nothing, nothing, nothing, 0, nothing, nothing, nothing, nothing, nothing, 0, nothing, nothing, 0, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing]
+        if VERSION < v"1.5"
+            target = Coverage.CovCount[nothing, 2, nothing, 0, nothing, 0, nothing, nothing, nothing, nothing, 0, nothing, nothing, nothing, nothing, nothing, 0, nothing, nothing, 0, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing]
+        else
+            target = Coverage.CovCount[nothing, 1, nothing, 0, nothing, 0, nothing, nothing, nothing, nothing, 0, nothing, nothing, nothing, nothing, 0, 0, nothing, nothing, 0, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing]
+        end
         target_disabled = map(x -> (x !== nothing && x > 0) ? x : nothing, target)
         @test r.coverage == target
 
-        covtarget = (sum(x->x !== nothing && x > 0, target), sum(x->x !== nothing, target))
+        covtarget = (sum(x -> x !== nothing && x > 0, target), sum(!isnothing, target))
         @test get_summary(r) == covtarget
-        @test get_summary(process_folder(datadir)) == (98, 106)
+        if VERSION < v"1.5"
+            @test get_summary(process_folder(datadir)) == (98, 106)
+        else
+            @test get_summary(process_folder(datadir)) == (98, 107)
+        end
 
         r_disabled = withenv("DISABLE_AMEND_COVERAGE_FROM_SRC" => "yes") do
             process_file(srcname, datadir)
