@@ -158,6 +158,7 @@ end
 # set up base system ENV vars for testing
 withenv(
     "COVERALLS_TOKEN" => "token_name_1",
+    "COVERALLS_URL" => nothing,
     "CODECOV_URL" => nothing,
     "CODECOV_TOKEN" => nothing,
     "TRAVIS" => nothing,

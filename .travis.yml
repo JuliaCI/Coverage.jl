@@ -40,7 +40,9 @@ notifications:
 script:
   - julia --color=yes --check-bounds=yes etc/travis-test.jl
   - export COVERALLS_PARALLEL=true
-  # submit coverage data, and collect new coverage data on that
-  - julia --color=yes --code-coverage=user etc/travis-coverage.jl
+  # submit coverage data to a black hole server with a fake job-id,
+  # and collect new coverage data on that
+  - COVERALLS_URL=https://httpbingo.julialang.org/post
+    julia --color=yes --code-coverage=user etc/travis-coverage.jl
   # submit coverage data *again*, this time without code coverage
   - julia --color=yes etc/travis-coverage.jl
