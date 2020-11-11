@@ -187,7 +187,8 @@ module Coveralls
     # posts the actual request given the data
     function post_request(data, verbose)
         verbose && @info "Submitting data to Coveralls..."
-        req = HTTP.post("https://coveralls.io/api/v1/jobs", HTTP.Form(makebody(data)))
+        coveralls_url = get(ENV, "COVERALLS_URL", "https://coveralls.io/api/v1/jobs")
+        req = HTTP.post(coveralls_url, HTTP.Form(makebody(data)))
         verbose && @debug "Result of submission:\n" * String(req.body)
         nothing
     end
