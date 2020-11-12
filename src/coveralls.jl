@@ -40,14 +40,19 @@ module Coveralls
 
     # to_json
     # Convert a FileCoverage instance to its Coveralls JSON representation
-    to_json(fc::FileCoverage) = Dict("name"          => fc.filename,
-                                     "source_digest" => digest(MD_MD5, fc.source, "secret"),
-                                     "coverage"      => fc.coverage)
+    function to_json(fc::FileCoverage)
+        name = Sys.iswindows() ? replace(fc.filename, '\\' => '/') : fc.filename
+        return Dict("name"          => name,
+                    "source_digest" => digest(MD_MD5, fc.source, "secret"),
+                    "coverage"      => fc.coverage)
+    end
 
     # Format the body argument to HTTP.post
-    makebody(data::Dict) =
-        Dict("json_file" => HTTP.Multipart("json_file", IOBuffer(JSON.json(data)),
-                                           "application/json"))
+    function makebody(data::Dict)
+        iodata = IOBuffer(JSON.json(data))
+        json_file = HTTP.Multipart("json_file", iodata, "application/json")
+        return Dict("json_file" => json_file)
+    end
 
     """
         submit(fcs::Vector{FileCoverage}; kwargs...)
