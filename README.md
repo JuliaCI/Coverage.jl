@@ -178,17 +178,6 @@ When using Coverage.jl locally, over time a lot of `.cov` files can accumulate. 
        - C:\projects\julia\bin\julia -e "using Pkg; Pkg.add(\"Coverage\"); using Coverage; Coveralls.submit(process_folder())"
        ```
 
-4. If you are uploading from multiple jobs, you'll need to tell Coveralls to merge the results after all CI jobs have completed. See https://docs.coveralls.io/parallel-build-webhook for general instructions.
-
-    For Travis, this can be achieved by adding the following to `.travis.yml`:
-
-        env:
-          global:
-            - COVERALLS_PARALLEL=true
-        notifications:
-          webhooks: https://coveralls.io/webhook
-
-
 ## A note for advanced users
 
 Coverage tracking in Julia is not yet quite perfect. One problem is that (at
