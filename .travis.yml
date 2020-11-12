@@ -12,12 +12,11 @@ os:
   - windows
 
 arch:
-  - x64
-  - x86
+  - amd64
+  - i386
 
 julia:
   - "1.0"
-  - "1.4"
   - "1"   # Latest stable release (currently "1.5")
   - nightly
 
@@ -26,11 +25,18 @@ jobs:
   allow_failures:
     - julia: nightly
 
-  # Test 32-bit only on Linux
   exclude:
-    - arch: x86
+    # Test 32-bit only on Linux
+    - arch: i386
       os: osx
-    - arch: x86
+    - arch: i386
+      os: windows
+    # Test fewer versions too
+    - julia: "1.0"
+      os: osx
+    - julia: nightly
+      os: osx
+    - julia: "1.0"
       os: windows
 
 notifications:
