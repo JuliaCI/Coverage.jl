@@ -12,7 +12,7 @@ MbedTLS = "739be429-bea8-5141-9913-cc70e7f3736d"
 
 [compat]
 CoverageTools = "1"
-HTTP = "0.8"
+HTTP = "0.8, 0.9"
 JSON = "0.21"
 MbedTLS = "0.6, 0.7, 1"
 julia = "1"
