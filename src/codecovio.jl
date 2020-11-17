@@ -139,6 +139,7 @@ module Codecov
                 build        = ENV["BUILD_BUILDID"],
             )
         elseif haskey(ENV, "GITHUB_ACTION") # GitHub Actions
+            event_path = open(JSON.Parser.parse, ENV["GITHUB_EVENT_PATH"])
             ref = ENV["GITHUB_REF"]
             if startswith(ref, "refs/heads/")
                 branch = ref[12:end]
@@ -148,7 +149,8 @@ module Codecov
                 ga_pr = "false"
             elseif startswith(ref, "refs/pull/")
                 branch = ENV["GITHUB_HEAD_REF"]
-                ga_pr = first(split(ref[11:end], "/"))
+                ga_pr_info = get(event_path, "pull_request", Dict())
+                ga_pr = get(ga_pr_info, "number", "false")
             end
             ga_build_url = "https://github.com/$(ENV["GITHUB_REPOSITORY"])/actions/runs/$(ENV["GITHUB_RUN_ID"])"
             kwargs = set_defaults(kwargs,
