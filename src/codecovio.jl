@@ -220,7 +220,8 @@ module Codecov
         @debug "Codecov.io API URL:\n" * mask_token(uri_str)
 
         if !dry_run
-            heads   = Dict("Content-Type" => "application/json")
+            heads   = Dict("Content-Type" => "application/json",
+                           "Accept" => "application/json")
             data    = to_json(fcs)
             req     = HTTP.post(uri_str; body = JSON.json(data), headers = heads)
             @debug "Result of submission:" * String(req)
