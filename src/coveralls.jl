@@ -95,8 +95,14 @@ module Coveralls
                 data["git"]["branch"] = split(ENV["GIT_BRANCH"], "/")[2]
             end
         elseif haskey(ENV, "GITHUB_ACTION")
+            data["service_job_id"] = ENV["GITHUB_RUN_ID"]
             data["service_name"] = "github"
             data["git"] = parse_git_info(git_info)
+
+            event_path = open(JSON.Parser.parse, ENV["GITHUB_EVENT_PATH"])
+            github_pr_info = get(event_path, "pull_request", Dict())
+            github_pr = get(github_pr_info, "number", "")
+            isempty(github_pr) || (data["service_pull_request"] = github_pr)
         else
             data["git"] = parse_git_info(git_info)
         end
