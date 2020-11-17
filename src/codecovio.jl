@@ -13,7 +13,7 @@ module Codecov
     using JSON
     using LibGit2
 
-    export submit, submit_token, submit_local, submit_generic
+    export submit, submit_local, submit_generic
 
     #=
     JSON structure for Codecov.io
@@ -192,15 +192,8 @@ module Codecov
             end
         end
 
-        if haskey(ENV, "REPO_TOKEN")
-            @warn "the environment variable REPO_TOKEN is deprecated, use CODECOV_TOKEN instead"
-            kwargs = set_defaults(kwargs, token = ENV["REPO_TOKEN"])
-        end
-
         return kwargs
     end
-
-    @deprecate submit_token submit_local
 
 
     """
@@ -220,18 +213,11 @@ module Codecov
     function submit_generic(fcs::Vector{FileCoverage}, kwargs::Dict)
         @assert length(kwargs) > 0
         dry_run = get(kwargs, :dry_run, false)
-        if haskey(kwargs, :verbose)
-            Base.depwarn("The verbose keyword argument is deprecated, set the environment variable " *
-                         "JULIA_DEBUG=Coverage for verbose output", :submit_generic)
-            verbose = kwargs[:verbose]
-        else
-            verbose = false
-        end
 
         uri_str = construct_uri_string(kwargs)
 
-        verbose && @info "Submitting data to Codecov..."
-        verbose && @debug "Codecov.io API URL:\n" * mask_token(uri_str)
+        @info "Submitting data to Codecov..."
+        @debug "Codecov.io API URL:\n" * mask_token(uri_str)
 
         if !dry_run
             heads   = Dict("Content-Type" => "application/json")

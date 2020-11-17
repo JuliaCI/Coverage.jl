@@ -14,7 +14,7 @@ module Coveralls
     using LibGit2
     using MbedTLS
 
-    export submit, submit_token, submit_local
+    export submit, submit_local
 
     #=
     JSON structure for Coveralls
@@ -62,15 +62,8 @@ module Coveralls
     on TravisCI, AppVeyor or Jenkins. If running locally, use `submit_local`.
     """
     function submit(fcs::Vector{FileCoverage}; kwargs...)
-        if haskey(kwargs, :verbose)
-            Base.depwarn("The verbose keyword argument is deprecated, set the environment variable " *
-                         "JULIA_DEBUG=Coverage for verbose output", :submit_generic)
-            verbose = kwargs[:verbose]
-        else
-            verbose = false
-        end
         data = prepare_request(fcs, false)
-        post_request(data, verbose)
+        post_request(data)
     end
 
     function prepare_request(fcs::Vector{FileCoverage}, local_env::Bool, git_info=query_git_info)
@@ -204,23 +197,16 @@ module Coveralls
     git_info can be either a `Dict` or a function that returns a `Dict`.
     """
     function submit_local(fcs::Vector{FileCoverage}, git_info=query_git_info; kwargs...)
-        if haskey(kwargs, :verbose)
-            Base.depwarn("The verbose keyword argument is deprecated, set the environment variable " *
-                         "JULIA_DEBUG=Coverage for verbose output", :submit_generic)
-            verbose = kwargs[:verbose]
-        else
-            verbose = false
-        end
         data = prepare_request(fcs, true, git_info)
-        post_request(data, verbose)
+        post_request(data)
     end
 
     # posts the actual request given the data
-    function post_request(data, verbose)
-        verbose && @info "Submitting data to Coveralls..."
+    function post_request(data)
+        @info "Submitting data to Coveralls..."
         coveralls_url = get(ENV, "COVERALLS_URL", "https://coveralls.io/api/v1/jobs")
         req = HTTP.post(coveralls_url, HTTP.Form(makebody(data)))
-        verbose && @debug "Result of submission:\n" * String(req.body)
+        @debug "Result of submission:\n" * String(req)
         nothing
     end
 
@@ -240,6 +226,5 @@ module Coveralls
         end
         return data
     end
-    @deprecate submit_token submit_local
 
 end  # module Coveralls
