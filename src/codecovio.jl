@@ -224,10 +224,15 @@ module Codecov
         @debug "Codecov.io API URL:\n" * mask_token(uri_str)
 
         if !dry_run
-            heads   = Dict("Content-Type" => "application/json")
-            data    = to_json(fcs)
-            req     = HTTP.post(uri_str; body = JSON.json(data), headers = heads)
-            @debug "Result of submission:" * mask_token(String(req))
+            # Tell Codecov we have an upload for them
+            response = HTTP.post(uri_str; headers=Dict("Accept" => "text/plain"))
+            # Get the temporary URL to use for uploading to S3
+            s3url = split(String(response.body), '\n')[2]
+            # Upload to S3
+            request = HTTP.put(s3url; body=json(to_json(fcs)),
+                               header=Dict("Content-Type" => "application/json",
+                                           "x-amz-storage-class" => "REDUCED_REDUNDANCY"))
+            @debug "Result of submission:" * mask_token(String(request))
         end
     end
 
@@ -252,7 +257,7 @@ module Codecov
             error("the codecov_url should not end with a /, given url $(repr(codecov_url))")
         end
 
-        codecov_url_path = get(kwargs, :codecov_url_path, "/upload/v2")
+        codecov_url_path = get(kwargs, :codecov_url_path, "/upload/v4")
         if isempty(codecov_url_path) || codecov_url_path[1] != '/' || codecov_url_path[end] == '/'
             error("the codecov_url_path should begin with, but not end with, a /, given url $(repr(codecov_url_path))")
         end
