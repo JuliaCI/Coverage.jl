@@ -430,9 +430,9 @@ withenv(
 
         # in the case above, the token is at the end. Let's test explicitly,
         # that this also works if the token occurs earlier in the url
-        url = "https://enterprise-codecov-1.com/upload/v2?token=token_name_1&build=t_job_num"
+        url = "https://enterprise-codecov-1.com/upload/v4?token=token_name_1&build=t_job_num"
         masked = Coverage.Codecov.mask_token(url)
-        @test masked == "https://enterprise-codecov-1.com/upload/v2?token=<HIDDEN>&build=t_job_num"
+        @test masked == "https://enterprise-codecov-1.com/upload/v4?token=<HIDDEN>&build=t_job_num"
     end
             
 
