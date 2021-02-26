@@ -227,7 +227,11 @@ module Codecov
             # Tell Codecov we have an upload for them
             response = HTTP.post(uri_str; headers=Dict("Accept" => "text/plain"))
             # Get the temporary URL to use for uploading to S3
-            s3url = split(String(response.body), '\n')[2]
+            repr = String(response)
+            s3url = get(split(String(response.body), '\n'), 2, "")
+            repr = chomp(replace(repr, s3url => ""))
+            @debug "Result of submission:" * repr
+            startswith(s3url, "https://") || error("Invalid codecov response: $s3url")
             # Upload to S3
             request = HTTP.put(s3url; body=json(to_json(fcs)),
                                header=Dict("Content-Type" => "application/json",
