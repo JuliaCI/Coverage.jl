@@ -207,6 +207,8 @@ module Codecov
     values match the Codecov upload/v2 API specification.
     The `codecov_url` keyword argument or the CODECOV_URL environment variable
     can be used to specify the base path of the uri.
+    The `codecov_url_path` keyword argument or the CODECOV_URL_PATH environment variable
+    can be used to specify the final path of the uri.
     The `dry_run` keyword can be used to prevent the http request from
     being generated.
     """
@@ -222,17 +224,19 @@ module Codecov
         @debug "Codecov.io API URL:\n" * mask_token(uri_str)
 
         if !dry_run
-            heads   = Dict("Content-Type" => "application/json",
-                           "Accept" => "application/json")
+            heads   = Dict("Content-Type" => "application/json")
             data    = to_json(fcs)
             req     = HTTP.post(uri_str; body = JSON.json(data), headers = heads)
-            @debug "Result of submission:" * String(req)
+            @debug "Result of submission:" * mask_token(String(req))
         end
     end
 
     function construct_uri_string(kwargs::Dict)
         url = get(ENV, "CODECOV_URL", "")
         isempty(url) || (kwargs = set_defaults(kwargs, codecov_url = url))
+
+        path = get(ENV, "CODECOV_URL_PATH", "")
+        isempty(path) || (kwargs = set_defaults(kwargs, codecov_url_path = path))
 
         token = get(ENV, "CODECOV_TOKEN", "")
         isempty(token) || (kwargs = set_defaults(kwargs, token = token))
@@ -244,15 +248,22 @@ module Codecov
         isempty(name) || (kwargs = set_defaults(kwargs; name = name))
 
         codecov_url = get(kwargs, :codecov_url, "https://codecov.io")
-        codecov_url[end] == "/" && error("the codecov_url should not end with a /, given url $(repr(codecov_url))")
+        if isempty(codecov_url) || codecov_url[end] == '/'
+            error("the codecov_url should not end with a /, given url $(repr(codecov_url))")
+        end
 
-        uri_str = "$(codecov_url)/upload/v2?"
+        codecov_url_path = get(kwargs, :codecov_url_path, "/upload/v2")
+        if isempty(codecov_url_path) || codecov_url_path[1] != '/' || codecov_url_path[end] == '/'
+            error("the codecov_url_path should begin with, but not end with, a /, given url $(repr(codecov_url_path))")
+        end
+
+        uri_str = "$(codecov_url)$(codecov_url_path)?"
         for (k, v) in kwargs
             # add all except a few special key/value pairs to the URL
             # (:verbose is there for backwards compatibility with versions
             # of this code that treated it in a special way)
             if k != :codecov_url && k != :dry_run && k != :verbose
-                uri_str = "$(uri_str)&$(k)=$(v)"
+                uri_str = "$(uri_str)$(k)=$(v)&"
             end
         end
 

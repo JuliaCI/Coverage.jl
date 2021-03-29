@@ -1,9 +1,9 @@
 Coverage.jl
 ===========
 
-[![Build Status](https://travis-ci.com/JuliaCI/Coverage.jl.svg?branch=master)](https://travis-ci.com/JuliaCI/Coverage.jl)
-[![Coverage Status](https://coveralls.io/repos/github/JuliaCI/Coverage.jl/badge.svg?branch=master)](https://coveralls.io/github/JuliaCI/Coverage.jl?branch=master)
-[![codecov](https://codecov.io/gh/JuliaCI/Coverage.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/JuliaCI/Coverage.jl)
+[![Build Status](https://github.com/JuliaCI/Coverage.jl/workflows/CI/badge.svg)](https://github.com/JuliaCI/Coverage.jl/actions/workflows/CI.yml?query=branch%3Amaster)
+[![coveralls](https://coveralls.io/repos/github/JuliaCI/Coverage.jl/badge.svg?branch=master)](https://coveralls.io/github/JuliaCI/Coverage.jl?branch=master)
+[![codecov](https://codecov.io/gh/JuliaCI/Coverage.jl/branch/master/graph/badge.svg?label=codecov)](https://codecov.io/gh/JuliaCI/Coverage.jl)
 
 **"Take Julia code coverage and memory allocation results, do useful things with them"**
 
