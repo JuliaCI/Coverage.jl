@@ -18,10 +18,10 @@ jobs:
         #  - '1.0'
           - '1'
         #  - 'nightly'
-        #os:
-        #  - ubuntu-latest
-        #arch:
-        #  - x64
+        os:
+          - ubuntu-latest
+        arch:
+          - x64
         #include:
         #  - version: '1'
         #    os: ubuntu-latest
