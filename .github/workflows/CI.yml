@@ -52,6 +52,6 @@ jobs:
       - run: julia --color=yes --project=. etc/travis-coverage.jl
         working-directory: ${{ github.workspace }}
         env:
-          COVERALLS_TOKEN: ${{ secrets.COVERALLS_TOKEN }}
+          # COVERALLS_TOKEN: ${{ secrets.COVERALLS_TOKEN }}
           COVERALLS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
