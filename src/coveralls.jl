@@ -42,9 +42,17 @@ module Coveralls
     # Convert a FileCoverage instance to its Coveralls JSON representation
     function to_json(fc::FileCoverage)
         name = Sys.iswindows() ? replace(fc.filename, '\\' => '/') : fc.filename
-        return Dict("name"          => name,
-                    "source_digest" => digest(MD_MD5, fc.source, "secret"),
-                    "coverage"      => fc.coverage)
+        T_K = String
+        T_V1 = String
+        T_V2 = Dict
+        T_V3 = Vector{<:Dict}
+        T_V4 = Vector{<:Union{Nothing, Int}}
+        T_V = Union{T_V1, T_V2, T_V3, T_V4}
+        result = Dict{T_K, T_V}()
+        result["name"] = name
+        result["source_digest"] = bytes2hex(digest(MD_MD5, fc.source, "secret"))
+        result["coverage"] = fc.coverage
+        return result
     end
 
     # Format the body argument to HTTP.post
@@ -67,7 +75,12 @@ module Coveralls
     end
 
     function prepare_request(fcs::Vector{FileCoverage}, local_env::Bool, git_info=query_git_info)
-        data = Dict{String,Any}("source_files" => map(to_json, fcs))
+        T_K = String
+        T_V1 = String
+        T_V2 = Dict
+        T_V3 = Vector{<:Dict}
+        T_V = Union{T_V1, T_V2, T_V3}
+        data = Dict{T_K, T_V}("source_files" => map(to_json, fcs))
 
         if local_env
             # Attempt to parse git info via git_info, unless the user explicitly disables it by setting git_info to nothing
@@ -92,7 +105,7 @@ module Coveralls
 
             # get the name of the branch if not a pull request
             if get(ENV, "CI_PULL_REQUEST", "false") == "false"
-                data["git"]["branch"] = split(ENV["GIT_BRANCH"], "/")[2]
+                data["git"]["branch"] = String(split(ENV["GIT_BRANCH"], "/")[2])
             end
         elseif haskey(ENV, "GITHUB_ACTION")
             data["service_job_id"] = ENV["GITHUB_RUN_ID"]
@@ -175,7 +188,13 @@ module Coveralls
         end
         LibGit2.close(repo)
 
-        return Dict(
+        T_K = String
+        T_V1 = String
+        T_V2 = Dict
+        T_V3 = Vector{<:Dict}
+        T_V = Union{T_V1, T_V2, T_V3}
+
+        return Dict{T_K, T_V}(
             "branch"    => branch,
             "remotes"   => [
                 Dict(
@@ -210,9 +229,10 @@ module Coveralls
     # posts the actual request given the data
     function post_request(data)
         @info "Submitting data to Coveralls..."
+        @info "" data
         coveralls_url = get(ENV, "COVERALLS_URL", "https://coveralls.io/api/v1/jobs")
         req = HTTP.post(coveralls_url, HTTP.Form(makebody(data)))
-        @debug "Result of submission:\n" * String(req)
+        @info "Result of submission:\n" * String(req)
         nothing
     end
 
@@ -221,9 +241,11 @@ module Coveralls
         repo_token =
                 get(ENV, "COVERALLS_TOKEN") do
                     get(ENV, "REPO_TOKEN") do #backward compatibility
-                        # error unless we are on Travis
-                        if local_submission || (data["service_name"] != "travis-ci")
-                            error("Coveralls submission requires a COVERALLS_TOKEN environment variable")
+                        get(ENV, "GITHUB_TOKEN") do
+                            # error unless we are on Travis
+                            if local_submission || (data["service_name"] != "travis-ci")
+                                error("Coveralls submission requires a COVERALLS_TOKEN environment variable")
+                            end
                         end
                     end
                 end
