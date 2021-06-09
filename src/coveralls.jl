@@ -43,7 +43,7 @@ module Coveralls
     function to_json(fc::FileCoverage)
         name = Sys.iswindows() ? replace(fc.filename, '\\' => '/') : fc.filename
         return Dict("name"          => name,
-                    "source_digest" => digest(MD_MD5, fc.source, "secret"),
+                    "source_digest" => bytes2hex(digest(MD_MD5, fc.source, "secret")),
                     "coverage"      => fc.coverage)
     end
 
@@ -102,7 +102,7 @@ module Coveralls
             event_path = open(JSON.Parser.parse, ENV["GITHUB_EVENT_PATH"])
             github_pr_info = get(event_path, "pull_request", Dict())
             github_pr = get(github_pr_info, "number", "")
-            isempty(github_pr) || (data["service_pull_request"] = github_pr)
+            isempty(github_pr) || (data["service_pull_request"] = strip(string(github_pr)))
         else
             data["git"] = parse_git_info(git_info)
         end
