@@ -46,8 +46,8 @@ jobs:
         env:
           COVERALLS_TOKEN: token
           COVERALLS_URL: https://httpbingo.julialang.org/post
-          CODECOV_URL: https://httpbingo.julialang.org
-          CODECOV_URL_PATH: /post
+      #     CODECOV_URL: https://httpbingo.julialang.org
+      #     CODECOV_URL_PATH: /post
       ## submit coverage data *again*, this time without code coverage
       - run: julia --color=yes --project=. etc/travis-coverage.jl
         working-directory: ${{ github.workspace }}
