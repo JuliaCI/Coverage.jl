@@ -102,7 +102,8 @@ module Coveralls
             event_path = open(JSON.Parser.parse, ENV["GITHUB_EVENT_PATH"])
             github_pr_info = get(event_path, "pull_request", Dict())
             github_pr = get(github_pr_info, "number", "")
-            isempty(github_pr) || (data["service_pull_request"] = strip(string(github_pr)))
+            github_pr::Union{AbstractString, Integer}
+            ((github_pr isa Integer) || (!isempty(github_pr))) && (data["service_pull_request"] = strip(string(github_pr)))
         else
             data["git"] = parse_git_info(git_info)
         end
