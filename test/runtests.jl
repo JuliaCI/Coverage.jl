@@ -6,6 +6,8 @@
 
 using Coverage, Test, LibGit2
 
+import CoverageTools
+
 @testset "Coverage" begin
 # set up base system ENV vars for testing
 withenv(
@@ -433,8 +435,19 @@ withenv(
         url = "https://enterprise-codecov-1.com/upload/v4?token=token_name_1&build=t_job_num"
         masked = Coverage.Codecov.mask_token(url)
         @test masked == "https://enterprise-codecov-1.com/upload/v4?token=<HIDDEN>&build=t_job_num"
+
+        @testset "Run the `Coverage.Codecov.upload_to_s3` function against the \"black hole\" server" begin
+            black_hole_server = get(
+                ENV,
+                "JULIA_COVERAGE_BLACK_HOLE_SERVER_URL_PUT",
+                "https://httpbingo.julialang.org/put",
+            )
+            s3url = black_hole_server
+            fcs = Vector{CoverageTools.FileCoverage}(undef, 0)
+            Coverage.Codecov.upload_to_s3(; s3url=s3url, fcs=fcs)
+        end
     end
-            
+
 
     @testset "coveralls" begin
         # NOTE: this only returns actual content if this package is devved.
