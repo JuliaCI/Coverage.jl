@@ -16,6 +16,7 @@ jobs:
       matrix:
         version:
           - '1.0'
+          - '1.6'
           - '1'
           - 'nightly'
         os:
@@ -25,6 +26,9 @@ jobs:
         include:
           - version: '1'
             os: ubuntu-latest
+            arch: x86
+          - version: '1'
+            os: windows-latest
             arch: x86
           - version: '1'
             os: windows-latest
