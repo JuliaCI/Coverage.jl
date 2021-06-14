@@ -213,7 +213,8 @@ end
 function post_request(data)
     @info "Submitting data to Coveralls..."
     coveralls_url = get(ENV, "COVERALLS_URL", "https://coveralls.io/api/v1/jobs")
-    req = HTTP.post(coveralls_url, HTTP.Form(makebody(data)))
+    headers = []
+    req = HTTP.post(coveralls_url, headers, HTTP.Form(makebody(data)))
     @debug "Result of submission:\n" * String(req)
     nothing
 end
