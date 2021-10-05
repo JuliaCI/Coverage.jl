@@ -163,6 +163,18 @@ function add_ci_to_kwargs(kwargs::Dict)
             build        = ENV["GITHUB_RUN_ID"],
             build_url    = ga_build_url,
         )
+    elseif lowercase(get(ENV, "BUILDKITE", "false")) == "true"
+        kwargs = set_defaults(kwargs,
+            service      = "buildkite",
+            branch       = ENV["BUILDKITE_BRANCH"],
+            commit       = ENV["BUILDKITE_COMMIT"],
+            job          = ENV["BUILDKITE_JOB_ID"],
+            build        = ENV["BUILDKITE_BUILD_NUMBER"],
+            build_url    = ENV["BUILDKITE_BUILD_URL"]
+        )
+        if ENV["BUILDKITE_PULL_REQUEST"] != "false"
+            kwargs = set_defaults(kwargs, pr = ENV["BUILDKITE_PULL_REQUEST"])
+        end
     else
         error("No compatible CI platform detected")
     end
