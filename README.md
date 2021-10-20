@@ -22,22 +22,25 @@ Most users will want to use [Coverage.jl](https://github.com/JuliaCI/Coverage.jl
 
 ### Code coverage
 
-*Step 1:* Navigate to your test directory, and run julia with the `--code-coverage` option:
+*Step 1: collect coverage data.* If you are using your default test suite, you can collect coverage data with `Pkg.test("MyPkg"; coverage=true)`. Alternatively, you can collect coverage data manually: in the terminal, navigate to whatever directory you want to start from as the working directory, and run julia with the `--code-coverage` option:
+
 ```sh
 julia --code-coverage=user
+```
+or more comprehensively (if you're interested in getting coverage for Julia's standard libraries)
+```sh
 julia --code-coverage=tracefile-%p.info --code-coverage=user  # available in Julia v1.1+
 ```
+You can add other options (e.g., `--project`) as needed. After the REPL starts, execute whatever commands you wish, and then quit Julia. Coverage data are written to files when Julia exits.
 
-*Step 2:* Run your tests (e.g., `include("runtests.jl")`) and quit Julia. (If you use `Pkg.test` to run your tests, set the `coverage` keyword argument to `true`, i.e. `Pkg.test("MyPkg"; coverage=true)`.)
-
-*Step 3:* Navigate to the top-level directory of your package, restart Julia (with no special flags) and analyze your code coverage:
+*Step 2: collect summary statistics (optional).* Navigate to the top-level directory of your package, restart Julia (with no special flags) and analyze your code coverage:
 
 ```julia
 using Coverage
 # process '*.cov' files
 coverage = process_folder() # defaults to src/; alternatively, supply the folder name as argument
-coverage = append!(coverage, process_folder("deps"))
-# process '*.info' files
+coverage = append!(coverage, process_folder("deps"))  # useful if you want to analyze more than just src/
+# process '*.info' files, if you collected them
 coverage = merge_coverage_counts(coverage, filter!(
     let prefixes = (joinpath(pwd(), "src", ""),
                     joinpath(pwd(), "deps", ""))
@@ -51,10 +54,15 @@ covered_lines, total_lines = get_summary(coverage)
 ```
 The fraction of total coverage is equal to `covered_lines/total_lines`.
 
-To discover which functions lack testing, browse through the `*.cov` files in your `src/`
-directory and look for lines starting with `-` or `0` - those lines were never executed.
+*Step 3: identify uncovered lines (optional).* To discover which functions lack testing, browse through the `*.cov` files in your `src/`
+directory and look for lines starting with `-` or `0`, which mark lines that were never executed.
 Numbers larger than 0 are counts of the number of times the respective line was executed.
+Note that blank lines, comments, lines with `end` statements, etc. are marked with `-` but do not count against your coverage.
 
+Be aware of a few limitations:
+
+- a line that can take one of two branches gets marked as covered even if only one branch is tested
+- currently, code run by Julia's internal interpreter [is not marked as covered](https://github.com/JuliaLang/julia/issues/37059).
 
 ### Memory allocation
 
