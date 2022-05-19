@@ -175,6 +175,15 @@ function add_ci_to_kwargs(kwargs::Dict)
         if ENV["BUILDKITE_PULL_REQUEST"] != "false"
             kwargs = set_defaults(kwargs, pr = ENV["BUILDKITE_PULL_REQUEST"])
         end
+    elseif haskey(ENV, "GITLAB_CI") 
+        kwargs = set_defaults(kwargs,
+            service      = "gitlab",
+            branch       = ENV["CI_COMMIT_REF_NAME"],
+            commit       = ENV["CI_COMMIT_SHA"],
+            job          = ENV["CI_JOB_ID"],
+            build        = ENV["CI_JOB_NAME"],
+            build_url    = ENV["CI_REPOSITORY_URL"]
+        )
     else
         error("No compatible CI platform detected")
     end
