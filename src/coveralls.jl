@@ -106,7 +106,7 @@ function prepare_request(fcs::Vector{FileCoverage}, local_env::Bool, git_info=qu
         github_pr::Union{AbstractString, Integer}
         ((github_pr isa Integer) || (!isempty(github_pr))) && (data["service_pull_request"] = strip(string(github_pr)))
     elseif haskey(ENV, "GITLAB_CI")
-        data["service_job_id"] = ENV["CI_JOB_ID"]
+#         data["service_job_id"] = ENV["CI_JOB_ID"]
         data["service_name"] = "gitlab"
         data["git"] = parse_git_info(git_info)
     else
