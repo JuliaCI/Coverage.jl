@@ -181,7 +181,6 @@ function add_ci_to_kwargs(kwargs::Dict)
             branch       = ENV["CI_COMMIT_REF_NAME"],
             commit       = ENV["CI_COMMIT_SHA"],
             job          = ENV["CI_JOB_ID"],
-            build        = ENV["CI_JOB_NAME"],
             build_url    = ENV["CI_REPOSITORY_URL"]
         )
     else
