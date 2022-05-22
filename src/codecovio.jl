@@ -71,6 +71,7 @@ end
 
 add_ci_to_kwargs(; kwargs...) = add_ci_to_kwargs(Dict{Symbol,Any}(kwargs))
 function add_ci_to_kwargs(kwargs::Dict)
+    # https://docs.codecov.com/reference/upload
     if lowercase(get(ENV, "APPVEYOR", "false")) == "true"
         appveyor_pr = get(ENV, "APPVEYOR_PULL_REQUEST_NUMBER", "")
         appveyor_job = join(
@@ -175,13 +176,16 @@ function add_ci_to_kwargs(kwargs::Dict)
         if ENV["BUILDKITE_PULL_REQUEST"] != "false"
             kwargs = set_defaults(kwargs, pr = ENV["BUILDKITE_PULL_REQUEST"])
         end
-    elseif haskey(ENV, "GITLAB_CI") 
+    elseif haskey(ENV, "GITLAB_CI")
+        # Gitlab API: https://docs.gitlab.com/ee/ci/variables/predefined_variables.html
         kwargs = set_defaults(kwargs,
             service      = "gitlab",
-            branch       = ENV["CI_COMMIT_REF_NAME"],
+            branch       = ENV["CI_COMMIT_BRANCH"],
             commit       = ENV["CI_COMMIT_SHA"],
             job          = ENV["CI_JOB_ID"],
-            build_url    = ENV["CI_REPOSITORY_URL"]
+            build_url    = ENV["CI_PIPELINE_URL"],
+            build        = ENV["CI_PIPELINE_IID"],
+            pull_request = ENV["CI_MERGE_REQUEST_TITLE"],
         )
     else
         error("No compatible CI platform detected")
