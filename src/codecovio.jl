@@ -187,7 +187,7 @@ function add_ci_to_kwargs(kwargs::Dict)
             job          = ENV["CI_JOB_ID"],
             build_url    = ENV["CI_PIPELINE_URL"],
             build        = ENV["CI_PIPELINE_IID"],
-            pr = num_mr,
+            pr           = num_mr,
         )
     else
         error("No compatible CI platform detected")

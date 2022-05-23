@@ -489,7 +489,7 @@ withenv(
             "GITLAB_CI" => "true",
             "CI_MERGE_REQUEST_IID" => "t_pr",
             "CI_JOB_ID" => "t_proj",
-            "CI_COMMIT_BRANCH" => "t_branch",
+            "CI_COMMIT_REF_NAME" => "t_branch",
             "CI_COMMIT_SHA" => "t_commit",
             "CI_PROJECT_NAME" => "t_repo",
             "CI_PIPELINE_URL" => "t_url",
@@ -503,7 +503,7 @@ withenv(
             @test occursin("service=gitlab", codecov_url)
             @test occursin("branch=t_branch", codecov_url)
             @test occursin("commit=t_commit", codecov_url)
-            @test occursin("pull_request=t_pr", codecov_url)
+            @test occursin("pr=t_pr", codecov_url)
             @test occursin("build_url=t_url", codecov_url)
             @test occursin("build=t_num", codecov_url)
 
@@ -515,7 +515,7 @@ withenv(
                 @test occursin("service=gitlab", codecov_url)
                 @test occursin("branch=t_branch", codecov_url)
                 @test occursin("commit=t_commit", codecov_url)
-                @test occursin("pull_request=t_pr", codecov_url)
+                @test occursin("pr=t_pr", codecov_url)
                 @test occursin("build_url=t_url", codecov_url)
                 @test occursin("build=t_num", codecov_url)
 
@@ -525,7 +525,7 @@ withenv(
                 @test occursin("service=gitlab", codecov_url)
                 @test occursin("branch=t_branch", codecov_url)
                 @test occursin("commit=t_commit", codecov_url)
-                @test occursin("pull_request=t_pr", codecov_url)
+                @test occursin("pr=t_pr", codecov_url)
                 @test occursin("build_url=t_url", codecov_url)
                 @test occursin("build=t_num", codecov_url)
 
@@ -538,7 +538,7 @@ withenv(
                     @test occursin("service=gitlab", codecov_url)
                     @test occursin("branch=t_branch", codecov_url)
                     @test occursin("commit=t_commit", codecov_url)
-                    @test occursin("pull_request=t_pr", codecov_url)
+                    @test occursin("pr=t_pr", codecov_url)
                     @test occursin("build_url=t_url", codecov_url)
                     @test occursin("build=t_num", codecov_url)
 
@@ -548,7 +548,7 @@ withenv(
                     @test occursin("service=gitlab", codecov_url)
                     @test occursin("branch=t_branch", codecov_url)
                     @test occursin("commit=t_commit", codecov_url)
-                    @test occursin("pull_request=t_pr", codecov_url)
+                    @test occursin("pr=t_pr", codecov_url)
                     @test occursin("build_url=t_url", codecov_url)
                     @test occursin("build=t_num", codecov_url)
                 end
@@ -714,7 +714,7 @@ withenv(
         withenv("GITLAB_CI" => "true",
                 "CI_PIPELINE_IID" => "my_job_num",
                 "CI_JOB_ID" => "my_job_id",
-                "CI_COMMIT_BRANCH" => "test",
+                "CI_COMMIT_REF_NAME" => "test",
                 "CI_DEFAULT_BRANCH" => "master",
                 "CI_MERGE_REQUEST_IID" => "t_pr") do
                 request = Coverage.Coveralls.prepare_request(fcs, false)
