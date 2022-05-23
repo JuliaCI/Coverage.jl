@@ -710,36 +710,6 @@ withenv(
                 end
         end
 
-        # test Travis
-        withenv("TRAVIS" => "true",
-                "TRAVIS_BUILD_NUMBER" => "my_job_num",
-                "TRAVIS_JOB_ID" => "my_job_id",
-                "TRAVIS_PULL_REQUEST" => "t_pr",
-                "COVERALLS_PARALLEL" => "true") do
-                request = Coverage.Coveralls.prepare_request(fcs, false)
-                @test request["repo_token"] == "token_name_1"
-                @test request["service_number"] == "my_job_num"
-                @test request["service_job_id"] == "my_job_id"
-                @test request["service_name"] == "travis-ci"
-                @test request["service_pull_request"] == "t_pr"
-                @test request["parallel"] == "true"
-        end
-
-        # test Travis
-        withenv("TRAVIS" => "true",
-                "TRAVIS_BUILD_NUMBER" => "my_job_num",
-                "TRAVIS_JOB_ID" => "my_job_id",
-                "TRAVIS_PULL_REQUEST" => "t_pr",
-                "COVERALLS_PARALLEL" => "true") do
-                request = Coverage.Coveralls.prepare_request(fcs, false)
-                @test request["repo_token"] == "token_name_1"
-                @test request["service_number"] == "my_job_num"
-                @test request["service_job_id"] == "my_job_id"
-                @test request["service_name"] == "travis-ci"
-                @test request["service_pull_request"] == "t_pr"
-                @test request["parallel"] == "true"
-        end
-
         # test Gitlab see https://docs.coveralls.io/api-reference
         withenv("GITLAB_CI" => "true",
                 "CI_PIPELINE_IID" => "my_job_num",
