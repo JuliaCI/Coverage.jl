@@ -178,7 +178,7 @@ function add_ci_to_kwargs(kwargs::Dict)
         end
     elseif haskey(ENV, "GITLAB_CI")
         # Gitlab API: https://docs.gitlab.com/ee/ci/variables/predefined_variables.html
-        branch = ENV["CI_COMMIT_BRANCH"]
+        branch = ENV["CI_COMMIT_REF_NAME"]
         num_mr = branch == ENV["CI_DEFAULT_BRANCH"] ? "false" : ENV["CI_MERGE_REQUEST_IID"]
         kwargs = set_defaults(kwargs,
             service      = "gitlab",
@@ -187,7 +187,7 @@ function add_ci_to_kwargs(kwargs::Dict)
             job          = ENV["CI_JOB_ID"],
             build_url    = ENV["CI_PIPELINE_URL"],
             build        = ENV["CI_PIPELINE_IID"],
-            pull_request = num_mr,
+            pr = num_mr,
         )
     else
         error("No compatible CI platform detected")
