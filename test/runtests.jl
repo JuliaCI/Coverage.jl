@@ -485,18 +485,16 @@ withenv(
         # test Gitlab ci submission process
 
         # set up Gitlab ci env
-                # test circle ci submission process
-
-        # set up circle ci env
         withenv(
             "GITLAB_CI" => "true",
-            "CI_MERGE_REQUEST_TITLE" => "t_pr",
+            "CI_MERGE_REQUEST_IID" => "t_pr",
             "CI_JOB_ID" => "t_proj",
-            "CI_COMMIT_REF_NAME" => "t_branch",
+            "CI_COMMIT_BRANCH" => "t_branch",
             "CI_COMMIT_SHA" => "t_commit",
             "CI_PROJECT_NAME" => "t_repo",
-            "CI_REPOSITORY_URL" => "t_url",
-            "CI_MERGE_REQUEST_ID" => "t_num",
+            "CI_PIPELINE_URL" => "t_url",
+            "CI_PIPELINE_IID" => "t_num",
+            "CI_DEFAULT_BRANCH" => "master",
             ) do
 
             # default values
@@ -745,14 +743,16 @@ withenv(
         # test Gitlab see https://docs.coveralls.io/api-reference
         withenv("GITLAB_CI" => "true",
                 "CI_PIPELINE_IID" => "my_job_num",
-                "CI_JOB_ID" => "my_job_id",) do
+                "CI_JOB_ID" => "my_job_id",
+                "CI_COMMIT_BRANCH" => "test",
+                "CI_DEFAULT_BRANCH" => "master",
+                "CI_MERGE_REQUEST_IID" => "t_pr") do
                 request = Coverage.Coveralls.prepare_request(fcs, false)
                 @test request["repo_token"] == "token_name_1"
                 @test request["service_number"] == "my_job_num"
                 @test request["service_job_id"] == "my_job_id"
                 @test request["service_name"] == "gitlab"
                 @test request["service_pull_request"] == "t_pr"
-                @test request["parallel"] == "true"
         end
 
         # test git_info (only works with Jenkins & local at the moment)
