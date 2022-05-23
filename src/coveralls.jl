@@ -105,7 +105,7 @@ function prepare_request(fcs::Vector{FileCoverage}, local_env::Bool, git_info=qu
         github_pr = get(github_pr_info, "number", "")
         github_pr::Union{AbstractString, Integer}
         ((github_pr isa Integer) || (!isempty(github_pr))) && (data["service_pull_request"] = strip(string(github_pr)))
-    elseif haskey(ENV, "GITLAB_CI")
+    elseif lowercase(get(ENV, "GITLAB_CI", "false")) == "true"
         # Gitlab API: https://docs.gitlab.com/ee/ci/variables/predefined_variables.html
         branch = ENV["CI_COMMIT_REF_NAME"]
         num_mr = branch == ENV["CI_DEFAULT_BRANCH"] ? "false" : ENV["CI_MERGE_REQUEST_IID"]
