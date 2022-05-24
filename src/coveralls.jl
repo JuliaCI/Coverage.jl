@@ -69,7 +69,7 @@ end
 
 function prepare_request(fcs::Vector{FileCoverage}, local_env::Bool, git_info=query_git_info)
     data = Dict{String,Any}("source_files" => map(to_json, fcs))
-
+    # Coveralls API : https://docs.coveralls.io/api-reference
     if local_env
         # Attempt to parse git info via git_info, unless the user explicitly disables it by setting git_info to nothing
         data["service_name"] = "local"
@@ -105,6 +105,16 @@ function prepare_request(fcs::Vector{FileCoverage}, local_env::Bool, git_info=qu
         github_pr = get(github_pr_info, "number", "")
         github_pr::Union{AbstractString, Integer}
         ((github_pr isa Integer) || (!isempty(github_pr))) && (data["service_pull_request"] = strip(string(github_pr)))
+    elseif lowercase(get(ENV, "GITLAB_CI", "false")) == "true"
+        # Gitlab API: https://docs.gitlab.com/ee/ci/variables/predefined_variables.html
+        branch = ENV["CI_COMMIT_REF_NAME"]
+        num_mr = branch == ENV["CI_DEFAULT_BRANCH"] ? "false" : ENV["CI_MERGE_REQUEST_IID"]
+        data["service_pull_request"] = num_mr
+        data["service_number"] = ENV["CI_PIPELINE_IID"]
+        data["service_job_id"] = ENV["CI_JOB_ID"]
+        data["service_name"] = "gitlab"
+        data["git"] = parse_git_info(git_info)
+        data["git"]["branch"] = branch
     else
         data["git"] = parse_git_info(git_info)
     end
