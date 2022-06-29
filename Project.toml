@@ -1,7 +1,7 @@
 name = "Coverage"
 uuid = "a2441757-f6aa-5fb2-8edb-039e3f45d037"
 authors = ["Iain Dunning <iaindunning@gmail.com>", "contributors"]
-version = "1.5.0"
+version = "1.6.0"
 
 [deps]
 CoverageTools = "c36e975a-824b-4404-a568-ef97ca766997"
