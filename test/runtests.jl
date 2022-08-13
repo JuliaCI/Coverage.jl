@@ -49,7 +49,7 @@ withenv(
     "JENKINS" => nothing,
     "BUILD_ID" => nothing,
     "CI_PULL_REQUEST" => nothing,
-    "GIT_BRANCH" => nothing
+    "GIT_BRANCH" => nothing,
     "CIRRUS_CI" => nothing,
     "CIRRUS_PR" => nothing,
     "CIRRUS_BRANCH" => nothing,
