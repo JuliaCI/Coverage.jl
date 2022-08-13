@@ -1,0 +1,27 @@
+freebsd_instance:
+  image: freebsd-12-2-release-amd64
+task:
+  name: FreeBSD
+  env:
+    matrix:
+      - JULIA_VERSION: 1.6
+      - JULIA_VERSION: 1
+      - JULIA_VERSION: nightly
+  allow_failures: $JULIA_VERSION == 'nightly'
+  install_script:
+    - sh -c "$(fetch https://raw.githubusercontent.com/ararslan/CirrusCI.jl/master/bin/install.sh -o -)"
+  build_script:
+    - cirrusjl build
+  test_script:
+    - |
+        export JULIA_COVERAGE_BLACK_HOLE_SERVER_URL_PUT="https://httpbingo.julialang.org/put"
+        cirrusjl test
+    - |
+        export JULIA_COVERAGE_IS_BLACK_HOLE_SERVER="true"
+        export COVERALLS_TOKEN="token"
+        export COVERALLS_URL="https://httpbingo.julialang.org/post"
+        export CODECOV_URL="https://httpbingo.julialang.org"
+        export CODECOV_URL_PATH="/post"
+        julia --color=yes --project=. --code-coverage=user etc/travis-coverage.jl
+  coverage_script:
+    - julia --color=yes --project=. etc/travis-coverage.jl

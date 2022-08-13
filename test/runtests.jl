@@ -50,6 +50,12 @@ withenv(
     "BUILD_ID" => nothing,
     "CI_PULL_REQUEST" => nothing,
     "GIT_BRANCH" => nothing
+    "CIRRUS_CI" => nothing,
+    "CIRRUS_PR" => nothing,
+    "CIRRUS_BRANCH" => nothing,
+    "CIRRUS_CHANGE_IN_REPO" => nothing,
+    "CIRRUS_REPO_FULL_NAME" => nothing,
+    "CIRRUS_BUILD_ID" => nothing,
     ) do
 
     @testset "codecovio.jl" begin
@@ -550,6 +556,66 @@ withenv(
                     @test occursin("commit=t_commit", codecov_url)
                     @test occursin("pr=t_pr", codecov_url)
                     @test occursin("build_url=t_url", codecov_url)
+                    @test occursin("build=t_num", codecov_url)
+                end
+            end
+        end
+
+        # Test Cirrus CI submission process
+
+        # Set up Cirrus CI environment
+        withenv("CIRRUS_CI" => "true",
+                "CIRRUS_PR" => "t_pr",
+                "CIRRUS_BRANCH" => "t_branch",
+                "CIRRUS_CHANGE_IN_REPO" => "t_commit",
+                "CIRRUS_REPO_FULL_NAME" => "t_repo",
+                "CIRRUS_BUILD_ID" => "t_num") do
+            # default values
+            codecov_url = construct_uri_string_ci()
+            @test occursin("codecov.io", codecov_url)
+            @test occursin("service=cirrus", codecov_url)
+            @test occursin("branch=t_branch", codecov_url)
+            @test occursin("commit=t_commit", codecov_url)
+            @test occursin("pull_request=t_pr", codecov_url)
+            @test occursin("build=t_num", codecov_url)
+
+            # env var url override
+            withenv("CODECOV_URL" => "https://enterprise-codecov-1.com") do
+                codecov_url = construct_uri_string_ci()
+                @test occursin("enterprise-codecov-1.com", codecov_url)
+                @test occursin("service=cirrus", codecov_url)
+                @test occursin("branch=t_branch", codecov_url)
+                @test occursin("commit=t_commit", codecov_url)
+                @test occursin("pull_request=t_pr", codecov_url)
+                @test occursin("build=t_num", codecov_url)
+
+                # function argument url override
+                codecov_url = construct_uri_string_ci(codecov_url="https://enterprise-codecov-2.com")
+                @test occursin("enterprise-codecov-2.com", codecov_url)
+                @test occursin("service=cirrus", codecov_url)
+                @test occursin("branch=t_branch", codecov_url)
+                @test occursin("commit=t_commit", codecov_url)
+                @test occursin("pull_request=t_pr", codecov_url)
+                @test occursin("build=t_num", codecov_url)
+
+                # env var token
+                withenv("CODECOV_TOKEN" => "token_name_1") do
+                    codecov_url = construct_uri_string_ci()
+                    @test occursin("enterprise-codecov-1.com", codecov_url)
+                    @test occursin("token=token_name_1", codecov_url)
+                    @test occursin("service=cirrus", codecov_url)
+                    @test occursin("branch=t_branch", codecov_url)
+                    @test occursin("commit=t_commit", codecov_url)
+                    @test occursin("pull_request=t_pr", codecov_url)
+                    @test occursin("build=t_num", codecov_url)
+
+                    # function argument token url override
+                    codecov_url = construct_uri_string_ci(token="token_name_2")
+                    @test occursin("enterprise-codecov-1.com", codecov_url)
+                    @test occursin("service=cirrus", codecov_url)
+                    @test occursin("branch=t_branch", codecov_url)
+                    @test occursin("commit=t_commit", codecov_url)
+                    @test occursin("pull_request=t_pr", codecov_url)
                     @test occursin("build=t_num", codecov_url)
                 end
             end
