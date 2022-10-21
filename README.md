@@ -64,6 +64,20 @@ Be aware of a few limitations:
 - a line that can take one of two branches gets marked as covered even if only one branch is tested
 - currently, code run by Julia's internal interpreter [is not marked as covered](https://github.com/JuliaLang/julia/issues/37059).
 
+### Exclude specific lines or sections from coverage
+
+To exclude specific sections, wrap the section in `COV_EXCL_START` - `COV_EXCL_STOP` blocks:
+```julia
+# COV_EXCL_START
+foo() = nothing
+# COV_EXCL_STOP
+```
+
+To exclude a single line, add `COV_EXCL_LINE` anywhere:
+```julia
+const a = 1  # COV_EXCL_LINE
+```
+
 ### Memory allocation
 
 Start julia with
