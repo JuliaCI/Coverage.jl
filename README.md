@@ -66,14 +66,14 @@ Be aware of a few limitations:
 
 ### Exclude specific lines or sections from coverage
 
-To exclude specific sections, wrap the section in `COV_EXCL_START` - `COV_EXCL_STOP` blocks:
+To exclude specific code blocks, surround the section with `COV_EXCL_START` and `COV_EXCL_STOP` comments:
 ```julia
 # COV_EXCL_START
 foo() = nothing
 # COV_EXCL_STOP
 ```
 
-To exclude a single line, add `COV_EXCL_LINE` anywhere:
+To exclude a single line, add a comment with `COV_EXCL_LINE`:
 ```julia
 const a = 1  # COV_EXCL_LINE
 ```
