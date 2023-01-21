@@ -111,6 +111,39 @@ LCOV.writefile("coverage-lcov.info", coverage)
 
 When using Coverage.jl locally, over time a lot of `.cov` files can accumulate. Coverage.jl provides the `clean_folder` and `clean_file` methods to either clean up all `.cov` files in a directory (and subdirectories) or only clean the `.cov` files associated with a specific source file.
 
+### Allocation table
+
+A convenience function exists for tabulating allocations, obtained from a command sent to `Coverage.report_allocs`. Here is an example:
+
+```julia
+julia> import Coverage
+julia> import PrettyTables # load report_allocs
+julia> mktempdir() do path
+           open(joinpath(path, "example.jl"), "w") do io
+               println(io, "for i in 1:1000")
+               println(io, "    x = []")
+               println(io, "    push!(x, 1)")
+               println(io, "    push!(x, [1,2,3,4])")
+               println(io, "    push!(x, \"stringy-string\")")
+               println(io, "end")
+           end
+           Coverage.report_allocs(;
+               run_cmd=`$(Base.julia_cmd()) --track-allocation=all $(joinpath(path, "example.jl"))`,
+               dirs_to_monitor = [path],
+               process_filename = fn -> replace(fn, path=>""),
+           )
+       end
+3 unique allocating sites, 224000 total bytes
+┌──────────────────────┬─────────────┬───────────────┐
+│ <file>:<line number> │ Allocations │ Allocations % │
+│                      │   (bytes)   │    (xᵢ/∑x)    │
+├──────────────────────┼─────────────┼───────────────┤
+│ example.jl:4         │    96000    │      43       │
+│ example.jl:3         │    80000    │      36       │
+│ example.jl:2         │    48000    │      21       │
+└──────────────────────┴─────────────┴───────────────┘
+```
+
 ## Tracking Coverage with [Codecov.io](https://codecov.io)
 
 [Codecov.io](https://codecov.io) is a test coverage tracking tool that integrates with your continuous integration servers (e.g. [TravisCI](https://travis-ci.com/)) or with HTTP POSTs from your very own computer at home.

@@ -743,3 +743,25 @@ withenv(
 end # of withenv( => nothing)
 
 end # of @testset "Coverage"
+
+import PrettyTables
+@testset "report_allocs" begin
+    mktempdir() do path
+        open(joinpath(path, "example.jl"), "w") do io
+            println(io, "for i in 1:1000")
+            println(io, "    x = []")
+            println(io, "    push!(x, 1)")
+            println(io, "    push!(x, [1,2,3,4])")
+            println(io, "    push!(x, \"stringy-string\")")
+            println(io, "end")
+        end
+        io = IOBuffer()
+        Coverage.report_allocs(io;
+            run_cmd = `$(Base.julia_cmd()) --track-allocation=all $(joinpath(path, "example.jl"))`,
+            dirs_to_monitor = [path],
+            process_filename = fn -> replace(fn, path=>""),
+        )
+        str = String(take!(io))
+        @test occursin("3 unique allocating sites", str)
+    end
+end
