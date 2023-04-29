@@ -198,7 +198,7 @@ When using Coverage.jl locally, over time a lot of `.cov` files can accumulate. 
 
        ```yml
        after_test:
-       - C:\projects\julia\bin\julia -e "using Pkg; Pkg.add(\"Coverage\"); using Coverage; Coveralls.submit(process_folder())"
+       - C:\julia\bin\julia -e "using Pkg; Pkg.add(\"Coverage\"); using Coverage; Coveralls.submit(process_folder())"
        ```
 
 ## A note for advanced users
