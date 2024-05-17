@@ -482,6 +482,79 @@ withenv(
             end
         end
 
+        # test Gitlab ci submission process
+
+        # set up Gitlab ci env
+        withenv(
+            "GITLAB_CI" => "true",
+            "CI_MERGE_REQUEST_IID" => "t_pr",
+            "CI_JOB_ID" => "t_proj",
+            "CI_COMMIT_REF_NAME" => "t_branch",
+            "CI_COMMIT_SHA" => "t_commit",
+            "CI_PROJECT_NAME" => "t_repo",
+            "CI_PIPELINE_URL" => "t_url",
+            "CI_PIPELINE_IID" => "t_num",
+            "CI_DEFAULT_BRANCH" => "master",
+            ) do
+
+            # default values
+            codecov_url = construct_uri_string_ci()
+            @test occursin("codecov.io", codecov_url)
+            @test occursin("service=gitlab", codecov_url)
+            @test occursin("branch=t_branch", codecov_url)
+            @test occursin("commit=t_commit", codecov_url)
+            @test occursin("pr=t_pr", codecov_url)
+            @test occursin("build_url=t_url", codecov_url)
+            @test occursin("build=t_num", codecov_url)
+
+            # env var url override
+            withenv( "CODECOV_URL" => "https://enterprise-codecov-1.com" ) do
+
+                codecov_url = construct_uri_string_ci()
+                @test occursin("enterprise-codecov-1.com", codecov_url)
+                @test occursin("service=gitlab", codecov_url)
+                @test occursin("branch=t_branch", codecov_url)
+                @test occursin("commit=t_commit", codecov_url)
+                @test occursin("pr=t_pr", codecov_url)
+                @test occursin("build_url=t_url", codecov_url)
+                @test occursin("build=t_num", codecov_url)
+
+                # function argument url override
+                codecov_url = construct_uri_string_ci(codecov_url="https://enterprise-codecov-2.com")
+                @test occursin("enterprise-codecov-2.com", codecov_url)
+                @test occursin("service=gitlab", codecov_url)
+                @test occursin("branch=t_branch", codecov_url)
+                @test occursin("commit=t_commit", codecov_url)
+                @test occursin("pr=t_pr", codecov_url)
+                @test occursin("build_url=t_url", codecov_url)
+                @test occursin("build=t_num", codecov_url)
+
+                # env var token
+                withenv( "CODECOV_TOKEN" => "token_name_1" ) do
+
+                    codecov_url = construct_uri_string_ci()
+                    @test occursin("enterprise-codecov-1.com", codecov_url)
+                    @test occursin("token=token_name_1", codecov_url)
+                    @test occursin("service=gitlab", codecov_url)
+                    @test occursin("branch=t_branch", codecov_url)
+                    @test occursin("commit=t_commit", codecov_url)
+                    @test occursin("pr=t_pr", codecov_url)
+                    @test occursin("build_url=t_url", codecov_url)
+                    @test occursin("build=t_num", codecov_url)
+
+                    # function argument token url override
+                    codecov_url = construct_uri_string_ci(token="token_name_2")
+                    @test occursin("enterprise-codecov-1.com", codecov_url)
+                    @test occursin("service=gitlab", codecov_url)
+                    @test occursin("branch=t_branch", codecov_url)
+                    @test occursin("commit=t_commit", codecov_url)
+                    @test occursin("pr=t_pr", codecov_url)
+                    @test occursin("build_url=t_url", codecov_url)
+                    @test occursin("build=t_num", codecov_url)
+                end
+            end
+        end
+
         # test codecov token masking
         withenv(
             "APPVEYOR" => "true",
@@ -635,6 +708,21 @@ withenv(
                         @test request["service_job_number"] == "ci_job_num"
                         @test request["service_job_id"] == "ci_job_id"
                 end
+        end
+
+        # test Gitlab see https://docs.coveralls.io/api-reference
+        withenv("GITLAB_CI" => "true",
+                "CI_PIPELINE_IID" => "my_job_num",
+                "CI_JOB_ID" => "my_job_id",
+                "CI_COMMIT_REF_NAME" => "test",
+                "CI_DEFAULT_BRANCH" => "master",
+                "CI_MERGE_REQUEST_IID" => "t_pr") do
+                request = Coverage.Coveralls.prepare_request(fcs, false)
+                @test request["repo_token"] == "token_name_1"
+                @test request["service_number"] == "my_job_num"
+                @test request["service_job_id"] == "my_job_id"
+                @test request["service_name"] == "gitlab"
+                @test request["service_pull_request"] == "t_pr"
         end
 
         # test git_info (only works with Jenkins & local at the moment)
