@@ -176,7 +176,7 @@ function add_ci_to_kwargs(kwargs::Dict)
         buildkite_repo = ENV["BUILDKITE_REPO"]
         @info "BUILDKITE_REPO: $buildkite_repo"
         # TODO: This only works for GitHub repos right now
-        m = match(r"/^(?:https:\/\/|git@)github.com(?:\/|:)(?<slug>.*?)\.git$/gm", buildkite_repo)
+        m = match(r"^(?:https:\/\/|git@)github.com(?:\/|:)(?<slug>.*?)\.git$", buildkite_repo)
         if m !== nothing
             @info "BUILDKITE_REPO matched: $(m[:slug])"
             kwargs = set_defaults(kwargs, repo = String(m[:slug]))
