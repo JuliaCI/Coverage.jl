@@ -179,7 +179,8 @@ function add_ci_to_kwargs(kwargs::Dict)
         m = match(r"^(?:https:\/\/|git@)github.com(?:\/|:)(?<slug>.*?)\.git$", buildkite_repo)
         if m !== nothing
             @info "BUILDKITE_REPO matched: $(m[:slug])"
-            kwargs = set_defaults(kwargs, repo = String(m[:slug]))
+            kwargs = set_defaults(kwargs, slug = String(m[:slug]))
+            # kwargs = set_defaults(kwargs, repo = String(m[:slug]))
         end
         if ENV["BUILDKITE_PULL_REQUEST"] != "false"
             kwargs = set_defaults(kwargs, pr = ENV["BUILDKITE_PULL_REQUEST"])
