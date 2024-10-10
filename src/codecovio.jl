@@ -177,7 +177,7 @@ function add_ci_to_kwargs(kwargs::Dict)
         # TODO: This only works for GitHub repos right now
         m = match(r"/^(?:https:\/\/|git@)github.com(?:\/|:)(?<slug>.*?)\.git$/gm", buildkite_repo)
         if m !== nothing
-            kwargs = set_defaults(kwargs, slug = String(m[:slug]))
+            kwargs = set_defaults(kwargs, repo = String(m[:slug]))
         end
         if ENV["BUILDKITE_PULL_REQUEST"] != "false"
             kwargs = set_defaults(kwargs, pr = ENV["BUILDKITE_PULL_REQUEST"])
@@ -254,7 +254,7 @@ function submit_generic(fcs::Vector{FileCoverage}, kwargs::Dict)
     uri_str = construct_uri_string(kwargs)
 
     @info "Submitting data to Codecov..."
-    @debug "Codecov.io API URL:\n" * mask_token(uri_str)
+    @info "Codecov.io API URL:\n" * mask_token(uri_str)
 
     is_black_hole_server = parse(Bool, strip(get(ENV, "JULIA_COVERAGE_IS_BLACK_HOLE_SERVER", "false")))::Bool
     if !dry_run
