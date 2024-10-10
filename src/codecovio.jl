@@ -174,9 +174,11 @@ function add_ci_to_kwargs(kwargs::Dict)
             build_url    = ENV["BUILDKITE_BUILD_URL"]
         )
         buildkite_repo = ENV["BUILDKITE_REPO"]
+        @info "BUILDKITE_REPO: $buildkite_repo"
         # TODO: This only works for GitHub repos right now
         m = match(r"/^(?:https:\/\/|git@)github.com(?:\/|:)(?<slug>.*?)\.git$/gm", buildkite_repo)
         if m !== nothing
+            @info "BUILDKITE_REPO matched: $(m[:slug])"
             kwargs = set_defaults(kwargs, repo = String(m[:slug]))
         end
         if ENV["BUILDKITE_PULL_REQUEST"] != "false"
@@ -310,6 +312,7 @@ function construct_uri_string(kwargs::Dict)
         # (:verbose is there for backwards compatibility with versions
         # of this code that treated it in a special way)
         if k != :codecov_url && k != :dry_run && k != :verbose
+            @info "Adding key-value pair to URL: $(k)=$(v)"
             uri_str = "$(uri_str)$(k)=$(v)&"
         end
     end
