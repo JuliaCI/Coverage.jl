@@ -1,6 +1,16 @@
 Coverage.jl
 ===========
 
+---
+
+> [!WARNING]  
+> **WARNING: codecov and coveralls no longer support 3rd party uploaders (such as this one). You must use their official uploaders. You can still use CoverageTools (re-exported by this package) to pre-process the files however.**
+>
+> * <https://docs.codecov.com/docs/codecov-uploader>
+> * <https://docs.coveralls.io/integrations#universal-coverage-reporter>
+
+---
+
 [![Build Status](https://github.com/JuliaCI/Coverage.jl/workflows/CI/badge.svg)](https://github.com/JuliaCI/Coverage.jl/actions/workflows/CI.yml?query=branch%3Amaster)
 [![coveralls](https://coveralls.io/repos/github/JuliaCI/Coverage.jl/badge.svg?branch=master)](https://coveralls.io/github/JuliaCI/Coverage.jl?branch=master)
 [![codecov](https://codecov.io/gh/JuliaCI/Coverage.jl/branch/master/graph/badge.svg?label=codecov)](https://codecov.io/gh/JuliaCI/Coverage.jl)
