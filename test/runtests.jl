@@ -39,6 +39,7 @@ withenv(
     "APPVEYOR_BUILD_NUMBER" => nothing,
     "APPVEYOR_BUILD_ID" => nothing,
     "APPVEYOR_JOB_ID" => nothing,
+    "GITHUB_ACTIONS" => nothing,
     "GITHUB_ACTION" => nothing,
     "GITHUB_EVENT_PATH" => nothing,
     "GITHUB_HEAD_REF" => nothing,
@@ -1079,16 +1080,18 @@ withenv(
     end
 
     @testset "CIIntegration" begin
-        # Test CI platform detection (should be :unknown in test environment)
-        @test CIIntegration.detect_ci_platform() == :unknown
+        # Test CI platform detection in a clean environment
+        withenv("GITHUB_ACTIONS" => nothing, "TRAVIS" => nothing, "APPVEYOR" => nothing, "JENKINS" => nothing) do
+            @test CIIntegration.detect_ci_platform() == :unknown
+        end
 
         # Test GitHub Actions detection
-        withenv("GITHUB_ACTIONS" => "true") do
+        withenv("GITHUB_ACTIONS" => "true", "TRAVIS" => nothing, "APPVEYOR" => nothing, "JENKINS" => nothing) do
             @test CIIntegration.detect_ci_platform() == :github_actions
         end
 
         # Test Travis detection
-        withenv("TRAVIS" => "true") do
+        withenv("TRAVIS" => "true", "GITHUB_ACTIONS" => nothing, "APPVEYOR" => nothing, "JENKINS" => nothing) do
             @test CIIntegration.detect_ci_platform() == :travis
         end
 
