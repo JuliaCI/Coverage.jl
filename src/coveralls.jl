@@ -13,6 +13,7 @@ using CoverageTools
 using HTTP
 using JSON
 using LibGit2
+using ..CoverageUtils
 using MbedTLS
 
 export submit, submit_local
@@ -61,8 +62,18 @@ end
 Take a vector of file coverage results (produced by `process_folder`),
 and submits them to Coveralls. Assumes that this code is being run
 on TravisCI, AppVeyor or Jenkins. If running locally, use `submit_local`.
+
+!!! warning "Deprecated"
+    This function is deprecated. Coveralls no longer supports 3rd party uploaders.
+    Please use the Coveralls Universal Coverage Reporter instead. See the documentation at:
+    https://docs.coveralls.io/integrations#universal-coverage-reporter
+
+    Use `Coverage.CoverallsExport.prepare_for_coveralls()` to prepare coverage data
+    for the official uploader.
 """
 function submit(fcs::Vector{FileCoverage}; kwargs...)
+    @warn CoverageUtils.create_deprecation_message(:coveralls, "submit") maxlog=1
+
     data = prepare_request(fcs, false)
     post_request(data)
 end
@@ -213,8 +224,18 @@ Take a `Vector` of file coverage results (produced by `process_folder`),
 and submits them to Coveralls. For submissions not from CI.
 
 git_info can be either a `Dict` or a function that returns a `Dict`.
+
+!!! warning "Deprecated"
+    This function is deprecated. Coveralls no longer supports 3rd party uploaders.
+    Please use the Coveralls Universal Coverage Reporter instead. See the documentation at:
+    https://docs.coveralls.io/integrations#universal-coverage-reporter
+
+    Use `Coverage.CoverallsExport.prepare_for_coveralls()` to prepare coverage data
+    for the official uploader.
 """
 function submit_local(fcs::Vector{FileCoverage}, git_info=query_git_info; kwargs...)
+    @warn CoverageUtils.create_deprecation_message(:coveralls, "submit_local") maxlog=1
+
     data = prepare_request(fcs, true, git_info)
     post_request(data)
 end

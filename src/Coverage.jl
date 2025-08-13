@@ -15,6 +15,13 @@ export process_cov
 export process_file
 export process_folder
 
+# New export modules for modern coverage uploaders
+export CodecovExport, CoverallsExport, CIIntegration
+
+# Internal utilities module
+include("coverage_utils.jl")
+using .CoverageUtils
+
 const CovCount = CoverageTools.CovCount
 const FileCoverage = CoverageTools.FileCoverage
 const amend_coverage_from_src! = CoverageTools.amend_coverage_from_src!
@@ -32,5 +39,10 @@ include("codecovio.jl")
 include("lcov.jl")
 include("memalloc.jl")
 include("parser.jl")
+
+# New modules for modern uploaders
+include("codecov_export.jl")
+include("coveralls_export.jl")
+include("ci_integration.jl")
 
 end # module

@@ -1,21 +1,66 @@
 Coverage.jl
 ===========
 
----
-
-> [!WARNING]  
-> **WARNING: codecov and coveralls no longer support 3rd party uploaders (such as this one). You must use their official uploaders. You can still use CoverageTools (re-exported by this package) to pre-process the files however.**
->
-> * <https://docs.codecov.com/docs/codecov-uploader>
-> * <https://docs.coveralls.io/integrations#universal-coverage-reporter>
-
----
-
 [![Build Status](https://github.com/JuliaCI/Coverage.jl/workflows/CI/badge.svg)](https://github.com/JuliaCI/Coverage.jl/actions/workflows/CI.yml?query=branch%3Amaster)
 [![coveralls](https://coveralls.io/repos/github/JuliaCI/Coverage.jl/badge.svg?branch=master)](https://coveralls.io/github/JuliaCI/Coverage.jl?branch=master)
 [![codecov](https://codecov.io/gh/JuliaCI/Coverage.jl/branch/master/graph/badge.svg?label=codecov)](https://codecov.io/gh/JuliaCI/Coverage.jl)
 
 **"Take Julia code coverage and memory allocation results, do useful things with them"**
+
+**Coverage.jl has been modernized** to work with the official uploaders from Codecov and Coveralls.
+The package now provides:
+- 🔄 **Coverage data processing** using CoverageTools.jl
+- 📤 **Export functionality** for official uploaders
+- 🚀 **Automated upload helpers** for CI environments
+- 📋 **Helper scripts** for easy integration
+
+> [!IMPORTANT]
+> **Codecov and Coveralls have deprecated 3rd party uploaders.** Coverage.jl now integrates with their official uploaders while maintaining the same easy-to-use interface for Julia projects.
+>
+> **Migration required:** See [MIGRATION.md](MIGRATION.md) for upgrading from the old `Codecov.submit()` and `Coveralls.submit()` functions.
+
+## Quick Start
+
+### Automated Upload (Recommended)
+
+```julia
+using Coverage, Coverage.CIIntegration
+
+# Process and upload to both services
+process_and_upload(service=:both, folder="src")
+
+# Or just one service
+process_and_upload(service=:codecov, folder="src")
+```
+
+### Manual Export + Official Uploaders
+
+```julia
+using Coverage, Coverage.LCOV
+
+# Process coverage
+coverage = process_folder("src")
+
+# Export to LCOV format
+LCOV.writefile("coverage.info", coverage)
+
+# Use with official uploaders in CI
+# Codecov: Upload via codecov/codecov-action@v3
+# Coveralls: Upload via coverallsapp/github-action@v2
+```
+
+### Using Helper Scripts
+
+```bash
+# Universal upload script
+julia scripts/upload_coverage.jl --service both --folder src
+
+# Codecov only
+julia scripts/upload_codecov.jl --folder src --flags julia
+
+# Dry run to test
+julia scripts/upload_coverage.jl --dry-run
+```
 
 **Code coverage**: Julia can track how many times, if any, each line of your code is run. This is useful for measuring how much of your code base your tests actually test, and can reveal the parts of your code that are not tested and might be hiding a bug. You can use Coverage.jl to summarize the results of this tracking, or to send them to a service like [Coveralls.io](https://coveralls.io) or [Codecov.io](https://codecov.io/github/JuliaCI).
 

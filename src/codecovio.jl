@@ -13,6 +13,7 @@ using Coverage
 using CoverageTools
 using JSON
 using LibGit2
+using ..CoverageUtils
 
 export submit, submit_local, submit_generic
 
@@ -63,8 +64,18 @@ end
 Takes a vector of file coverage results (produced by `process_folder`),
 and submits them to Codecov.io. Assumes that this code is being run
 on TravisCI or AppVeyor. If running locally, use `submit_local`.
+
+!!! warning "Deprecated"
+    This function is deprecated. Codecov no longer supports 3rd party uploaders.
+    Please use the official Codecov uploader instead. See the documentation at:
+    https://docs.codecov.com/docs/codecov-uploader
+
+    Use `Coverage.CodecovExport.prepare_for_codecov()` to prepare coverage data
+    for the official uploader.
 """
 function submit(fcs::Vector{FileCoverage}; kwargs...)
+    @warn CoverageUtils.create_deprecation_message(:codecov, "submit") maxlog=1
+
     submit_generic(fcs, add_ci_to_kwargs(; kwargs...))
 end
 
@@ -203,8 +214,18 @@ Take a `Vector` of file coverage results (produced by `process_folder`),
 and submit them to Codecov.io. Assumes the submission is being made from
 a local git installation, rooted at `dir`. A repository token should be specified by a
 `token` keyword argument or the `CODECOV_TOKEN` environment variable.
+
+!!! warning "Deprecated"
+    This function is deprecated. Codecov no longer supports 3rd party uploaders.
+    Please use the official Codecov uploader instead. See the documentation at:
+    https://docs.codecov.com/docs/codecov-uploader
+
+    Use `Coverage.CodecovExport.prepare_for_codecov()` to prepare coverage data
+    for the official uploader.
 """
 function submit_local(fcs::Vector{FileCoverage}, dir::AbstractString=pwd(); kwargs...)
+    @warn CoverageUtils.create_deprecation_message(:codecov, "submit_local") maxlog=1
+
     submit_generic(fcs, add_local_to_kwargs(dir; kwargs...))
 end
 
@@ -238,10 +259,20 @@ The `codecov_url_path` keyword argument or the CODECOV_URL_PATH environment vari
 can be used to specify the final path of the uri.
 The `dry_run` keyword can be used to prevent the http request from
 being generated.
+
+!!! warning "Deprecated"
+    This function is deprecated. Codecov no longer supports 3rd party uploaders.
+    Please use the official Codecov uploader instead. See the documentation at:
+    https://docs.codecov.com/docs/codecov-uploader
+
+    Use `Coverage.CodecovExport.prepare_for_codecov()` to prepare coverage data
+    for the official uploader.
 """
 submit_generic(fcs::Vector{FileCoverage}; kwargs...) =
     submit_generic(fcs, Dict{Symbol,Any}(kwargs))
 function submit_generic(fcs::Vector{FileCoverage}, kwargs::Dict)
+    @warn CoverageUtils.create_deprecation_message(:codecov, "submit_generic") maxlog=1
+
     @assert length(kwargs) > 0
     dry_run = get(kwargs, :dry_run, false)
 
