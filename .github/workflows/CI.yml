@@ -51,14 +51,8 @@ jobs:
           coverage: true
       # Upload coverage using the modernized Coverage.jl
       - name: Upload coverage
-        if: matrix.version == '1' && matrix.os == 'ubuntu-latest' && matrix.arch == 'x64'
         run: |
           julia --color=yes --project=. -e '
             using Coverage
-            try
-              # Test the modernized upload functionality
-              process_and_upload(service=:both, folder="src", dry_run=true)
-            catch e
-              @warn "Coverage upload test failed" exception=e
-            end
+            process_and_upload(service=:both, folder="src", dry_run=true)
           '
