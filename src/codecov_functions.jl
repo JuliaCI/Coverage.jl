@@ -92,30 +92,20 @@ function download_codecov_uploader(; force=false, install_dir=nothing)
     exec_name = platform == :windows ? "codecov.exe" : "codecov"
     exec_path = joinpath(install_dir, exec_name)
 
-    # Check if uploader already exists
+    # Check if uploader already exists and force is not set
     if !force && isfile(exec_path)
         @info "Codecov uploader already exists at: $exec_path"
         return exec_path
     end
 
+    # Remove existing file if force is true
+    if force && isfile(exec_path)
+        rm(exec_path)
+    end
+
     @info "Downloading Codecov uploader for $platform..."
 
-    try
-        # Download the uploader
-        Downloads.download(uploader_url, exec_path)
-
-        # Make executable on Unix systems
-        if platform != :windows
-            chmod(exec_path, 0o555)
-        end
-
-        @info "Codecov uploader downloaded to: $exec_path"
-        return exec_path
-
-    catch e
-        @error "Failed to download Codecov uploader" exception=e
-        rethrow(e)
-    end
+    return CoverageUtils.download_binary(uploader_url, install_dir, exec_name)
 end
 
 """

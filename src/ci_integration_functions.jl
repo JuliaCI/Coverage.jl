@@ -173,10 +173,20 @@ end
 """
     process_and_upload(; service=:both, folder="src", format=:lcov, codecov_flags=nothing, codecov_name=nothing, dry_run=false)
 
-Convenience function to process coverage and upload to coverage services.
+Process coverage data in the specified folder and upload to the specified service(s).
+
+# Arguments
+- `service`: Service to upload to (:codecov, :coveralls, or :both)
+- `folder`: Folder to process for coverage data (default: "src")
+- `format`: Coverage format (:lcov or :json)
+- `codecov_flags`: Flags for Codecov upload
+- `codecov_name`: Name for Codecov upload
+- `dry_run`: Show what would be uploaded without actually uploading
+
+# Returns
+Dictionary with upload results for each service
 """
-function process_and_upload(;
-                           service=:both,
+function process_and_upload(; service=:both,
                            folder="src",
                            format=:lcov,
                            codecov_flags=nothing,
@@ -188,25 +198,35 @@ function process_and_upload(;
 
     if isempty(fcs)
         @warn "No coverage data found in $folder"
-        return Dict(:codecov => false, :coveralls => false)
+        return service == :both ? Dict(:codecov => false, :coveralls => false) : false
     end
 
     results = Dict{Symbol,Bool}()
 
-    if service == :codecov || service == :both
+    # Upload to Codecov
+    if service in [:codecov, :both]
         @info "Uploading to Codecov..."
-        results[:codecov] = upload_to_codecov(fcs;
-                                             format=format,
-                                             flags=codecov_flags,
-                                             name=codecov_name,
-                                             dry_run=dry_run)
+        try
+            results[:codecov] = upload_to_codecov(fcs;
+                                                 format=format,
+                                                 flags=codecov_flags,
+                                                 name=codecov_name,
+                                                 dry_run=dry_run)
+        catch e
+            results[:codecov] = CoverageUtils.handle_upload_error(e, "Codecov")
+        end
     end
 
-    if service == :coveralls || service == :both
+    # Upload to Coveralls
+    if service in [:coveralls, :both]
         @info "Uploading to Coveralls..."
-        results[:coveralls] = upload_to_coveralls(fcs;
-                                                 format=format,
-                                                 dry_run=dry_run)
+        try
+            results[:coveralls] = upload_to_coveralls(fcs;
+                                                     format=format,
+                                                     dry_run=dry_run)
+        catch e
+            results[:coveralls] = CoverageUtils.handle_upload_error(e, "Coveralls")
+        end
     end
 
     return results

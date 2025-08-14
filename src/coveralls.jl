@@ -262,16 +262,17 @@ end
 
 # adds the repo token to the data
 function add_repo_token(data, local_submission)
-    repo_token =
-            get(ENV, "COVERALLS_TOKEN") do
-                get(ENV, "REPO_TOKEN") do #backward compatibility
-                    # error unless we are on Travis
-                    if local_submission || (data["service_name"] != "travis-ci")
-                        error("Coveralls submission requires a COVERALLS_TOKEN environment variable")
-                    end
-                end
-            end
-    if repo_token !== nothing
+    repo_token = get(ENV, "COVERALLS_TOKEN", nothing)
+    if repo_token === nothing
+        repo_token = get(ENV, "REPO_TOKEN", nothing) # backward compatibility
+    end
+    
+    if repo_token === nothing
+        # error unless we are on Travis
+        if local_submission || (data["service_name"] != "travis-ci")
+            error("Coveralls submission requires a COVERALLS_TOKEN environment variable")
+        end
+    else
         data["repo_token"] = repo_token
     end
     return data

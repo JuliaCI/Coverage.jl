@@ -2,8 +2,9 @@
 module CoverageUtils
 
 using Downloads
+using HTTP
 
-export detect_platform, ensure_output_dir, create_deprecation_message, create_script_help, parse_script_args, handle_script_error
+export detect_platform, ensure_output_dir, create_deprecation_message, create_script_help, parse_script_args, handle_script_error, download_binary, handle_upload_error
 
 """
     detect_platform()
@@ -163,6 +164,57 @@ Standard error handling for scripts.
 function handle_script_error(e::Exception, context::String)
     println("❌ Error in $(context): $(string(e))")
     exit(1)
+end
+
+"""
+    download_binary(url::String, dest_dir::String, executable_name::String)
+
+Common function to download and set up binary executables.
+Returns the path to the downloaded executable or nothing if failed.
+"""
+function download_binary(url::String, dest_dir::String, executable_name::String)
+    exe_path = joinpath(dest_dir, executable_name)
+
+    if isfile(exe_path)
+        @info "$executable_name already exists at: $exe_path"
+        return exe_path
+    end
+
+    try
+        @info "Downloading from: $url"
+        Downloads.download(url, exe_path)
+
+        # Set executable permissions on Unix
+        if !Sys.iswindows()
+            chmod(exe_path, 0o755)
+        end
+
+        @info "$executable_name downloaded to: $exe_path"
+        return exe_path
+    catch e
+        @error "Failed to download $executable_name" exception=e
+        return nothing
+    end
+end
+
+"""
+    handle_upload_error(e::Exception, service::String)
+
+Common error handler for upload failures.
+"""
+function handle_upload_error(e::Exception, service::String)
+    error_msg = sprint(Base.display_error, e)
+    @error "Failed to upload to $service" error=error_msg
+
+    if occursin("404", string(e))
+        @warn "Check if the repository is registered with $service"
+    elseif occursin("401", string(e)) || occursin("403", string(e))
+        @warn "Authentication failed. Check your $service token"
+    elseif occursin("timeout", lowercase(string(e)))
+        @warn "Connection timeout. Check your network connection"
+    end
+
+    return false
 end
 
 end # module CoverageUtils

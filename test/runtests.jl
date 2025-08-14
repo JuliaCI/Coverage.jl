@@ -687,7 +687,7 @@ withenv(
         withenv("JENKINS" => "true",
                 "BUILD_ID" => "my_job_id",
                 "CI_PULL_REQUEST" => true,
-                "COVERALLS_PARALLEL" => "not") do
+                "COVERALLS_PARALLEL" => "false") do
                 my_git_info = Dict("remote_name" => "my_origin")
                 request = Coverage.Coveralls.prepare_request(fcs, false)
                 @test request["repo_token"] == "token_name_1"

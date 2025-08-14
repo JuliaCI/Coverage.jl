@@ -183,30 +183,20 @@ function install_via_download(reporter_info, platform; force=false, install_dir=
 
     exec_path = joinpath(install_dir, reporter_info.filename)
 
-    # Check if reporter already exists
+    # Check if reporter already exists and force is not set
     if !force && isfile(exec_path)
         @info "Coveralls reporter already exists at: $exec_path"
         return exec_path
     end
 
+    # Remove existing file if force is true
+    if force && isfile(exec_path)
+        rm(exec_path)
+    end
+
     @info "Downloading Coveralls Universal Coverage Reporter for $platform..."
 
-    try
-        # Download the reporter
-        Downloads.download(reporter_info.url, exec_path)
-
-        # Make executable on Unix systems
-        if platform != :windows
-            chmod(exec_path, 0o555)
-        end
-
-        @info "Coveralls reporter downloaded to: $exec_path"
-        return exec_path
-
-    catch e
-        @error "Failed to download Coveralls reporter" exception=e
-        rethrow(e)
-    end
+    return CoverageUtils.download_binary(reporter_info.url, install_dir, reporter_info.filename)
 end
 
 """
