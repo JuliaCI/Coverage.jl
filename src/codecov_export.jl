@@ -86,7 +86,7 @@ Prepare coverage data for upload with the official Codecov uploader.
 
 # Arguments
 - `fcs::Vector{FileCoverage}`: Coverage data from `process_folder()`
-- `format::Symbol`: Output format (:json, :lcov, or :xml)
+- `format::Symbol`: Output format (:json or :lcov)
 - `output_dir::String`: Directory to store output files
 - `filename::String`: Custom filename (optional)
 

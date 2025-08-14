@@ -1,4 +1,4 @@
-#!/usr/bin/env julia --project
+#!/usr/bin/env julia --project=..
 
 """
 Easy Coveralls upload script for CI environments.

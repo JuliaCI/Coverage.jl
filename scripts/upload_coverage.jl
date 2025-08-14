@@ -1,4 +1,4 @@
-#!/usr/bin/env julia --project
+#!/usr/bin/env julia --project=..
 
 """
 Universal coverage upload script for CI environments.

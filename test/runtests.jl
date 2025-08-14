@@ -877,7 +877,7 @@ withenv(
 
                     # For Homebrew installations, exe_path is the full path to coveralls
                     # For direct downloads, exe_path is the full path to the binary
-                    if CoverageUtils.detect_platform() == "macos"
+                    if CoverageUtils.detect_platform() == :macos
                         # On macOS with Homebrew, test the command is available
                         @test (exe_path == "coveralls" || endswith(exe_path, "/coveralls"))
                     else

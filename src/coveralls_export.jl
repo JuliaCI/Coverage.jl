@@ -168,22 +168,17 @@ Install Coveralls reporter via Homebrew (macOS).
 """
 function install_via_homebrew(reporter_info; force=false)
     # Check if Homebrew is available
-    try
-        run(`which brew`; wait=true)
-    catch
+    brew_path = Sys.which("brew")
+    if brew_path === nothing
         error("Homebrew is not installed. Please install Homebrew first: https://brew.sh")
     end
 
     # Check if coveralls is already installed
     if !force
-        try
-            coveralls_path = strip(read(`which coveralls`, String))
-            if isfile(coveralls_path)
-                @info "Coveralls reporter already installed via Homebrew at: $coveralls_path"
-                return coveralls_path
-            end
-        catch
-            # Not installed, continue with installation
+        coveralls_path = Sys.which("coveralls")
+        if coveralls_path !== nothing && isfile(coveralls_path)
+            @info "Coveralls reporter already installed via Homebrew at: $coveralls_path"
+            return coveralls_path
         end
     end
 
