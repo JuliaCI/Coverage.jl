@@ -49,8 +49,19 @@ include("ci_integration_functions.jl")
 # Legacy modules for backward compatibility
 include("coveralls.jl")
 include("codecovio.jl")
-include("lcov.jl")
-include("memalloc.jl")
-include("parser.jl")
+
+const readfile = CoverageTools.LCOV.readfile
+const writefile = CoverageTools.LCOV.writefile
+
+const MallocInfo = CoverageTools.MallocInfo
+const analyze_malloc = CoverageTools.analyze_malloc
+const analyze_malloc_files = CoverageTools.analyze_malloc_files
+const find_malloc_files = CoverageTools.find_malloc_files
+const sortbybytes = CoverageTools.sortbybytes
+
+const isevaldef = CoverageTools.isevaldef
+const isfuncexpr = CoverageTools.isfuncexpr
+const function_body_lines = CoverageTools.function_body_lines
+const function_body_lines! = CoverageTools.function_body_lines!
 
 end # module
