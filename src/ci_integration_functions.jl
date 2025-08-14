@@ -1,33 +1,6 @@
 # CI Integration functions for Coverage.jl
 
 """
-    detect_ci_platform()
-
-Detect the current CI platform based on environment variables.
-"""
-function detect_ci_platform()
-    if haskey(ENV, "GITHUB_ACTIONS") || haskey(ENV, "GITHUB_ACTION")
-        return :github_actions
-    elseif Base.get_bool_env("TRAVIS", false)
-        return :travis
-    elseif Base.get_bool_env("APPVEYOR", false)
-        return :appveyor
-    elseif Base.get_bool_env("CIRCLECI", false)
-        return :circleci
-    elseif Base.get_bool_env("JENKINS", false)
-        return :jenkins
-    elseif haskey(ENV, "BUILD_BUILDURI") # Azure Pipelines
-        return :azure_pipelines
-    elseif Base.get_bool_env("BUILDKITE", false)
-        return :buildkite
-    elseif Base.get_bool_env("GITLAB_CI", false)
-        return :gitlab
-    else
-        return :unknown
-    end
-end
-
-"""
     upload_to_codecov(fcs::Vector{FileCoverage}; format=:lcov, flags=nothing, name=nothing, token=nothing, dry_run=false, cleanup=true)
 
 Process coverage data and upload to Codecov using the official uploader.
@@ -78,7 +51,7 @@ function upload_to_codecov(fcs::Vector{FileCoverage};
         if name !== nothing
             push!(cmd_args, "-n", name)
         end
-        
+
         # Add flag to exit with non-zero on failure (instead of default exit code 0)
         push!(cmd_args, "-Z")
 

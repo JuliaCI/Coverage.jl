@@ -102,7 +102,6 @@ Coverage.jl now provides these functions directly:
 - `export_coveralls_json()` - Export to JSON format
 
 ### Utility Functions
-- `detect_ci_platform()` - Detect current CI environment
 - `detect_platform()` - Detect current platform
 
 ## Environment Variables

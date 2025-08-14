@@ -1030,26 +1030,6 @@ withenv(
     end
 
     @testset "CI integration" begin
-        # Test CI platform detection in a clean environment
-        withenv("GITHUB_ACTIONS" => nothing, "TRAVIS" => nothing, "APPVEYOR" => nothing, "JENKINS" => nothing) do
-            @test Coverage.detect_ci_platform() == :unknown
-        end
-
-        # Test GitHub Actions detection
-        withenv("GITHUB_ACTIONS" => "true", "TRAVIS" => nothing, "APPVEYOR" => nothing, "JENKINS" => nothing) do
-            @test Coverage.detect_ci_platform() == :github_actions
-        end
-
-        # Test Travis detection
-        withenv("TRAVIS" => "true", "GITHUB_ACTIONS" => nothing, "APPVEYOR" => nothing, "JENKINS" => nothing) do
-            @test Coverage.detect_ci_platform() == :travis
-        end
-
-        # Test Appveyor detection
-        withenv("APPVEYOR" => "true", "GITHUB_ACTIONS" => nothing, "TRAVIS" => nothing, "JENKINS" => nothing) do
-            @test Coverage.detect_ci_platform() == :appveyor
-        end
-
         # Test upload functions with dry run (should not actually upload)
         test_fcs = [FileCoverage("test.jl", "test", [1, 0, 1])]
 
@@ -1075,7 +1055,7 @@ withenv(
                     cleanup=false)
                 @test success == true
 
-                # Test with name parameter  
+                # Test with name parameter
                 success = Coverage.upload_to_codecov(test_fcs;
                     dry_run=true,
                     name="test-build",
@@ -1114,14 +1094,14 @@ withenv(
                         dry_run=true)
                     @test haskey(results, :codecov)
                     @test results[:codecov] == true
-                    
+
                     # Test with Coveralls service
                     results = Coverage.process_and_upload(;
                         service=:coveralls,
                         folder="src",
                         dry_run=true)
                     @test haskey(results, :coveralls)
-                    
+
                     # Test with both services
                     results = Coverage.process_and_upload(;
                         service=:both,
@@ -1156,29 +1136,29 @@ withenv(
 
     @testset "Codecov Functions" begin
         test_fcs = [FileCoverage("test.jl", "test", [1, 0, 1])]
-        
+
         mktempdir() do tmpdir
             # Test JSON format support
-            json_file = Coverage.prepare_for_codecov(test_fcs; 
+            json_file = Coverage.prepare_for_codecov(test_fcs;
                 format=:json, output_dir=tmpdir, filename=joinpath(tmpdir, "codecov.json"))
             @test isfile(json_file)
             @test endswith(json_file, "codecov.json")
-            
+
             # Verify JSON content structure
             json_data = JSON.parsefile(json_file)
             @test haskey(json_data, "coverage")
             @test haskey(json_data["coverage"], "test.jl")
-            
+
             # Test LCOV format support (existing functionality)
-            lcov_file = Coverage.prepare_for_codecov(test_fcs; 
+            lcov_file = Coverage.prepare_for_codecov(test_fcs;
                 format=:lcov, output_dir=tmpdir)
             @test isfile(lcov_file)
             @test endswith(lcov_file, "coverage.info")
-            
+
             # Test unsupported format
             @test_throws ErrorException Coverage.prepare_for_codecov(test_fcs; format=:xml)
         end
-        
+
         # Test get_codecov_url for different platforms
         @test Coverage.get_codecov_url(:macos) == "https://uploader.codecov.io/latest/macos/codecov"
         # Linux URL depends on architecture
@@ -1200,7 +1180,6 @@ withenv(
 
         # Test utility functions
         @test hasmethod(Coverage.detect_platform, ())
-        @test hasmethod(Coverage.detect_ci_platform, ())
     end
 
     @testset "Coverage Utilities" begin
@@ -1224,10 +1203,10 @@ withenv(
             Coverage.ensure_output_dir(test_file)
             @test isdir(dirname(test_file))
         end
-        
+
         # Test error handling function
         @test Coverage.CoverageUtils.handle_upload_error(ErrorException("404 Not Found"), "TestService") == false
-        @test Coverage.CoverageUtils.handle_upload_error(ErrorException("401 Unauthorized"), "TestService") == false  
+        @test Coverage.CoverageUtils.handle_upload_error(ErrorException("401 Unauthorized"), "TestService") == false
         @test Coverage.CoverageUtils.handle_upload_error(ErrorException("Connection timeout"), "TestService") == false
         @test Coverage.CoverageUtils.handle_upload_error(ErrorException("Generic error"), "TestService") == false
     end

@@ -266,7 +266,7 @@ function add_repo_token(data, local_submission)
     if repo_token === nothing
         repo_token = get(ENV, "REPO_TOKEN", nothing) # backward compatibility
     end
-    
+
     if repo_token === nothing
         # error unless we are on Travis
         if local_submission || (data["service_name"] != "travis-ci")
