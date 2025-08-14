@@ -54,5 +54,5 @@ jobs:
         run: |
           julia --color=yes --project=. -e '
             using Coverage
-            process_and_upload(service=:both, folder="src", dry_run=true)
+            process_and_upload(service=:both, folder="src")
           '
