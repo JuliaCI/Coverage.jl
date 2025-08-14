@@ -1045,13 +1045,46 @@ withenv(
             @test Coverage.detect_ci_platform() == :travis
         end
 
+        # Test Appveyor detection
+        withenv("APPVEYOR" => "true", "GITHUB_ACTIONS" => nothing, "TRAVIS" => nothing, "JENKINS" => nothing) do
+            @test Coverage.detect_ci_platform() == :appveyor
+        end
+
         # Test upload functions with dry run (should not actually upload)
         test_fcs = [FileCoverage("test.jl", "test", [1, 0, 1])]
 
         mktempdir() do tmpdir
             cd(tmpdir) do
-                # Test Codecov upload (dry run)
+                # Test Codecov upload (dry run) with various parameters
                 success = Coverage.upload_to_codecov(test_fcs;
+                    dry_run=true,
+                    cleanup=false)
+                @test success == true
+
+                # Test with token parameter
+                success = Coverage.upload_to_codecov(test_fcs;
+                    dry_run=true,
+                    token="test-token",
+                    cleanup=false)
+                @test success == true
+
+                # Test with flags parameter
+                success = Coverage.upload_to_codecov(test_fcs;
+                    dry_run=true,
+                    flags=["unit", "integration"],
+                    cleanup=false)
+                @test success == true
+
+                # Test with name parameter  
+                success = Coverage.upload_to_codecov(test_fcs;
+                    dry_run=true,
+                    name="test-build",
+                    cleanup=false)
+                @test success == true
+
+                # Test with JSON format
+                success = Coverage.upload_to_codecov(test_fcs;
+                    format=:json,
                     dry_run=true,
                     cleanup=false)
                 @test success == true
@@ -1081,6 +1114,21 @@ withenv(
                         dry_run=true)
                     @test haskey(results, :codecov)
                     @test results[:codecov] == true
+                    
+                    # Test with Coveralls service
+                    results = Coverage.process_and_upload(;
+                        service=:coveralls,
+                        folder="src",
+                        dry_run=true)
+                    @test haskey(results, :coveralls)
+                    
+                    # Test with both services
+                    results = Coverage.process_and_upload(;
+                        service=:both,
+                        folder="src",
+                        dry_run=true)
+                    @test haskey(results, :codecov)
+                    @test haskey(results, :coveralls)
                 catch e
                     @warn "process_and_upload test failed" exception=e
                 end
@@ -1104,6 +1152,40 @@ withenv(
 
         # The fact that we get to the ErrorException means the deprecation warning was shown
         # and the function continued to execute
+    end
+
+    @testset "Codecov Functions" begin
+        test_fcs = [FileCoverage("test.jl", "test", [1, 0, 1])]
+        
+        mktempdir() do tmpdir
+            # Test JSON format support
+            json_file = Coverage.prepare_for_codecov(test_fcs; 
+                format=:json, output_dir=tmpdir, filename=joinpath(tmpdir, "codecov.json"))
+            @test isfile(json_file)
+            @test endswith(json_file, "codecov.json")
+            
+            # Verify JSON content structure
+            json_data = JSON.parsefile(json_file)
+            @test haskey(json_data, "coverage")
+            @test haskey(json_data["coverage"], "test.jl")
+            
+            # Test LCOV format support (existing functionality)
+            lcov_file = Coverage.prepare_for_codecov(test_fcs; 
+                format=:lcov, output_dir=tmpdir)
+            @test isfile(lcov_file)
+            @test endswith(lcov_file, "coverage.info")
+            
+            # Test unsupported format
+            @test_throws ErrorException Coverage.prepare_for_codecov(test_fcs; format=:xml)
+        end
+        
+        # Test get_codecov_url for different platforms
+        @test Coverage.get_codecov_url(:macos) == "https://uploader.codecov.io/latest/macos/codecov"
+        # Linux URL depends on architecture
+        linux_url = Coverage.get_codecov_url(:linux)
+        @test linux_url in ["https://uploader.codecov.io/latest/linux/codecov", "https://uploader.codecov.io/latest/aarch64/codecov"]
+        @test Coverage.get_codecov_url(:windows) == "https://uploader.codecov.io/latest/windows/codecov.exe"
+        @test_throws ErrorException Coverage.get_codecov_url(:unsupported)
     end
 
     @testset "New Module Exports" begin
@@ -1142,6 +1224,12 @@ withenv(
             Coverage.ensure_output_dir(test_file)
             @test isdir(dirname(test_file))
         end
+        
+        # Test error handling function
+        @test Coverage.CoverageUtils.handle_upload_error(ErrorException("404 Not Found"), "TestService") == false
+        @test Coverage.CoverageUtils.handle_upload_error(ErrorException("401 Unauthorized"), "TestService") == false  
+        @test Coverage.CoverageUtils.handle_upload_error(ErrorException("Connection timeout"), "TestService") == false
+        @test Coverage.CoverageUtils.handle_upload_error(ErrorException("Generic error"), "TestService") == false
     end
 
 end # of withenv( => nothing)

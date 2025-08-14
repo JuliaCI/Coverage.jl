@@ -72,19 +72,6 @@ function create_deprecation_message(service::Symbol, old_function::String)
 end
 
 """
-    download_with_info(url::String, dest_path::String, binary_name::String, platform::Symbol)
-
-Download a binary with standardized info messages.
-"""
-function download_with_info(url::String, dest_path::String, binary_name::String, platform::Symbol)
-    @info "Downloading $(binary_name) for $(platform)..."
-    Downloads.download(url, dest_path)
-    chmod(dest_path, 0o555)  # Make executable
-    @info "$(binary_name) downloaded to: $(dest_path)"
-    return dest_path
-end
-
-"""
     download_binary(url::String, dest_dir::String, executable_name::String)
 
 Common function to download and set up binary executables.
