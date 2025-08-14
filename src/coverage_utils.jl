@@ -4,7 +4,7 @@ module CoverageUtils
 using Downloads
 using HTTP
 
-export detect_platform, ensure_output_dir, create_deprecation_message, create_script_help, parse_script_args, handle_script_error, download_binary, handle_upload_error
+export detect_platform, ensure_output_dir, create_deprecation_message, download_binary, handle_upload_error
 
 """
     detect_platform()
@@ -82,88 +82,6 @@ function download_with_info(url::String, dest_path::String, binary_name::String,
     chmod(dest_path, 0o555)  # Make executable
     @info "$(binary_name) downloaded to: $(dest_path)"
     return dest_path
-end
-
-"""
-    create_script_help(script_name::String, description::String, options::Vector{Tuple{String, String}})
-
-Create standardized help text for scripts.
-"""
-function create_script_help(script_name::String, description::String, options::Vector{Tuple{String, String}})
-    help_text = """
-    $(description)
-
-    Usage:
-        julia $(script_name) [options]
-
-    Options:
-    """
-
-    for (option, desc) in options
-        help_text *= "    $(option)\n"
-        # Add description indented
-        for line in split(desc, '\n')
-            help_text *= "        $(line)\n"
-        end
-    end
-
-    return help_text
-end
-
-"""
-    parse_script_args(args::Vector{String}, valid_options::Vector{String})
-
-Parse command line arguments for scripts with common patterns.
-Returns a Dict with parsed options.
-"""
-function parse_script_args(args::Vector{String}, valid_options::Vector{String})
-    parsed = Dict{String, Any}()
-    i = 1
-
-    while i <= length(args)
-        arg = args[i]
-
-        if arg == "--help" || arg == "-h"
-            parsed["help"] = true
-            return parsed
-        end
-
-        if !startswith(arg, "--")
-            error("Unknown argument: $arg")
-        end
-
-        option = arg[3:end]  # Remove "--"
-
-        if !(option in valid_options)
-            error("Unknown option: --$option")
-        end
-
-        if option in ["help", "dry-run", "version"]
-            # Boolean flags
-            parsed[option] = true
-        else
-            # Options that need values
-            if i == length(args)
-                error("Option --$option requires a value")
-            end
-            parsed[option] = args[i + 1]
-            i += 1
-        end
-
-        i += 1
-    end
-
-    return parsed
-end
-
-"""
-    handle_script_error(e::Exception, context::String)
-
-Standard error handling for scripts.
-"""
-function handle_script_error(e::Exception, context::String)
-    println("❌ Error in $(context): $(string(e))")
-    exit(1)
 end
 
 """

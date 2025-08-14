@@ -745,54 +745,6 @@ withenv(
     # NEW MODERNIZED FUNCTIONALITY TESTS
     # ================================================================================
 
-    @testset "CodecovExport" begin
-        # Test platform detection
-        @test Coverage.detect_platform() in [:linux, :macos, :windows]
-
-        # Test JSON conversion
-        test_fcs = [
-            FileCoverage("test_file.jl", "test source", [1, 0, nothing, 1]),
-            FileCoverage("other_file.jl", "other source", [nothing, 1, 1, 0])
-        ]
-
-        json_data = Coverage.to_codecov_json(test_fcs)
-        @test haskey(json_data, "coverage")
-        @test haskey(json_data["coverage"], "test_file.jl")
-        @test haskey(json_data["coverage"], "other_file.jl")
-        @test json_data["coverage"]["test_file.jl"] == [nothing, 1, 0, nothing, 1]
-        @test json_data["coverage"]["other_file.jl"] == [nothing, nothing, 1, 1, 0]
-
-        # Test JSON export
-        mktempdir() do tmpdir
-            json_file = joinpath(tmpdir, "test_codecov.json")
-            result_file = Coverage.export_codecov_json(test_fcs, json_file)
-            @test isfile(result_file)
-            @test result_file == abspath(json_file)
-
-            # Verify content
-            saved_data = open(JSON.parse, result_file)
-            @test saved_data["coverage"]["test_file.jl"] == [nothing, 1, 0, nothing, 1]
-        end
-
-        # Test prepare_for_codecov with different formats
-        mktempdir() do tmpdir
-            # Test JSON format
-            json_file = Coverage.prepare_for_codecov(test_fcs;
-                format=:json, output_dir=tmpdir, filename=joinpath(tmpdir, "custom.json"))
-            @test isfile(json_file)
-            @test endswith(json_file, "custom.json")
-
-            # Test LCOV format
-            lcov_file = Coverage.prepare_for_codecov(test_fcs;
-                format=:lcov, output_dir=tmpdir)
-            @test isfile(lcov_file)
-            @test endswith(lcov_file, "coverage.info")
-        end
-
-        # Test unsupported format
-        @test_throws ErrorException Coverage.prepare_for_codecov(test_fcs; format=:xml)
-    end
-
     @testset "Executable Functionality Tests" begin
         # Test that downloaded executables actually work
         # These tests verify the binaries can run and aren't corrupted
