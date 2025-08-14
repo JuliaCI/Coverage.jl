@@ -78,6 +78,9 @@ function upload_to_codecov(fcs::Vector{FileCoverage};
         if name !== nothing
             push!(cmd_args, "-n", name)
         end
+        
+        # Add flag to exit with non-zero on failure (instead of default exit code 0)
+        push!(cmd_args, "-Z")
 
         # Execute command
         if dry_run
@@ -85,16 +88,21 @@ function upload_to_codecov(fcs::Vector{FileCoverage};
             return true
         else
             @info "Uploading to Codecov..."
-            result = run(Cmd(cmd_args); wait=true)
-            success = result.exitcode == 0
+            try
+                result = run(Cmd(cmd_args); wait=true)
+                success = result.exitcode == 0
 
-            if success
-                @info "Successfully uploaded to Codecov"
-            else
-                @error "Failed to upload to Codecov (exit code: $(result.exitcode))"
+                if success
+                    @info "Successfully uploaded to Codecov"
+                else
+                    @error "Failed to upload to Codecov (exit code: $(result.exitcode))"
+                end
+
+                return success
+            catch e
+                @error "Failed to upload to Codecov" exception=e
+                return false
             end
-
-            return success
         end
 
     finally
@@ -204,7 +212,6 @@ function process_and_upload(; service=:both,
 
     # Upload to Codecov
     if service in [:codecov, :both]
-        @info "Uploading to Codecov..."
         try
             results[:codecov] = upload_to_codecov(fcs;
                                                  format=format,
@@ -218,7 +225,6 @@ function process_and_upload(; service=:both,
 
     # Upload to Coveralls
     if service in [:coveralls, :both]
-        @info "Uploading to Coveralls..."
         try
             results[:coveralls] = upload_to_coveralls(fcs;
                                                      format=format,
