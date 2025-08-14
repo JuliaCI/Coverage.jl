@@ -54,7 +54,7 @@ jobs:
         if: matrix.version == '1' && matrix.os == 'ubuntu-latest' && matrix.arch == 'x64'
         run: |
           julia --color=yes --project=. -e '
-            using Coverage, Coverage.CIIntegration
+            using Coverage
             try
               # Test the modernized upload functionality
               process_and_upload(service=:both, folder="src", dry_run=true)

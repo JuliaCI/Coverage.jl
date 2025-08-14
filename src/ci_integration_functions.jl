@@ -1,5 +1,4 @@
 # CI Integration functions for Coverage.jl
-# Simplified from CIIntegration module
 
 """
     detect_ci_platform()

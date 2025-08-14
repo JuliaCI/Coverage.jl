@@ -1077,7 +1077,7 @@ withenv(
         @test_throws ErrorException Coverage.prepare_for_coveralls(test_fcs; format=:xml)
     end
 
-    @testset "CIIntegration" begin
+    @testset "CI integration" begin
         # Test CI platform detection in a clean environment
         withenv("GITHUB_ACTIONS" => nothing, "TRAVIS" => nothing, "APPVEYOR" => nothing, "JENKINS" => nothing) do
             @test Coverage.detect_ci_platform() == :unknown
