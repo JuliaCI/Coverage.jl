@@ -44,14 +44,12 @@ function create_deprecation_message(service::Symbol, old_function::String)
     if service == :codecov
         service_name = "Codecov"
         service_url = "https://docs.codecov.com/docs/codecov-uploader"
-        export_module = "CodecovExport"
         prepare_function = "prepare_for_codecov"
         upload_function = "upload_to_codecov"
         official_uploader = "official Codecov uploader"
     elseif service == :coveralls
         service_name = "Coveralls"
         service_url = "https://docs.coveralls.io/integrations#universal-coverage-reporter"
-        export_module = "CoverallsExport"
         prepare_function = "prepare_for_coveralls"
         upload_function = "upload_to_coveralls"
         official_uploader = "Coveralls Universal Coverage Reporter"
@@ -64,11 +62,11 @@ function create_deprecation_message(service::Symbol, old_function::String)
     Please use the $(official_uploader) instead.
 
     Migration guide:
-    1. Use Coverage.$(export_module).$(prepare_function)(fcs) to prepare coverage data
+    1. Use Coverage.$(prepare_function)(fcs) to prepare coverage data
     2. Use the $(official_uploader) to submit the data
     3. See $(service_url) for details
 
-    For automated upload, use Coverage.CIIntegration.$(upload_function)(fcs)
+    For automated upload, use Coverage.$(upload_function)(fcs)
     """
 end
 

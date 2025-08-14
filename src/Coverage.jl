@@ -2,6 +2,12 @@ module Coverage
 
 using CoverageTools
 using LibGit2
+using Downloads
+using SHA
+using Artifacts
+using JSON
+using HTTP
+using MbedTLS
 
 export FileCoverage
 export LCOV
@@ -15,8 +21,10 @@ export process_cov
 export process_file
 export process_folder
 
-# New export modules for modern coverage uploaders
-export CodecovExport, CoverallsExport, CIIntegration
+# Modern uploader functions
+export prepare_for_codecov, prepare_for_coveralls
+export upload_to_codecov, upload_to_coveralls, process_and_upload
+export detect_ci_platform
 
 # Internal utilities module
 include("coverage_utils.jl")
@@ -35,10 +43,11 @@ const process_file = CoverageTools.process_file
 const process_folder = CoverageTools.process_folder
 
 # New modules for modern uploaders
-include("codecov_export.jl")
-include("coveralls_export.jl")
-include("ci_integration.jl")
+include("codecov_functions.jl")
+include("coveralls_functions.jl")
+include("ci_integration_functions.jl")
 
+# Legacy modules for backward compatibility
 include("coveralls.jl")
 include("codecovio.jl")
 include("lcov.jl")

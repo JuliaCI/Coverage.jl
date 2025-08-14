@@ -28,82 +28,55 @@ Examples:
 """
 
 using Coverage
-using Coverage.CIIntegration
+using ArgParse
 
-function parse_args(args)
-    options = Dict{Symbol,Any}(
-        :service => :both,
-        :folder => "src",
-        :format => :lcov,
-        :codecov_flags => nothing,
-        :codecov_name => nothing,
-        :codecov_token => nothing,
-        :coveralls_token => nothing,
-        :dry_run => false,
-        :help => false
+function parse_commandline()
+    s = ArgParseSettings(
+        description = "Universal coverage upload script for CI environments.",
+        epilog = """
+        Examples:
+          julia scripts/upload_coverage.jl
+          julia scripts/upload_coverage.jl --service codecov --codecov-flags julia
+          julia scripts/upload_coverage.jl --service coveralls --format lcov
+          julia scripts/upload_coverage.jl --dry-run
+        """,
+        add_version = true,
+        version = pkgversion(Coverage)
     )
 
-    i = 1
-    while i <= length(args)
-        arg = args[i]
-
-        if arg == "--help" || arg == "-h"
-            options[:help] = true
-            break
-        elseif arg == "--service"
-            i += 1
-            i <= length(args) || error("--service requires a value")
-            service_str = lowercase(args[i])
-            if service_str == "codecov"
-                options[:service] = :codecov
-            elseif service_str == "coveralls"
-                options[:service] = :coveralls
-            elseif service_str == "both"
-                options[:service] = :both
-            else
-                error("Invalid service: $service_str. Use 'codecov', 'coveralls', or 'both'.")
-            end
-        elseif arg == "--folder"
-            i += 1
-            i <= length(args) || error("--folder requires a value")
-            options[:folder] = args[i]
-        elseif arg == "--format"
-            i += 1
-            i <= length(args) || error("--format requires a value")
-            format_str = lowercase(args[i])
-            if format_str == "lcov"
-                options[:format] = :lcov
-            elseif format_str == "json"
-                options[:format] = :json
-            else
-                error("Invalid format: $format_str. Use 'lcov' or 'json'.")
-            end
-        elseif arg == "--codecov-flags"
-            i += 1
-            i <= length(args) || error("--codecov-flags requires a value")
-            options[:codecov_flags] = split(args[i], ',')
-        elseif arg == "--codecov-name"
-            i += 1
-            i <= length(args) || error("--codecov-name requires a value")
-            options[:codecov_name] = args[i]
-        elseif arg == "--codecov-token"
-            i += 1
-            i <= length(args) || error("--codecov-token requires a value")
-            options[:codecov_token] = args[i]
-        elseif arg == "--coveralls-token"
-            i += 1
-            i <= length(args) || error("--coveralls-token requires a value")
-            options[:coveralls_token] = args[i]
-        elseif arg == "--dry-run"
-            options[:dry_run] = true
-        else
-            error("Unknown option: $arg")
-        end
-
-        i += 1
+    @add_arg_table! s begin
+        "--service"
+            help = "Which service to upload to: codecov, coveralls, or both"
+            default = "both"
+            range_tester = x -> x in ["codecov", "coveralls", "both"]
+            metavar = "SERVICE"
+        "--folder"
+            help = "Folder to process for coverage"
+            default = "src"
+            metavar = "PATH"
+        "--format"
+            help = "Coverage format: lcov or json"
+            default = "lcov"
+            range_tester = x -> x in ["lcov", "json"]
+            metavar = "FORMAT"
+        "--codecov-flags"
+            help = "Comma-separated list of Codecov flags"
+            metavar = "FLAGS"
+        "--codecov-name"
+            help = "Codecov upload name"
+            metavar = "NAME"
+        "--codecov-token"
+            help = "Codecov token (or set CODECOV_TOKEN env var)"
+            metavar = "TOKEN"
+        "--coveralls-token"
+            help = "Coveralls token (or set COVERALLS_REPO_TOKEN env var)"
+            metavar = "TOKEN"
+        "--dry-run"
+            help = "Print commands instead of executing"
+            action = :store_true
     end
 
-    return options
+    return parse_args(s)
 end
 
 function show_help()
@@ -137,30 +110,36 @@ end
 
 function main()
     try
-        options = parse_args(ARGS)
-
-        if options[:help]
-            show_help()
-            return
-        end
+        args = parse_commandline()
 
         # Show configuration
         println("📊 Coverage Upload Configuration")
-        println("Service: $(options[:service])")
-        println("Folder: $(options[:folder])")
-        println("Format: $(options[:format])")
+        println("Service: $(args["service"])")
+        println("Folder: $(args["folder"])")
+        println("Format: $(args["format"])")
 
-        if options[:service] in [:codecov, :both]
-            println("Codecov flags: $(something(options[:codecov_flags], "none"))")
-            println("Codecov name: $(something(options[:codecov_name], "auto"))")
-            println("Codecov token: $(options[:codecov_token] !== nothing ? "<provided>" : "from environment")")
+        service_sym = Symbol(args["service"])
+
+        if service_sym in [:codecov, :both]
+            # Parse codecov flags if provided
+            codecov_flags = nothing
+            if args["codecov-flags"] !== nothing
+                codecov_flags = split(args["codecov-flags"], ',')
+                println("Codecov flags: $(join(codecov_flags, ","))")
+            else
+                println("Codecov flags: none")
+            end
+            println("Codecov name: $(something(args["codecov-name"], "auto"))")
+            println("Codecov token: $(args["codecov-token"] !== nothing ? "<provided>" : "from environment")")
+        else
+            codecov_flags = nothing
         end
 
-        if options[:service] in [:coveralls, :both]
-            println("Coveralls token: $(options[:coveralls_token] !== nothing ? "<provided>" : "from environment")")
+        if service_sym in [:coveralls, :both]
+            println("Coveralls token: $(args["coveralls-token"] !== nothing ? "<provided>" : "from environment")")
         end
 
-        println("Dry run: $(options[:dry_run])")
+        println("Dry run: $(args["dry-run"])")
         println()
 
         # Detect CI platform
@@ -169,12 +148,12 @@ function main()
 
         # Process and upload coverage
         results = process_and_upload(;
-            service=options[:service],
-            folder=options[:folder],
-            format=options[:format],
-            codecov_flags=options[:codecov_flags],
-            codecov_name=options[:codecov_name],
-            dry_run=options[:dry_run]
+            service=service_sym,
+            folder=args["folder"],
+            format=Symbol(args["format"]),
+            codecov_flags=codecov_flags,
+            codecov_name=args["codecov-name"],
+            dry_run=args["dry-run"]
         )
 
         # Check results

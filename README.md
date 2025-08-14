@@ -22,7 +22,7 @@ The package now provides:
 ### Automated Upload (Recommended)
 
 ```julia
-using Coverage, Coverage.CIIntegration
+using Coverage
 
 # Process and upload to both services
 process_and_upload(service=:both, folder="src")
@@ -194,14 +194,14 @@ When using Coverage.jl locally, over time a lot of `.cov` files can accumulate. 
 
        ```yml
        after_success:
-       - julia -e 'using Pkg; Pkg.add("Coverage"); using Coverage; Codecov.submit(process_folder())'
+       - julia -e 'using Pkg; Pkg.add("Coverage"); using Coverage; Coverage.upload_to_codecov(process_folder())'
        ```
 
    - On AppVeyor:
 
        ```yml
        after_test:
-       - C:\projects\julia\bin\julia -e "using Pkg; Pkg.add(\"Coverage\"); using Coverage; Codecov.submit(process_folder())"
+       - C:\projects\julia\bin\julia -e "using Pkg; Pkg.add(\"Coverage\"); using Coverage; Coverage.upload_to_codecov(process_folder())"
        ```
 
    - If you're running coverage on your own machine and want to upload results
@@ -209,7 +209,7 @@ When using Coverage.jl locally, over time a lot of `.cov` files can accumulate. 
 
        ```bash
        #!/bin/bash
-       CODECOV_TOKEN=$YOUR_TOKEN_HERE julia -e 'using Pkg; using Coverage; Codecov.submit_local(process_folder())'
+       CODECOV_TOKEN=$YOUR_TOKEN_HERE julia -e 'using Pkg; using Coverage; Coverage.upload_to_codecov(process_folder())'
        ```
 
 ## Tracking Coverage with [Coveralls.io](https://coveralls.io)
@@ -244,14 +244,14 @@ When using Coverage.jl locally, over time a lot of `.cov` files can accumulate. 
 
        ```yml
        after_success:
-       - julia -e 'using Pkg; Pkg.add("Coverage"); using Coverage; Coveralls.submit(process_folder())'
+       - julia -e 'using Pkg; Pkg.add("Coverage"); using Coverage; Coverage.upload_to_coveralls(process_folder())'
        ```
 
    - On AppVeyor:
 
        ```yml
        after_test:
-       - C:\julia\bin\julia -e "using Pkg; Pkg.add(\"Coverage\"); using Coverage; Coveralls.submit(process_folder())"
+       - C:\julia\bin\julia -e "using Pkg; Pkg.add(\"Coverage\"); using Coverage; Coverage.upload_to_coveralls(process_folder())"
        ```
 
 ## A note for advanced users

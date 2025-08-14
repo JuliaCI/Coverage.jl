@@ -23,53 +23,40 @@ Examples:
 """
 
 using Coverage
-using Coverage.CIIntegration
+using ArgParse
 
-function parse_args(args)
-    options = Dict{Symbol,Any}(
-        :folder => "src",
-        :format => :lcov,
-        :token => nothing,
-        :dry_run => false,
-        :help => false
+function parse_commandline()
+    s = ArgParseSettings(
+        description = "Easy Coveralls upload script for CI environments.",
+        epilog = """
+        Examples:
+          julia scripts/upload_coveralls.jl
+          julia scripts/upload_coveralls.jl --folder src --format lcov
+          julia scripts/upload_coveralls.jl --dry-run
+        """,
+        add_version = true,
+        version = pkgversion(Coverage)
     )
 
-    i = 1
-    while i <= length(args)
-        arg = args[i]
-
-        if arg == "--help" || arg == "-h"
-            options[:help] = true
-            break
-        elseif arg == "--folder"
-            i += 1
-            i <= length(args) || error("--folder requires a value")
-            options[:folder] = args[i]
-        elseif arg == "--format"
-            i += 1
-            i <= length(args) || error("--format requires a value")
-            format_str = lowercase(args[i])
-            if format_str == "lcov"
-                options[:format] = :lcov
-            elseif format_str == "json"
-                options[:format] = :json
-            else
-                error("Invalid format: $format_str. Use 'lcov' or 'json'.")
-            end
-        elseif arg == "--token"
-            i += 1
-            i <= length(args) || error("--token requires a value")
-            options[:token] = args[i]
-        elseif arg == "--dry-run"
-            options[:dry_run] = true
-        else
-            error("Unknown option: $arg")
-        end
-
-        i += 1
+    @add_arg_table! s begin
+        "--folder"
+            help = "Folder to process for coverage"
+            default = "src"
+            metavar = "PATH"
+        "--format"
+            help = "Coverage format: lcov or json"
+            default = "lcov"
+            range_tester = x -> x in ["lcov", "json"]
+            metavar = "FORMAT"
+        "--token"
+            help = "Coveralls token (or set COVERALLS_REPO_TOKEN env var)"
+            metavar = "TOKEN"
+        "--dry-run"
+            help = "Print commands instead of executing"
+            action = :store_true
     end
 
-    return options
+    return parse_args(s)
 end
 
 function show_help()
@@ -98,27 +85,22 @@ end
 
 function main()
     try
-        options = parse_args(ARGS)
-
-        if options[:help]
-            show_help()
-            return
-        end
+        args = parse_commandline()
 
         # Show configuration
         println("📊 Coveralls Upload Configuration")
-        println("Folder: $(options[:folder])")
-        println("Format: $(options[:format])")
-        println("Token: $(options[:token] !== nothing ? "<provided>" : "from environment")")
-        println("Dry run: $(options[:dry_run])")
+        println("Folder: $(args["folder"])")
+        println("Format: $(args["format"])")
+        println("Token: $(args["token"] !== nothing ? "<provided>" : "from environment")")
+        println("Dry run: $(args["dry-run"])")
         println()
 
         # Process coverage
         println("🔄 Processing coverage data...")
-        fcs = process_folder(options[:folder])
+        fcs = process_folder(args["folder"])
 
         if isempty(fcs)
-            println("❌ No coverage data found in folder: $(options[:folder])")
+            println("❌ No coverage data found in folder: $(args["folder"])")
             exit(1)
         end
 
@@ -126,9 +108,9 @@ function main()
 
         # Upload to Coveralls
         success = upload_to_coveralls(fcs;
-            format=options[:format],
-            token=options[:token],
-            dry_run=options[:dry_run]
+            format=Symbol(args["format"]),
+            token=args["token"],
+            dry_run=args["dry-run"]
         )
 
         if success

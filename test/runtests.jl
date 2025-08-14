@@ -5,7 +5,6 @@
 #######################################################################
 
 using Coverage, Test, LibGit2, JSON
-using Coverage.CodecovExport, Coverage.CoverallsExport, Coverage.CIIntegration, Coverage.CoverageUtils
 
 import CoverageTools
 
@@ -748,7 +747,7 @@ withenv(
 
     @testset "CodecovExport" begin
         # Test platform detection
-        @test Coverage.CoverageUtils.detect_platform() in [:linux, :macos, :windows]
+        @test Coverage.detect_platform() in [:linux, :macos, :windows]
 
         # Test JSON conversion
         test_fcs = [
@@ -756,7 +755,7 @@ withenv(
             FileCoverage("other_file.jl", "other source", [nothing, 1, 1, 0])
         ]
 
-        json_data = CodecovExport.to_codecov_json(test_fcs)
+        json_data = Coverage.to_codecov_json(test_fcs)
         @test haskey(json_data, "coverage")
         @test haskey(json_data["coverage"], "test_file.jl")
         @test haskey(json_data["coverage"], "other_file.jl")
@@ -766,7 +765,7 @@ withenv(
         # Test JSON export
         mktempdir() do tmpdir
             json_file = joinpath(tmpdir, "test_codecov.json")
-            result_file = CodecovExport.export_codecov_json(test_fcs, json_file)
+            result_file = Coverage.export_codecov_json(test_fcs, json_file)
             @test isfile(result_file)
             @test result_file == abspath(json_file)
 
@@ -778,20 +777,20 @@ withenv(
         # Test prepare_for_codecov with different formats
         mktempdir() do tmpdir
             # Test JSON format
-            json_file = CodecovExport.prepare_for_codecov(test_fcs;
+            json_file = Coverage.prepare_for_codecov(test_fcs;
                 format=:json, output_dir=tmpdir, filename=joinpath(tmpdir, "custom.json"))
             @test isfile(json_file)
             @test endswith(json_file, "custom.json")
 
             # Test LCOV format
-            lcov_file = CodecovExport.prepare_for_codecov(test_fcs;
+            lcov_file = Coverage.prepare_for_codecov(test_fcs;
                 format=:lcov, output_dir=tmpdir)
             @test isfile(lcov_file)
             @test endswith(lcov_file, "coverage.info")
         end
 
         # Test unsupported format
-        @test_throws ErrorException CodecovExport.prepare_for_codecov(test_fcs; format=:xml)
+        @test_throws ErrorException Coverage.prepare_for_codecov(test_fcs; format=:xml)
     end
 
     @testset "Executable Functionality Tests" begin
@@ -803,7 +802,7 @@ withenv(
             mktempdir() do tmpdir
                 try
                     # Download the uploader
-                    exe_path = CodecovExport.download_codecov_uploader(; install_dir=tmpdir)
+                    exe_path = Coverage.download_codecov_uploader(; install_dir=tmpdir)
                     @test isfile(exe_path)
 
                     # Test that the file is executable (platform-specific check)
@@ -865,12 +864,12 @@ withenv(
             mktempdir() do tmpdir
                 try
                     # Download/install the reporter (uses Homebrew on macOS, direct download elsewhere)
-                    exe_path = CoverallsExport.download_coveralls_reporter(; install_dir=tmpdir)
+                    exe_path = Coverage.download_coveralls_reporter(; install_dir=tmpdir)
                     @test !isempty(exe_path)  # Should get a valid path
 
                     # For Homebrew installations, exe_path is the full path to coveralls
                     # For direct downloads, exe_path is the full path to the binary
-                    if CoverageUtils.detect_platform() == :macos
+                    if Coverage.detect_platform() == :macos
                         # On macOS with Homebrew, test the command is available
                         @test (exe_path == "coveralls" || endswith(exe_path, "/coveralls"))
                     else
@@ -946,11 +945,11 @@ withenv(
                     @testset "Codecov with Coverage File" begin
                         try
                             # Generate a coverage file
-                            lcov_file = CodecovExport.prepare_for_codecov(test_fcs; format=:lcov, output_dir=tmpdir)
+                            lcov_file = Coverage.prepare_for_codecov(test_fcs; format=:lcov, output_dir=tmpdir)
                             @test isfile(lcov_file)
 
                             # Get the executable
-                            codecov_exe = CodecovExport.get_codecov_executable()
+                            codecov_exe = Coverage.get_codecov_executable()
 
                             # Test dry run with actual file (should validate file format)
                             try
@@ -988,11 +987,11 @@ withenv(
                     @testset "Coveralls with Coverage File" begin
                         try
                             # Generate a coverage file
-                            lcov_file = CoverallsExport.prepare_for_coveralls(test_fcs; format=:lcov, output_dir=tmpdir)
+                            lcov_file = Coverage.prepare_for_coveralls(test_fcs; format=:lcov, output_dir=tmpdir)
                             @test isfile(lcov_file)
 
                             # Get the executable
-                            coveralls_exe = CoverallsExport.get_coveralls_executable()
+                            coveralls_exe = Coverage.get_coveralls_executable()
 
                             # Test with actual file (dry run style)
                             try
@@ -1034,7 +1033,7 @@ withenv(
 
     @testset "CoverallsExport" begin
         # Test platform detection
-        @test Coverage.CoverageUtils.detect_platform() in [:linux, :macos, :windows]
+        @test Coverage.detect_platform() in [:linux, :macos, :windows]
 
         # Test JSON conversion
         test_fcs = [
@@ -1042,7 +1041,7 @@ withenv(
             FileCoverage("other_file.jl", "other source", [nothing, 1, 1, 0])
         ]
 
-        json_data = CoverallsExport.to_coveralls_json(test_fcs)
+        json_data = Coverage.to_coveralls_json(test_fcs)
         @test haskey(json_data, "source_files")
         @test length(json_data["source_files"]) == 2
 
@@ -1054,7 +1053,7 @@ withenv(
         # Test JSON export
         mktempdir() do tmpdir
             json_file = joinpath(tmpdir, "test_coveralls.json")
-            result_file = CoverallsExport.export_coveralls_json(test_fcs, json_file)
+            result_file = Coverage.export_coveralls_json(test_fcs, json_file)
             @test isfile(result_file)
             @test result_file == abspath(json_file)
         end
@@ -1062,36 +1061,36 @@ withenv(
         # Test prepare_for_coveralls with different formats
         mktempdir() do tmpdir
             # Test LCOV format (preferred)
-            lcov_file = CoverallsExport.prepare_for_coveralls(test_fcs;
+            lcov_file = Coverage.prepare_for_coveralls(test_fcs;
                 format=:lcov, output_dir=tmpdir)
             @test isfile(lcov_file)
             @test endswith(lcov_file, "lcov.info")
 
             # Test JSON format
-            json_file = CoverallsExport.prepare_for_coveralls(test_fcs;
+            json_file = Coverage.prepare_for_coveralls(test_fcs;
                 format=:json, output_dir=tmpdir, filename=joinpath(tmpdir, "custom.json"))
             @test isfile(json_file)
             @test endswith(json_file, "custom.json")
         end
 
         # Test unsupported format
-        @test_throws ErrorException CoverallsExport.prepare_for_coveralls(test_fcs; format=:xml)
+        @test_throws ErrorException Coverage.prepare_for_coveralls(test_fcs; format=:xml)
     end
 
     @testset "CIIntegration" begin
         # Test CI platform detection in a clean environment
         withenv("GITHUB_ACTIONS" => nothing, "TRAVIS" => nothing, "APPVEYOR" => nothing, "JENKINS" => nothing) do
-            @test CIIntegration.detect_ci_platform() == :unknown
+            @test Coverage.detect_ci_platform() == :unknown
         end
 
         # Test GitHub Actions detection
         withenv("GITHUB_ACTIONS" => "true", "TRAVIS" => nothing, "APPVEYOR" => nothing, "JENKINS" => nothing) do
-            @test CIIntegration.detect_ci_platform() == :github_actions
+            @test Coverage.detect_ci_platform() == :github_actions
         end
 
         # Test Travis detection
         withenv("TRAVIS" => "true", "GITHUB_ACTIONS" => nothing, "APPVEYOR" => nothing, "JENKINS" => nothing) do
-            @test CIIntegration.detect_ci_platform() == :travis
+            @test Coverage.detect_ci_platform() == :travis
         end
 
         # Test upload functions with dry run (should not actually upload)
@@ -1100,14 +1099,14 @@ withenv(
         mktempdir() do tmpdir
             cd(tmpdir) do
                 # Test Codecov upload (dry run)
-                success = CIIntegration.upload_to_codecov(test_fcs;
+                success = Coverage.upload_to_codecov(test_fcs;
                     dry_run=true,
                     cleanup=false)
                 @test success == true
 
                 # Test Coveralls upload (dry run) - may fail on download, that's ok
                 try
-                    success = CIIntegration.upload_to_coveralls(test_fcs;
+                    success = Coverage.upload_to_coveralls(test_fcs;
                         dry_run=true,
                         cleanup=false)
                     @test success == true
@@ -1124,7 +1123,7 @@ withenv(
                     write("src/test.jl", "function test()\n    return 1\nend")
                     write("src/test.jl.cov", "        - function test()\n        1     return 1\n        - end")
 
-                    results = CIIntegration.process_and_upload(;
+                    results = Coverage.process_and_upload(;
                         service=:codecov,
                         folder="src",
                         dry_run=true)
@@ -1156,20 +1155,18 @@ withenv(
     end
 
     @testset "New Module Exports" begin
-        # Test that new modules are properly exported
-        @test isdefined(Coverage, :CodecovExport)
-        @test isdefined(Coverage, :CoverallsExport)
-        @test isdefined(Coverage, :CIIntegration)
+        # Test that functions are directly available from Coverage module (simplified API)
+        @test hasmethod(Coverage.prepare_for_codecov, (Vector{CoverageTools.FileCoverage},))
+        @test hasmethod(Coverage.prepare_for_coveralls, (Vector{CoverageTools.FileCoverage},))
+        @test hasmethod(Coverage.process_and_upload, ())
 
-        # Test that we can access the modules
-        @test Coverage.CodecovExport isa Module
-        @test Coverage.CoverallsExport isa Module
-        @test Coverage.CIIntegration isa Module
+        # Test key upload functions
+        @test hasmethod(Coverage.upload_to_codecov, (Vector{CoverageTools.FileCoverage},))
+        @test hasmethod(Coverage.upload_to_coveralls, (Vector{CoverageTools.FileCoverage},))
 
-        # Test key functions are available
-        @test hasmethod(Coverage.CodecovExport.prepare_for_codecov, (Vector{CoverageTools.FileCoverage},))
-        @test hasmethod(Coverage.CoverallsExport.prepare_for_coveralls, (Vector{CoverageTools.FileCoverage},))
-        @test hasmethod(Coverage.CIIntegration.process_and_upload, ())
+        # Test utility functions
+        @test hasmethod(Coverage.detect_platform, ())
+        @test hasmethod(Coverage.detect_ci_platform, ())
     end
 
     @testset "Coverage Utilities" begin
@@ -1177,20 +1174,20 @@ withenv(
         @test Coverage.CoverageUtils.detect_platform() in [:linux, :macos, :windows]
 
         # Test deprecation message creation
-        codecov_msg = Coverage.CoverageUtils.create_deprecation_message(:codecov, "submit")
+        codecov_msg = Coverage.create_deprecation_message(:codecov, "submit")
         @test contains(codecov_msg, "Codecov.submit() is deprecated")
-        @test contains(codecov_msg, "CodecovExport.prepare_for_codecov")
+        @test contains(codecov_msg, "Coverage.prepare_for_codecov")
         @test contains(codecov_msg, "upload_to_codecov")
 
-        coveralls_msg = Coverage.CoverageUtils.create_deprecation_message(:coveralls, "submit_local")
+        coveralls_msg = Coverage.create_deprecation_message(:coveralls, "submit_local")
         @test contains(coveralls_msg, "Coveralls.submit_local() is deprecated")
-        @test contains(coveralls_msg, "CoverallsExport.prepare_for_coveralls")
+        @test contains(coveralls_msg, "Coverage.prepare_for_coveralls")
         @test contains(coveralls_msg, "upload_to_coveralls")
 
         # Test file path utilities
         mktempdir() do tmpdir
             test_file = joinpath(tmpdir, "subdir", "test.json")
-            Coverage.CoverageUtils.ensure_output_dir(test_file)
+            Coverage.ensure_output_dir(test_file)
             @test isdir(dirname(test_file))
         end
     end

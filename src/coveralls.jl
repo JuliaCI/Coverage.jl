@@ -13,8 +13,6 @@ using CoverageTools
 using HTTP
 using JSON
 using LibGit2
-using ..CIIntegration
-using ..CoverageUtils
 using MbedTLS
 
 export submit, submit_local
@@ -81,13 +79,13 @@ function submit(fcs::Vector{FileCoverage}; kwargs...)
         haskey(ENV, "BUILDKITE"),
         haskey(ENV, "COVERALLS_REPO_TOKEN")
     ])
-    
+
     if !ci_detected
         throw(ErrorException("No compatible CI platform detected"))
     end
-    
-    # Use the new official uploader via CIIntegration
-    return CIIntegration.upload_to_coveralls(fcs; kwargs...)
+
+    # Use the new simplified uploader directly
+    return upload_to_coveralls(fcs; kwargs...)
 end
 
 function prepare_request(fcs::Vector{FileCoverage}, local_env::Bool, git_info=query_git_info)
@@ -97,19 +95,19 @@ function prepare_request(fcs::Vector{FileCoverage}, local_env::Bool, git_info=qu
         # Attempt to parse git info via git_info, unless the user explicitly disables it by setting git_info to nothing
         data["service_name"] = "local"
         data["git"] = parse_git_info(git_info)
-    elseif lowercase(get(ENV, "APPVEYOR", "false")) == "true"
+    elseif Base.get_bool_env("APPVEYOR", false)
         data["service_job_number"] = ENV["APPVEYOR_BUILD_NUMBER"]
         data["service_job_id"] = ENV["APPVEYOR_BUILD_ID"]
         data["service_name"] = "appveyor"
         appveyor_pr = get(ENV, "APPVEYOR_PULL_REQUEST_NUMBER", "")
         isempty(appveyor_pr) || (data["service_pull_request"] = appveyor_pr)
-    elseif lowercase(get(ENV, "TRAVIS", "false")) == "true"
+    elseif Base.get_bool_env("TRAVIS", false)
         data["service_number"] = ENV["TRAVIS_BUILD_NUMBER"]
         data["service_job_id"] = ENV["TRAVIS_JOB_ID"]
         data["service_name"] = "travis-ci"
         travis_pr = get(ENV, "TRAVIS_PULL_REQUEST", "")
         isempty(travis_pr) || (data["service_pull_request"] = travis_pr)
-    elseif lowercase(get(ENV, "JENKINS", "false")) == "true"
+    elseif Base.get_bool_env("JENKINS", false)
         data["service_job_id"] = ENV["BUILD_ID"]
         data["service_name"] = "jenkins-ci"
         data["git"] = parse_git_info(git_info)
@@ -128,7 +126,7 @@ function prepare_request(fcs::Vector{FileCoverage}, local_env::Bool, git_info=qu
         github_pr = get(github_pr_info, "number", "")
         github_pr::Union{AbstractString, Integer}
         ((github_pr isa Integer) || (!isempty(github_pr))) && (data["service_pull_request"] = strip(string(github_pr)))
-    elseif lowercase(get(ENV, "GITLAB_CI", "false")) == "true"
+    elseif Base.get_bool_env("GITLAB_CI", false)
         # Gitlab API: https://docs.gitlab.com/ee/ci/variables/predefined_variables.html
         branch = ENV["CI_COMMIT_REF_NAME"]
         num_mr = branch == ENV["CI_DEFAULT_BRANCH"] ? "false" : ENV["CI_MERGE_REQUEST_IID"]
@@ -165,7 +163,7 @@ function prepare_request(fcs::Vector{FileCoverage}, local_env::Bool, git_info=qu
     end
 
     data = add_repo_token(data, local_env)
-    if get(ENV, "COVERALLS_PARALLEL", "false") == "true"
+    if Base.get_bool_env("COVERALLS_PARALLEL", false)
         data["parallel"] = "true"
     end
     return data
@@ -242,7 +240,7 @@ git_info can be either a `Dict` or a function that returns a `Dict`.
     Please use the Coveralls Universal Coverage Reporter instead. See the documentation at:
     https://docs.coveralls.io/integrations#universal-coverage-reporter
 
-    Use `Coverage.CoverallsExport.prepare_for_coveralls()` to prepare coverage data
+    Use `Coverage.prepare_for_coveralls()` to prepare coverage data
     for the official uploader.
 """
 function submit_local(fcs::Vector{FileCoverage}, git_info=query_git_info; kwargs...)

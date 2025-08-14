@@ -1,16 +1,5 @@
-"""
-CI Integration helpers for Coverage.jl
-
-This module provides convenience functions for integrating Coverage.jl with
-Continuous Integration platforms using official uploaders.
-"""
-module CIIntegration
-
-using Coverage
-using Coverage.CodecovExport
-using Coverage.CoverallsExport
-
-export upload_to_codecov, upload_to_coveralls, detect_ci_platform, process_and_upload
+# CI Integration functions for Coverage.jl
+# Simplified from CIIntegration module
 
 """
     detect_ci_platform()
@@ -40,27 +29,9 @@ function detect_ci_platform()
 end
 
 """
-    upload_to_codecov(fcs::Vector{FileCoverage};
-                      format=:lcov,
-                      flags=nothing,
-                      name=nothing,
-                      token=nothing,
-                      dry_run=false,
-                      cleanup=true)
+    upload_to_codecov(fcs::Vector{FileCoverage}; format=:lcov, flags=nothing, name=nothing, token=nothing, dry_run=false, cleanup=true)
 
 Process coverage data and upload to Codecov using the official uploader.
-
-# Arguments
-- `fcs::Vector{FileCoverage}`: Coverage data from `process_folder()`
-- `format::Symbol`: Format to use (:lcov or :json)
-- `flags::Vector{String}`: Coverage flags
-- `name::String`: Upload name
-- `token::String`: Codecov token (will use CODECOV_TOKEN env var if not provided)
-- `dry_run::Bool`: Print commands instead of executing
-- `cleanup::Bool`: Remove temporary files after upload
-
-# Returns
-- `Bool`: Success status
 """
 function upload_to_codecov(fcs::Vector{FileCoverage};
                           format=:lcov,
@@ -136,23 +107,9 @@ function upload_to_codecov(fcs::Vector{FileCoverage};
 end
 
 """
-    upload_to_coveralls(fcs::Vector{FileCoverage};
-                        format=:lcov,
-                        token=nothing,
-                        dry_run=false,
-                        cleanup=true)
+    upload_to_coveralls(fcs::Vector{FileCoverage}; format=:lcov, token=nothing, dry_run=false, cleanup=true)
 
 Process coverage data and upload to Coveralls using the Universal Coverage Reporter.
-
-# Arguments
-- `fcs::Vector{FileCoverage}`: Coverage data from `process_folder()`
-- `format::Symbol`: Format to use (:lcov preferred)
-- `token::String`: Coveralls token (will use COVERALLS_REPO_TOKEN env var if not provided)
-- `dry_run::Bool`: Print commands instead of executing
-- `cleanup::Bool`: Remove temporary files after upload
-
-# Returns
-- `Bool`: Success status
 """
 function upload_to_coveralls(fcs::Vector{FileCoverage};
                             format=:lcov,
@@ -214,26 +171,9 @@ function upload_to_coveralls(fcs::Vector{FileCoverage};
 end
 
 """
-    process_and_upload(;
-                       service=:both,
-                       folder="src",
-                       format=:lcov,
-                       codecov_flags=nothing,
-                       codecov_name=nothing,
-                       dry_run=false)
+    process_and_upload(; service=:both, folder="src", format=:lcov, codecov_flags=nothing, codecov_name=nothing, dry_run=false)
 
 Convenience function to process coverage and upload to coverage services.
-
-# Arguments
-- `service::Symbol`: Which service to upload to (:codecov, :coveralls, or :both)
-- `folder::String`: Folder to process for coverage (default: "src")
-- `format::Symbol`: Coverage format (:lcov or :json)
-- `codecov_flags::Vector{String}`: Flags for Codecov
-- `codecov_name::String`: Name for Codecov upload
-- `dry_run::Bool`: Print commands instead of executing
-
-# Returns
-- `Dict`: Results from each service
 """
 function process_and_upload(;
                            service=:both,
@@ -271,5 +211,3 @@ function process_and_upload(;
 
     return results
 end
-
-end # module

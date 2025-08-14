@@ -13,8 +13,6 @@ using Coverage
 using CoverageTools
 using JSON
 using LibGit2
-using ..CIIntegration
-using ..CoverageUtils
 
 export submit, submit_local, submit_generic
 
@@ -83,20 +81,20 @@ function submit(fcs::Vector{FileCoverage}; kwargs...)
         haskey(ENV, "BUILDKITE"),
         haskey(ENV, "CODECOV_TOKEN")
     ])
-    
+
     if !ci_detected
         throw(ErrorException("No compatible CI platform detected"))
     end
-    
-    # Use the new official uploader via CIIntegration
-    return CIIntegration.upload_to_codecov(fcs; kwargs...)
+
+    # Use the new simplified uploader directly
+    return upload_to_codecov(fcs; kwargs...)
 end
 
 
 add_ci_to_kwargs(; kwargs...) = add_ci_to_kwargs(Dict{Symbol,Any}(kwargs))
 function add_ci_to_kwargs(kwargs::Dict)
     # https://docs.codecov.com/reference/upload
-    if lowercase(get(ENV, "APPVEYOR", "false")) == "true"
+    if Base.get_bool_env("APPVEYOR", false)
         appveyor_pr = get(ENV, "APPVEYOR_PULL_REQUEST_NUMBER", "")
         appveyor_job = join(
             [
@@ -115,7 +113,7 @@ function add_ci_to_kwargs(kwargs::Dict)
             slug         = ENV["APPVEYOR_REPO_NAME"],
             build        = ENV["APPVEYOR_JOB_ID"],
         )
-    elseif lowercase(get(ENV, "TRAVIS", "false")) == "true"
+    elseif Base.get_bool_env("TRAVIS", false)
         kwargs = set_defaults(kwargs,
             service      = "travis-org",
             branch       = ENV["TRAVIS_BRANCH"],
@@ -125,7 +123,7 @@ function add_ci_to_kwargs(kwargs::Dict)
             slug         = ENV["TRAVIS_REPO_SLUG"],
             build        = ENV["TRAVIS_JOB_NUMBER"],
         )
-    elseif lowercase(get(ENV, "CIRCLECI", "false")) == "true"
+    elseif Base.get_bool_env("CIRCLECI", false)
         circle_slug = join(
             [
                 ENV["CIRCLE_PROJECT_USERNAME"],
@@ -142,7 +140,7 @@ function add_ci_to_kwargs(kwargs::Dict)
             slug         = circle_slug,
             build        = ENV["CIRCLE_BUILD_NUM"],
         )
-    elseif lowercase(get(ENV, "JENKINS", "false")) == "true"
+    elseif Base.get_bool_env("JENKINS", false)
         kwargs = set_defaults(kwargs,
             service      = "jenkins",
             branch       = ENV["GIT_BRANCH"],
@@ -188,7 +186,7 @@ function add_ci_to_kwargs(kwargs::Dict)
             build        = ENV["GITHUB_RUN_ID"],
             build_url    = ga_build_url,
         )
-    elseif lowercase(get(ENV, "BUILDKITE", "false")) == "true"
+    elseif Base.get_bool_env("BUILDKITE", false)
         kwargs = set_defaults(kwargs,
             service      = "buildkite",
             branch       = ENV["BUILDKITE_BRANCH"],
@@ -200,7 +198,7 @@ function add_ci_to_kwargs(kwargs::Dict)
         if ENV["BUILDKITE_PULL_REQUEST"] != "false"
             kwargs = set_defaults(kwargs, pr = ENV["BUILDKITE_PULL_REQUEST"])
         end
-    elseif lowercase(get(ENV, "GITLAB_CI", "false")) == "true"
+    elseif Base.get_bool_env("GITLAB_CI", false)
         # Gitlab API: https://docs.gitlab.com/ee/ci/variables/predefined_variables.html
         branch = ENV["CI_COMMIT_REF_NAME"]
         num_mr = branch == ENV["CI_DEFAULT_BRANCH"] ? "false" : ENV["CI_MERGE_REQUEST_IID"]
@@ -233,7 +231,7 @@ a local git installation, rooted at `dir`. A repository token should be specifie
     Please use the official Codecov uploader instead. See the documentation at:
     https://docs.codecov.com/docs/codecov-uploader
 
-    Use `Coverage.CodecovExport.prepare_for_codecov()` to prepare coverage data
+    Use `Coverage.prepare_for_codecov()` to prepare coverage data
     for the official uploader.
 """
 function submit_local(fcs::Vector{FileCoverage}, dir::AbstractString=pwd(); kwargs...)
@@ -278,7 +276,7 @@ being generated.
     Please use the official Codecov uploader instead. See the documentation at:
     https://docs.codecov.com/docs/codecov-uploader
 
-    Use `Coverage.CodecovExport.prepare_for_codecov()` to prepare coverage data
+    Use `Coverage.prepare_for_codecov()` to prepare coverage data
     for the official uploader.
 """
 submit_generic(fcs::Vector{FileCoverage}; kwargs...) =

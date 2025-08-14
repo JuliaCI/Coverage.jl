@@ -25,116 +25,79 @@ Examples:
 """
 
 using Coverage
-using Coverage.CIIntegration
 
-function parse_args(args)
-    options = Dict{Symbol,Any}(
-        :folder => "src",
-        :format => :lcov,
-        :flags => nothing,
-        :name => nothing,
-        :token => nothing,
-        :dry_run => false,
-        :help => false
+using Coverage
+using ArgParse
+
+function parse_commandline()
+    s = ArgParseSettings(
+        description = "Easy Codecov upload script for CI environments.",
+        epilog = """
+        Examples:
+          julia scripts/upload_codecov.jl
+          julia scripts/upload_codecov.jl --folder src --format lcov --flags julia
+          julia scripts/upload_codecov.jl --dry-run
+        """,
+        add_version = true,
+        version = pkgversion(Coverage)
     )
 
-    i = 1
-    while i <= length(args)
-        arg = args[i]
-
-        if arg == "--help" || arg == "-h"
-            options[:help] = true
-            break
-        elseif arg == "--folder"
-            i += 1
-            i <= length(args) || error("--folder requires a value")
-            options[:folder] = args[i]
-        elseif arg == "--format"
-            i += 1
-            i <= length(args) || error("--format requires a value")
-            format_str = lowercase(args[i])
-            if format_str == "lcov"
-                options[:format] = :lcov
-            elseif format_str == "json"
-                options[:format] = :json
-            else
-                error("Invalid format: $format_str. Use 'lcov' or 'json'.")
-            end
-        elseif arg == "--flags"
-            i += 1
-            i <= length(args) || error("--flags requires a value")
-            options[:flags] = split(args[i], ',')
-        elseif arg == "--name"
-            i += 1
-            i <= length(args) || error("--name requires a value")
-            options[:name] = args[i]
-        elseif arg == "--token"
-            i += 1
-            i <= length(args) || error("--token requires a value")
-            options[:token] = args[i]
-        elseif arg == "--dry-run"
-            options[:dry_run] = true
-        else
-            error("Unknown option: $arg")
-        end
-
-        i += 1
+    @add_arg_table! s begin
+        "--folder"
+            help = "Folder to process for coverage"
+            default = "src"
+            metavar = "PATH"
+        "--format"
+            help = "Coverage format: lcov or json"
+            default = "lcov"
+            range_tester = x -> x in ["lcov", "json"]
+            metavar = "FORMAT"
+        "--flags"
+            help = "Comma-separated list of coverage flags"
+            metavar = "FLAGS"
+        "--name"
+            help = "Upload name"
+            metavar = "NAME"
+        "--token"
+            help = "Codecov token (or set CODECOV_TOKEN env var)"
+            metavar = "TOKEN"
+        "--dry-run"
+            help = "Print commands instead of executing"
+            action = :store_true
     end
 
-    return options
-end
-
-function show_help()
-    println("""
-Easy Codecov upload script for CI environments.
-
-This script processes Julia coverage data and uploads it to Codecov
-using the official Codecov uploader.
-
-Usage:
-    julia scripts/upload_codecov.jl [options]
-
-Options:
-    --folder <path>     Folder to process for coverage (default: src)
-    --format <format>   Coverage format: lcov or json (default: lcov)
-    --flags <flags>     Comma-separated list of coverage flags
-    --name <name>       Upload name
-    --token <token>     Codecov token (or set CODECOV_TOKEN env var)
-    --dry-run          Print commands instead of executing
-    --help             Show this help message
-
-Examples:
-    julia scripts/upload_codecov.jl
-    julia scripts/upload_codecov.jl --folder src --format lcov --flags julia
-    julia scripts/upload_codecov.jl --dry-run
-""")
+    return parse_args(s)
 end
 
 function main()
     try
-        options = parse_args(ARGS)
-
-        if options[:help]
-            show_help()
-            return
-        end
+        args = parse_commandline()
 
         # Show configuration
         println("📊 Codecov Upload Configuration")
-        println("Folder: $(options[:folder])")
-        println("Format: $(options[:format])")
-        println("Flags: $(something(options[:flags], "none"))")
-        println("Name: $(something(options[:name], "auto"))")
-        println("Token: $(options[:token] !== nothing ? "<provided>" : "from environment")")
-        println("Dry run: $(options[:dry_run])")
+        println("Folder: $(args["folder"])")
+        println("Format: $(args["format"])")
+
+        # Parse flags if provided
+        flags = nothing
+        if args["flags"] !== nothing
+            flags = split(args["flags"], ',')
+            println("Flags: $(join(flags, ","))")
+        else
+            println("Flags: none")
+        end
+
+        println("Name: $(something(args["name"], "auto"))")
+        println("Token: $(args["token"] !== nothing ? "<provided>" : "from environment")")
+        println("Dry run: $(args["dry-run"])")
         println()
 
         # Process coverage
         println("🔄 Processing coverage data...")
-        fcs = process_folder(options[:folder])
+        fcs = process_folder(args["folder"])
 
         if isempty(fcs)
-            println("❌ No coverage data found in folder: $(options[:folder])")
+            println("❌ No coverage data found in folder: $(args["folder"])")
             exit(1)
         end
 
@@ -142,11 +105,11 @@ function main()
 
         # Upload to Codecov
         success = upload_to_codecov(fcs;
-            format=options[:format],
-            flags=options[:flags],
-            name=options[:name],
-            token=options[:token],
-            dry_run=options[:dry_run]
+            format=Symbol(args["format"]),
+            flags=flags,
+            name=args["name"],
+            token=args["token"],
+            dry_run=args["dry-run"]
         )
 
         if success

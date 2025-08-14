@@ -20,11 +20,9 @@ using Coverage
 fcs = process_folder("src")
 
 # Option 1: Use automated upload (recommended)
-using Coverage.CIIntegration
 process_and_upload(service=:both, folder="src")
 
 # Option 2: Prepare data for manual upload
-using Coverage.CodecovExport, Coverage.CoverallsExport
 codecov_file = prepare_for_codecov(fcs, format=:lcov)
 coveralls_file = prepare_for_coveralls(fcs, format=:lcov)
 ```
@@ -34,8 +32,9 @@ coveralls_file = prepare_for_coveralls(fcs, format=:lcov)
 ### 1. For CI Environments (GitHub Actions, Travis, etc.)
 
 **Option A: Use the automated helper (easiest)**
+
 ```julia
-using Coverage, Coverage.CIIntegration
+using Coverage
 process_and_upload(service=:both, folder="src")
 ```
 
@@ -66,7 +65,7 @@ process_and_upload(service=:both, folder="src")
 ### 2. For Local Development
 
 ```julia
-using Coverage, Coverage.CIIntegration
+using Coverage
 
 # Process and upload
 fcs = process_folder("src")
@@ -87,23 +86,24 @@ julia scripts/upload_coverage.jl --service codecov --flags julia
 julia scripts/upload_coverage.jl --dry-run
 ```
 
-## New Modules
+## Available Functions
 
-### Coverage.CodecovExport
-- `prepare_for_codecov()` - Export coverage in Codecov-compatible formats
-- `download_codecov_uploader()` - Download official Codecov uploader
-- `export_codecov_json()` - Export to JSON format
+Coverage.jl now provides these functions directly:
 
-### Coverage.CoverallsExport
-- `prepare_for_coveralls()` - Export coverage in Coveralls-compatible formats
-- `download_coveralls_reporter()` - Download Universal Coverage Reporter
-- `export_coveralls_json()` - Export to JSON format
-
-### Coverage.CIIntegration
+### Coverage Processing and Upload
 - `process_and_upload()` - One-stop function for processing and uploading
 - `upload_to_codecov()` - Upload to Codecov using official uploader
 - `upload_to_coveralls()` - Upload to Coveralls using official reporter
+
+### Data Export Functions
+- `prepare_for_codecov()` - Export coverage in Codecov-compatible formats
+- `prepare_for_coveralls()` - Export coverage in Coveralls-compatible formats
+- `export_codecov_json()` - Export to JSON format
+- `export_coveralls_json()` - Export to JSON format
+
+### Utility Functions
 - `detect_ci_platform()` - Detect current CI environment
+- `detect_platform()` - Detect current platform
 
 ## Environment Variables
 
@@ -131,12 +131,12 @@ The modernized Coverage.jl automatically downloads the appropriate uploader for 
 
 ### Deprecation Warnings
 If you see deprecation warnings, update your code:
+
 ```julia
 # Old
 Codecov.submit(fcs)
 
 # New
-using Coverage.CIIntegration
 upload_to_codecov(fcs)
 ```
 
