@@ -197,7 +197,7 @@ function main()
         end
 
     catch e
-        println("❌ Error: $(string(e))")
+        println("❌ Error: $(sprint(Base.display_error, e))")
         if isa(e, InterruptException)
             println("Interrupted by user")
         else

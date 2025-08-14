@@ -13,6 +13,7 @@ using CoverageTools
 using HTTP
 using JSON
 using LibGit2
+using ..CIIntegration
 using ..CoverageUtils
 using MbedTLS
 
@@ -63,19 +64,30 @@ Take a vector of file coverage results (produced by `process_folder`),
 and submits them to Coveralls. Assumes that this code is being run
 on TravisCI, AppVeyor or Jenkins. If running locally, use `submit_local`.
 
-!!! warning "Deprecated"
-    This function is deprecated. Coveralls no longer supports 3rd party uploaders.
-    Please use the Coveralls Universal Coverage Reporter instead. See the documentation at:
-    https://docs.coveralls.io/integrations#universal-coverage-reporter
-
-    Use `Coverage.CoverallsExport.prepare_for_coveralls()` to prepare coverage data
-    for the official uploader.
+!!! note "Modernized"
+    This function now uses the official Coveralls Universal Coverage Reporter for better reliability.
+    See: https://docs.coveralls.io/integrations#universal-coverage-reporter
 """
 function submit(fcs::Vector{FileCoverage}; kwargs...)
-    @warn CoverageUtils.create_deprecation_message(:coveralls, "submit") maxlog=1
-
-    data = prepare_request(fcs, false)
-    post_request(data)
+    # Preserve legacy behavior: always check for CI environment
+    # Check if we're in a known CI environment
+    ci_detected = any([
+        haskey(ENV, "TRAVIS"),
+        haskey(ENV, "APPVEYOR"),
+        haskey(ENV, "GITHUB_ACTIONS"),
+        haskey(ENV, "CIRCLECI"),
+        haskey(ENV, "JENKINS_URL"),
+        haskey(ENV, "GITLAB_CI"),
+        haskey(ENV, "BUILDKITE"),
+        haskey(ENV, "COVERALLS_REPO_TOKEN")
+    ])
+    
+    if !ci_detected
+        throw(ErrorException("No compatible CI platform detected"))
+    end
+    
+    # Use the new official uploader via CIIntegration
+    return CIIntegration.upload_to_coveralls(fcs; kwargs...)
 end
 
 function prepare_request(fcs::Vector{FileCoverage}, local_env::Bool, git_info=query_git_info)

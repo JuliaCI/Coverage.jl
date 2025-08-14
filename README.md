@@ -14,10 +14,8 @@ The package now provides:
 - 🚀 **Automated upload helpers** for CI environments
 - 📋 **Helper scripts** for easy integration
 
-> [!IMPORTANT]
-> **Codecov and Coveralls have deprecated 3rd party uploaders.** Coverage.jl now integrates with their official uploaders while maintaining the same easy-to-use interface for Julia projects.
->
-> **Migration required:** See [MIGRATION.md](MIGRATION.md) for upgrading from the old `Codecov.submit()` and `Coveralls.submit()` functions.
+> [!NOTE]
+> **Coverage.jl now uses official uploaders from Codecov and Coveralls** for better reliability and future compatibility. The familiar `Codecov.submit()` and `Coveralls.submit()` functions continue to work seamlessly.
 
 ## Quick Start
 

@@ -792,19 +792,6 @@ withenv(
 
         # Test unsupported format
         @test_throws ErrorException CodecovExport.prepare_for_codecov(test_fcs; format=:xml)
-
-        # Test YAML generation (basic)
-        mktempdir() do tmpdir
-            yml_file = joinpath(tmpdir, "codecov.yml")
-            result_file = CodecovExport.generate_codecov_yml(;
-                flags=["julia", "test"],
-                name="test-upload",
-                output_file=yml_file)
-            @test isfile(result_file)
-            content = read(result_file, String)
-            @test occursin("flags:", content)
-            @test occursin("name:", content)
-        end
     end
 
     @testset "Executable Functionality Tests" begin

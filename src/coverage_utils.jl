@@ -80,7 +80,7 @@ Download a binary with standardized info messages.
 function download_with_info(url::String, dest_path::String, binary_name::String, platform::Symbol)
     @info "Downloading $(binary_name) for $(platform)..."
     Downloads.download(url, dest_path)
-    chmod(dest_path, 0o755)  # Make executable
+    chmod(dest_path, 0o555)  # Make executable
     @info "$(binary_name) downloaded to: $(dest_path)"
     return dest_path
 end

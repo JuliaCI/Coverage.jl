@@ -21,25 +21,32 @@ using ..CoverageUtils
 export prepare_for_coveralls, export_coveralls_json, download_coveralls_reporter, get_coveralls_executable
 
 # Platform-specific Coveralls reporter installation methods
-const COVERALLS_REPORTERS = Dict(
-    :linux => (
-        url = "https://github.com/coverallsapp/coverage-reporter/releases/latest/download/coveralls-linux",
-        filename = "coveralls-linux",
-        method = :download
-    ),
-    :macos => (
-        url = nothing,  # Use Homebrew instead
-        filename = "coveralls",
-        method = :homebrew,
-        tap = "coverallsapp/coveralls",
-        package = "coveralls"
-    ),
-    :windows => (
-        url = "https://github.com/coverallsapp/coverage-reporter/releases/latest/download/coveralls-windows.exe",
-        filename = "coveralls-windows.exe",
-        method = :download
-    )
-)
+function get_coveralls_info(platform)
+    if platform == :linux
+        arch = Sys.ARCH == :aarch64 ? "aarch64" : "x86_64"
+        return (
+            url = "https://github.com/coverallsapp/coverage-reporter/releases/latest/download/coveralls-linux-$arch",
+            filename = "coveralls-linux-$arch",
+            method = :download
+        )
+    elseif platform == :macos
+        return (
+            url = nothing,  # Use Homebrew instead
+            filename = "coveralls",
+            method = :homebrew,
+            tap = "coverallsapp/coveralls",
+            package = "coveralls"
+        )
+    elseif platform == :windows
+        return (
+            url = "https://github.com/coverallsapp/coverage-reporter/releases/latest/download/coveralls-windows.exe",
+            filename = "coveralls-windows.exe",
+            method = :download
+        )
+    else
+        error("Unsupported platform: $platform")
+    end
+end
 
 """
     to_coveralls_json(fcs::Vector{FileCoverage})
@@ -150,7 +157,7 @@ Uses the appropriate installation method for each platform:
 """
 function download_coveralls_reporter(; force=false, install_dir=nothing)
     platform = CoverageUtils.detect_platform()
-    reporter_info = COVERALLS_REPORTERS[platform]
+    reporter_info = get_coveralls_info(platform)
 
     if reporter_info.method == :homebrew
         return install_via_homebrew(reporter_info; force=force)
@@ -265,7 +272,7 @@ Get the path to the Coveralls reporter executable, downloading it if necessary.
 """
 function get_coveralls_executable(; auto_download=true, install_dir=nothing)
     platform = CoverageUtils.detect_platform()
-    reporter_info = COVERALLS_REPORTERS[platform]
+    reporter_info = get_coveralls_info(platform)
 
     # First, check if coveralls is available in PATH
     # Try common executable names

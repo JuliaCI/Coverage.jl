@@ -13,6 +13,7 @@ using Coverage
 using CoverageTools
 using JSON
 using LibGit2
+using ..CIIntegration
 using ..CoverageUtils
 
 export submit, submit_local, submit_generic
@@ -65,18 +66,30 @@ Takes a vector of file coverage results (produced by `process_folder`),
 and submits them to Codecov.io. Assumes that this code is being run
 on TravisCI or AppVeyor. If running locally, use `submit_local`.
 
-!!! warning "Deprecated"
-    This function is deprecated. Codecov no longer supports 3rd party uploaders.
-    Please use the official Codecov uploader instead. See the documentation at:
-    https://docs.codecov.com/docs/codecov-uploader
-
-    Use `Coverage.CodecovExport.prepare_for_codecov()` to prepare coverage data
-    for the official uploader.
+!!! note "Modernized"
+    This function now uses the official Codecov uploader for better reliability.
+    See: https://docs.codecov.com/docs/codecov-uploader
 """
 function submit(fcs::Vector{FileCoverage}; kwargs...)
-    @warn CoverageUtils.create_deprecation_message(:codecov, "submit") maxlog=1
-
-    submit_generic(fcs, add_ci_to_kwargs(; kwargs...))
+    # Preserve legacy behavior: always check for CI environment
+    # Check if we're in a known CI environment
+    ci_detected = any([
+        haskey(ENV, "TRAVIS"),
+        haskey(ENV, "APPVEYOR"),
+        haskey(ENV, "GITHUB_ACTIONS"),
+        haskey(ENV, "CIRCLECI"),
+        haskey(ENV, "JENKINS_URL"),
+        haskey(ENV, "GITLAB_CI"),
+        haskey(ENV, "BUILDKITE"),
+        haskey(ENV, "CODECOV_TOKEN")
+    ])
+    
+    if !ci_detected
+        throw(ErrorException("No compatible CI platform detected"))
+    end
+    
+    # Use the new official uploader via CIIntegration
+    return CIIntegration.upload_to_codecov(fcs; kwargs...)
 end
 
 

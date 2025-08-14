@@ -21,20 +21,18 @@ using ..CoverageUtils
 export prepare_for_codecov, export_codecov_json, download_codecov_uploader, get_codecov_executable
 
 # Platform-specific codecov uploader URLs and checksums
-const CODECOV_UPLOADERS = Dict(
-    :linux => (
-        url = "https://uploader.codecov.io/latest/linux/codecov",
-        checksum = nothing  # Will be fetched dynamically
-    ),
-    :macos => (
-        url = "https://uploader.codecov.io/latest/macos/codecov",
-        checksum = nothing
-    ),
-    :windows => (
-        url = "https://uploader.codecov.io/latest/windows/codecov.exe",
-        checksum = nothing
-    )
-)
+function get_codecov_url(platform)
+    if platform == :linux
+        arch = Sys.ARCH == :aarch64 ? "aarch64" : "linux"
+        return "https://uploader.codecov.io/latest/$arch/codecov"
+    elseif platform == :macos
+        return "https://uploader.codecov.io/latest/macos/codecov"
+    elseif platform == :windows
+        return "https://uploader.codecov.io/latest/windows/codecov.exe"
+    else
+        error("Unsupported platform: $platform")
+    end
+end
 
 """
     to_codecov_json(fcs::Vector{FileCoverage})
@@ -127,7 +125,7 @@ Download the official Codecov uploader for the current platform.
 """
 function download_codecov_uploader(; force=false, install_dir=nothing)
     platform = CoverageUtils.detect_platform()
-    uploader_info = CODECOV_UPLOADERS[platform]
+    uploader_url = get_codecov_url(platform)
 
     # Determine installation directory
     if install_dir === nothing
@@ -150,11 +148,11 @@ function download_codecov_uploader(; force=false, install_dir=nothing)
 
     try
         # Download the uploader
-        Downloads.download(uploader_info.url, exec_path)
+        Downloads.download(uploader_url, exec_path)
 
         # Make executable on Unix systems
         if platform != :windows
-            chmod(exec_path, 0o755)
+            chmod(exec_path, 0o555)
         end
 
         @info "Codecov uploader downloaded to: $exec_path"
@@ -204,76 +202,6 @@ function get_codecov_executable(; auto_download=true, install_dir=nothing)
         return download_codecov_uploader(; install_dir=install_dir)
     else
         error("Codecov uploader not found. Set auto_download=true or install manually.")
-    end
-end
-
-"""
-    generate_codecov_yml(; flags=nothing, name=nothing, output_file="codecov.yml")
-
-Generate a basic codecov.yml configuration file.
-
-# Arguments
-- `flags::Vector{String}`: Coverage flags to apply
-- `name::String`: Custom name for the upload
-- `output_file::String`: Output file path
-
-# Returns
-- `String`: Path to the generated codecov.yml file
-"""
-function generate_codecov_yml(; flags=nothing, name=nothing, output_file="codecov.yml")
-    config = Dict{String,Any}()
-
-    if flags !== nothing
-        config["flags"] = flags
-    end
-
-    if name !== nothing
-        config["name"] = name
-    end
-
-    # Basic codecov configuration
-    config["coverage"] = Dict(
-        "status" => Dict(
-            "project" => Dict(
-                "default" => Dict(
-                    "target" => "auto",
-                    "threshold" => "1%"
-                )
-            )
-        )
-    )
-
-    # Write YAML format (simplified - just key: value pairs)
-    open(output_file, "w") do io
-        _write_yaml(io, config, 0)
-    end
-
-    @info "Codecov configuration written to: $output_file"
-    return abspath(output_file)
-end
-
-# Simple YAML writer (basic functionality)
-function _write_yaml(io, obj, indent)
-    if obj isa Dict
-        for (key, value) in obj
-            print(io, " "^indent, key, ": ")
-            if value isa Dict || value isa Vector
-                println(io)
-                _write_yaml(io, value, indent + 2)
-            else
-                println(io, value)
-            end
-        end
-    elseif obj isa Vector
-        for item in obj
-            print(io, " "^indent, "- ")
-            if item isa Dict
-                println(io)
-                _write_yaml(io, item, indent + 2)
-            else
-                println(io, item)
-            end
-        end
     end
 end
 

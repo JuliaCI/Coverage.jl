@@ -140,7 +140,7 @@ function main()
         end
 
     catch e
-        println("❌ Error: $(string(e))")
+        println("❌ Error: $(sprint(Base.display_error, e))")
         exit(1)
     end
 end

@@ -34,15 +34,15 @@ const process_cov = CoverageTools.process_cov
 const process_file = CoverageTools.process_file
 const process_folder = CoverageTools.process_folder
 
+# New modules for modern uploaders
+include("codecov_export.jl")
+include("coveralls_export.jl")
+include("ci_integration.jl")
+
 include("coveralls.jl")
 include("codecovio.jl")
 include("lcov.jl")
 include("memalloc.jl")
 include("parser.jl")
-
-# New modules for modern uploaders
-include("codecov_export.jl")
-include("coveralls_export.jl")
-include("ci_integration.jl")
 
 end # module

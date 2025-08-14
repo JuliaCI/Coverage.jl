@@ -193,7 +193,7 @@ function upload_to_coveralls(fcs::Vector{FileCoverage};
             return true
         else
             @info "Uploading to Coveralls..."
-            result = run(Cmd(cmd_args); env=env, wait=true)
+            result = run(setenv(Cmd(cmd_args), env); wait=true)
             success = result.exitcode == 0
 
             if success
