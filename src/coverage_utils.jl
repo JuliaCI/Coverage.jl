@@ -203,7 +203,7 @@ end
 Common error handler for upload failures.
 """
 function handle_upload_error(e::Exception, service::String)
-    error_msg = sprint(Base.display_error, e)
+    error_msg = sprint(showerror, e)
     @error "Failed to upload to $service" error=error_msg
 
     if occursin("404", string(e))
