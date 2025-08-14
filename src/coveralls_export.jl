@@ -198,7 +198,10 @@ function install_via_homebrew(reporter_info; force=false)
         end
 
         # Get the installed path
-        coveralls_path = strip(read(`which coveralls`, String))
+        coveralls_path = Sys.which("coveralls")
+        if coveralls_path === nothing
+            error("Coveralls installation failed - command not found in PATH")
+        end
         @info "Coveralls reporter installed at: $coveralls_path"
         return coveralls_path
 
@@ -265,21 +268,13 @@ function get_coveralls_executable(; auto_download=true, install_dir=nothing)
     reporter_info = COVERALLS_REPORTERS[platform]
 
     # First, check if coveralls is available in PATH
-    try
-        # Try common executable names
-        for exec_name in ["coveralls", "coveralls-reporter", reporter_info.filename]
-            try
-                coveralls_path = strip(read(`which $exec_name`, String))
-                if isfile(coveralls_path)
-                    @info "Found Coveralls reporter in PATH: $coveralls_path"
-                    return coveralls_path
-                end
-            catch
-                continue
-            end
+    # Try common executable names
+    for exec_name in ["coveralls", "coveralls-reporter", reporter_info.filename]
+        coveralls_path = Sys.which(exec_name)
+        if coveralls_path !== nothing && isfile(coveralls_path)
+            @info "Found Coveralls reporter in PATH: $coveralls_path"
+            return coveralls_path
         end
-    catch
-        # which command failed, continue to other methods
     end
 
     # Check in specified install directory

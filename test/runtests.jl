@@ -819,8 +819,14 @@ withenv(
                     exe_path = CodecovExport.download_codecov_uploader(; install_dir=tmpdir)
                     @test isfile(exe_path)
 
-                    # Test that the file is executable
-                    @test stat(exe_path).mode & 0o111 != 0  # Check execute permissions
+                    # Test that the file is executable (platform-specific check)
+                    if Sys.iswindows()
+                        # On Windows, just check that the file exists and has .exe extension
+                        @test endswith(exe_path, ".exe")
+                    else
+                        # On Unix systems, check execute permissions
+                        @test stat(exe_path).mode & 0o111 != 0  # Check execute permissions
+                    end
 
                     # Test basic command execution (--help should work without network)
                     try
@@ -883,7 +889,13 @@ withenv(
                     else
                         # On other platforms, test the downloaded file exists and is executable
                         @test isfile(exe_path)
-                        @test stat(exe_path).mode & 0o111 != 0  # Check execute permissions
+                        if Sys.iswindows()
+                            # On Windows, just check that the file exists and has .exe extension
+                            @test endswith(exe_path, ".exe")
+                        else
+                            # On Unix systems, check execute permissions
+                            @test stat(exe_path).mode & 0o111 != 0  # Check execute permissions
+                        end
                     end
 
                     # Test basic command execution (--help should work)

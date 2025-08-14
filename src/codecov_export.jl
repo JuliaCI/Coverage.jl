@@ -183,14 +183,10 @@ function get_codecov_executable(; auto_download=true, install_dir=nothing)
     exec_name = platform == :windows ? "codecov.exe" : "codecov"
 
     # First, check if codecov is available in PATH
-    try
-        codecov_path = strip(read(`which $exec_name`, String))
-        if isfile(codecov_path)
-            @info "Found Codecov uploader in PATH: $codecov_path"
-            return codecov_path
-        end
-    catch
-        # which command failed, continue to other methods
+    codecov_path = Sys.which(exec_name)
+    if codecov_path !== nothing && isfile(codecov_path)
+        @info "Found Codecov uploader in PATH: $codecov_path"
+        return codecov_path
     end
 
     # Check in specified install directory
