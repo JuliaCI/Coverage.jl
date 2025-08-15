@@ -114,7 +114,7 @@ function upload_to_codecov(fcs::Vector{FileCoverage};
 end
 
 """
-    upload_to_coveralls(fcs::Vector{FileCoverage}; format=:lcov, token=nothing, parallel=nothing, job_flag=nothing, dry_run=false, cleanup=true)
+    upload_to_coveralls(fcs::Vector{FileCoverage}; format=:lcov, token=nothing, parallel=nothing, job_flag=nothing, build_num=nothing, dry_run=false, cleanup=true)
 
 Process coverage data and upload to Coveralls using the Universal Coverage Reporter.
 
@@ -124,6 +124,7 @@ Process coverage data and upload to Coveralls using the Universal Coverage Repor
 - `token`: Coveralls repo token (defaults to COVERALLS_REPO_TOKEN environment variable)
 - `parallel`: Set to true for parallel job uploads (requires calling finish_parallel afterwards)
 - `job_flag`: Flag to distinguish this job in parallel builds (e.g., "julia-1.9-linux")
+- `build_num`: Build number for grouping parallel jobs (overrides COVERALLS_SERVICE_NUMBER environment variable)
 - `dry_run`: If true, show what would be uploaded without actually uploading
 - `cleanup`: If true, remove temporary files after upload
 
@@ -131,13 +132,13 @@ Process coverage data and upload to Coveralls using the Universal Coverage Repor
 For parallel CI jobs, set parallel=true and call finish_parallel when all jobs complete:
 ```julia
 # Job 1: Upload with parallel flag
-upload_to_coveralls(fcs; parallel=true, job_flag="julia-1.9")
+upload_to_coveralls(fcs; parallel=true, job_flag="julia-1.9", build_num="123")
 
 # Job 2: Upload with parallel flag
-upload_to_coveralls(fcs; parallel=true, job_flag="julia-1.10")
+upload_to_coveralls(fcs; parallel=true, job_flag="julia-1.10", build_num="123")
 
 # After all jobs: Signal completion (typically in a separate "finalize" job)
-finish_coveralls_parallel()
+finish_coveralls_parallel(build_num="123")
 ```
 """
 function upload_to_coveralls(fcs::Vector{FileCoverage};
@@ -145,6 +146,7 @@ function upload_to_coveralls(fcs::Vector{FileCoverage};
                             token=nothing,
                             parallel=nothing,
                             job_flag=nothing,
+                            build_num=nothing,
                             dry_run=false,
                             cleanup=true)
 
@@ -185,6 +187,14 @@ function upload_to_coveralls(fcs::Vector{FileCoverage};
         # Set job flag for distinguishing parallel jobs
         if job_flag !== nothing
             env["COVERALLS_FLAG_NAME"] = job_flag
+        end
+
+        # Set build number for grouping parallel jobs
+        if build_num !== nothing
+            env["COVERALLS_SERVICE_NUMBER"] = string(build_num)
+            @debug "Using explicit build number for Coveralls" build_num=build_num
+        elseif haskey(ENV, "COVERALLS_SERVICE_NUMBER")
+            @debug "Using environment COVERALLS_SERVICE_NUMBER" service_number=ENV["COVERALLS_SERVICE_NUMBER"]
         end
 
         # Execute command
@@ -284,14 +294,18 @@ function process_and_upload(; service=:both,
 end
 
 """
-    finish_coveralls_parallel(; token=nothing)
+    finish_coveralls_parallel(; token=nothing, build_num=nothing)
 
 Signal to Coveralls that all parallel jobs have completed and coverage can be processed.
 This should be called once after all parallel upload_to_coveralls() calls are complete.
 
+# Arguments
+- `token`: Coveralls repo token (defaults to COVERALLS_REPO_TOKEN environment variable)
+- `build_num`: Build number for the parallel jobs (overrides COVERALLS_SERVICE_NUMBER environment variable)
+
 Call this from a separate CI job that runs after all parallel coverage jobs finish.
 """
-function finish_coveralls_parallel(; token=nothing)
+function finish_coveralls_parallel(; token=nothing, build_num=nothing)
     # Add token if provided or available in environment
     upload_token = token
     if upload_token === nothing
@@ -302,9 +316,20 @@ function finish_coveralls_parallel(; token=nothing)
     end
 
     # Prepare the completion webhook payload
+    payload_data = Dict("status" => "done")
+
+    # Add build number if provided or available in environment
+    service_number = build_num !== nothing ? string(build_num) : get(ENV, "COVERALLS_SERVICE_NUMBER", nothing)
+    if service_number !== nothing && service_number != ""
+        payload_data["build_num"] = service_number
+        @info "Using build number for parallel completion" build_num=service_number
+    else
+        @warn "No build number available for parallel completion - this may cause issues with parallel job grouping"
+    end
+
     payload = Dict(
         "repo_token" => upload_token,
-        "payload" => Dict("status" => "done")
+        "payload" => payload_data
     )
 
     @info "Signaling Coveralls parallel job completion..."

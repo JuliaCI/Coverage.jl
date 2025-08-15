@@ -1254,15 +1254,15 @@ withenv(
         @test_logs (:error, r"Failed to upload to TestService") (:warn, r"Check if the repository is registered with TestService") begin
             @test Coverage.CoverageUtils.handle_upload_error(ErrorException("404 Not Found"), "TestService") == false
         end
-        
+
         @test_logs (:error, r"Failed to upload to TestService") (:warn, r"Authentication failed. Check your TestService token") begin
             @test Coverage.CoverageUtils.handle_upload_error(ErrorException("401 Unauthorized"), "TestService") == false
         end
-        
+
         @test_logs (:error, r"Failed to upload to TestService") (:warn, r"Connection timeout. Check your network connection") begin
             @test Coverage.CoverageUtils.handle_upload_error(ErrorException("Connection timeout"), "TestService") == false
         end
-        
+
         @test_logs (:error, r"Failed to upload to TestService") begin
             @test Coverage.CoverageUtils.handle_upload_error(ErrorException("Generic error"), "TestService") == false
         end
