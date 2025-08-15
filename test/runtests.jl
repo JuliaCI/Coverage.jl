@@ -1116,6 +1116,52 @@ withenv(
         end
     end
 
+    @testset "Parallel Job Support" begin
+        # Test parallel upload functions with dry run
+        test_fcs = [FileCoverage("test.jl", "test", [1, 0, 1])]
+
+        mktempdir() do tmpdir
+            cd(tmpdir) do
+                # Test Codecov with flags and build_id
+                success = Coverage.upload_to_codecov(test_fcs;
+                    dry_run=true,
+                    flags=["unit-tests", "julia-1.9"],
+                    name="test-job",
+                    build_id="12345",
+                    cleanup=false)
+                @test success == true
+
+                # Test Coveralls with parallel mode
+                success = Coverage.upload_to_coveralls(test_fcs;
+                    dry_run=true,
+                    parallel=true,
+                    job_flag="julia-1.9-linux",
+                    cleanup=false)
+                @test success == true
+
+                # Test finish_coveralls_parallel requires token
+                @test_throws ErrorException Coverage.finish_coveralls_parallel()
+
+                # Test process_and_upload with parallel options
+                mkdir("src")
+                write("src/test.jl", "function test()\n    return 1\nend")
+                write("src/test.jl.cov", "        - function test()\n        1     return 1\n        - end")
+
+                # Test with parallel options for both services
+                results = Coverage.process_and_upload(;
+                    service=:both,
+                    folder="src",
+                    codecov_flags=["test"],
+                    codecov_build_id="123",
+                    coveralls_parallel=true,
+                    coveralls_job_flag="test-job",
+                    dry_run=true)
+                @test haskey(results, :codecov)
+                @test haskey(results, :coveralls)
+            end
+        end
+    end
+
     @testset "Deprecation Warnings" begin
         # Test that deprecation warnings are shown for old functions
         test_fcs = FileCoverage[]

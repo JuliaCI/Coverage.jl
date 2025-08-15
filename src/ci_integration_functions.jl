@@ -1,15 +1,36 @@
 # CI Integration functions for Coverage.jl
 
 """
-    upload_to_codecov(fcs::Vector{FileCoverage}; format=:lcov, flags=nothing, name=nothing, token=nothing, dry_run=false, cleanup=true)
+    upload_to_codecov(fcs::Vector{FileCoverage}; format=:lcov, flags=nothing, name=nothing, token=nothing, build_id=nothing, dry_run=false, cleanup=true)
 
 Process coverage data and upload to Codecov using the official uploader.
+
+# Arguments
+- `fcs`: Vector of FileCoverage objects containing coverage data
+- `format`: Coverage format (:lcov or :json)
+- `flags`: String or Vector{String} of flags to categorize this upload (e.g., ["unittests", "julia-1.9"])
+- `name`: Name for this specific upload (useful for parallel jobs)
+- `token`: Codecov upload token (defaults to CODECOV_TOKEN environment variable)
+- `build_id`: Build identifier to group parallel uploads (auto-detected if not provided)
+- `dry_run`: If true, show what would be uploaded without actually uploading
+- `cleanup`: If true, remove temporary files after upload
+
+# Parallel Job Usage
+For parallel CI jobs, use flags to distinguish different parts:
+```julia
+# Job 1: Unit tests on Julia 1.9
+upload_to_codecov(fcs; flags=["unittests", "julia-1.9"], name="unit-tests-1.9")
+
+# Job 2: Integration tests on Julia 1.10
+upload_to_codecov(fcs; flags=["integration", "julia-1.10"], name="integration-1.10")
+```
 """
 function upload_to_codecov(fcs::Vector{FileCoverage};
                           format=:lcov,
                           flags=nothing,
                           name=nothing,
                           token=nothing,
+                          build_id=nothing,
                           dry_run=false,
                           cleanup=true)
 
@@ -42,7 +63,8 @@ function upload_to_codecov(fcs::Vector{FileCoverage};
 
         # Add flags if provided
         if flags !== nothing
-            for flag in flags
+            flag_list = flags isa String ? [flags] : flags
+            for flag in flag_list
                 push!(cmd_args, "-F", flag)
             end
         end
@@ -50,6 +72,11 @@ function upload_to_codecov(fcs::Vector{FileCoverage};
         # Add name if provided
         if name !== nothing
             push!(cmd_args, "-n", name)
+        end
+
+        # Add build identifier for parallel job grouping
+        if build_id !== nothing
+            push!(cmd_args, "-b", string(build_id))
         end
 
         # Add flag to exit with non-zero on failure (instead of default exit code 0)
@@ -87,13 +114,37 @@ function upload_to_codecov(fcs::Vector{FileCoverage};
 end
 
 """
-    upload_to_coveralls(fcs::Vector{FileCoverage}; format=:lcov, token=nothing, dry_run=false, cleanup=true)
+    upload_to_coveralls(fcs::Vector{FileCoverage}; format=:lcov, token=nothing, parallel=nothing, job_flag=nothing, dry_run=false, cleanup=true)
 
 Process coverage data and upload to Coveralls using the Universal Coverage Reporter.
+
+# Arguments
+- `fcs`: Vector of FileCoverage objects containing coverage data
+- `format`: Coverage format (:lcov)
+- `token`: Coveralls repo token (defaults to COVERALLS_REPO_TOKEN environment variable)
+- `parallel`: Set to true for parallel job uploads (requires calling finish_parallel afterwards)
+- `job_flag`: Flag to distinguish this job in parallel builds (e.g., "julia-1.9-linux")
+- `dry_run`: If true, show what would be uploaded without actually uploading
+- `cleanup`: If true, remove temporary files after upload
+
+# Parallel Job Usage
+For parallel CI jobs, set parallel=true and call finish_parallel when all jobs complete:
+```julia
+# Job 1: Upload with parallel flag
+upload_to_coveralls(fcs; parallel=true, job_flag="julia-1.9")
+
+# Job 2: Upload with parallel flag
+upload_to_coveralls(fcs; parallel=true, job_flag="julia-1.10")
+
+# After all jobs: Signal completion (typically in a separate "finalize" job)
+finish_coveralls_parallel()
+```
 """
 function upload_to_coveralls(fcs::Vector{FileCoverage};
                             format=:lcov,
                             token=nothing,
+                            parallel=nothing,
+                            job_flag=nothing,
                             dry_run=false,
                             cleanup=true)
 
@@ -121,6 +172,19 @@ function upload_to_coveralls(fcs::Vector{FileCoverage};
         end
         if upload_token !== nothing
             env["COVERALLS_REPO_TOKEN"] = upload_token
+        end
+
+        # Set parallel flag if requested
+        if parallel === true
+            env["COVERALLS_PARALLEL"] = "true"
+        elseif parallel === false
+            env["COVERALLS_PARALLEL"] = "false"
+        end
+        # If parallel=nothing, let the environment variable take precedence
+
+        # Set job flag for distinguishing parallel jobs
+        if job_flag !== nothing
+            env["COVERALLS_FLAG_NAME"] = job_flag
         end
 
         # Execute command
@@ -151,7 +215,7 @@ function upload_to_coveralls(fcs::Vector{FileCoverage};
 end
 
 """
-    process_and_upload(; service=:both, folder="src", format=:lcov, codecov_flags=nothing, codecov_name=nothing, dry_run=false)
+    process_and_upload(; service=:both, folder="src", format=:lcov, codecov_flags=nothing, codecov_name=nothing, codecov_build_id=nothing, coveralls_parallel=nothing, coveralls_job_flag=nothing, dry_run=false)
 
 Process coverage data in the specified folder and upload to the specified service(s).
 
@@ -161,6 +225,9 @@ Process coverage data in the specified folder and upload to the specified servic
 - `format`: Coverage format (:lcov or :json)
 - `codecov_flags`: Flags for Codecov upload
 - `codecov_name`: Name for Codecov upload
+- `codecov_build_id`: Build ID for Codecov parallel job grouping
+- `coveralls_parallel`: Enable parallel mode for Coveralls (true/false)
+- `coveralls_job_flag`: Job flag for Coveralls parallel identification
 - `dry_run`: Show what would be uploaded without actually uploading
 
 # Returns
@@ -171,6 +238,9 @@ function process_and_upload(; service=:both,
                            format=:lcov,
                            codecov_flags=nothing,
                            codecov_name=nothing,
+                           codecov_build_id=nothing,
+                           coveralls_parallel=nothing,
+                           coveralls_job_flag=nothing,
                            dry_run=false)
 
     @info "Processing coverage for folder: $folder"
@@ -190,6 +260,7 @@ function process_and_upload(; service=:both,
                                                  format=format,
                                                  flags=codecov_flags,
                                                  name=codecov_name,
+                                                 build_id=codecov_build_id,
                                                  dry_run=dry_run)
         catch e
             results[:codecov] = CoverageUtils.handle_upload_error(e, "Codecov")
@@ -201,6 +272,8 @@ function process_and_upload(; service=:both,
         try
             results[:coveralls] = upload_to_coveralls(fcs;
                                                      format=format,
+                                                     parallel=coveralls_parallel,
+                                                     job_flag=coveralls_job_flag,
                                                      dry_run=dry_run)
         catch e
             results[:coveralls] = CoverageUtils.handle_upload_error(e, "Coveralls")
@@ -208,4 +281,50 @@ function process_and_upload(; service=:both,
     end
 
     return results
+end
+
+"""
+    finish_coveralls_parallel(; token=nothing)
+
+Signal to Coveralls that all parallel jobs have completed and coverage can be processed.
+This should be called once after all parallel upload_to_coveralls() calls are complete.
+
+Call this from a separate CI job that runs after all parallel coverage jobs finish.
+"""
+function finish_coveralls_parallel(; token=nothing)
+    # Add token if provided or available in environment
+    upload_token = token
+    if upload_token === nothing
+        upload_token = get(ENV, "COVERALLS_REPO_TOKEN", nothing)
+    end
+    if upload_token === nothing
+        error("Coveralls token required for parallel completion. Set COVERALLS_REPO_TOKEN environment variable or pass token parameter.")
+    end
+
+    # Prepare the completion webhook payload
+    payload = Dict(
+        "repo_token" => upload_token,
+        "payload" => Dict("status" => "done")
+    )
+
+    @info "Signaling Coveralls parallel job completion..."
+
+    try
+        response = HTTP.post(
+            "https://coveralls.io/webhook",
+            ["Content-Type" => "application/json"],
+            JSON.json(payload)
+        )
+
+        if response.status == 200
+            @info "✅ Successfully signaled parallel job completion to Coveralls"
+            return true
+        else
+            @error "❌ Failed to signal parallel completion" status=response.status
+            return false
+        end
+    catch e
+        @error "❌ Error signaling parallel completion to Coveralls" exception=e
+        return false
+    end
 end

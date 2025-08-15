@@ -24,6 +24,7 @@ export process_folder
 # Modern uploader functions
 export prepare_for_codecov, prepare_for_coveralls
 export upload_to_codecov, upload_to_coveralls, process_and_upload
+export finish_coveralls_parallel
 
 # Internal utilities module
 include("coverage_utils.jl")
