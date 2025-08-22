@@ -8,6 +8,7 @@ using Artifacts
 using JSON
 using HTTP
 using MbedTLS
+using Scratch
 
 export FileCoverage
 export LCOV

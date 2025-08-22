@@ -123,48 +123,113 @@ end
     install_via_homebrew(reporter_info; force=false)
 
 Install Coveralls reporter via Homebrew (macOS).
+First installs a local Homebrew if needed, then installs coveralls locally.
 """
 function install_via_homebrew(reporter_info; force=false)
-    # Check if Homebrew is available
-    brew_path = Sys.which("brew")
-    if brew_path === nothing
-        error("Homebrew is not installed. Please install Homebrew first: https://brew.sh")
+    # Set up local Homebrew installation directory using scratch space
+    local_homebrew_dir = @get_scratch!("local_homebrew")
+    local_brew_path = joinpath(local_homebrew_dir, "bin", "brew")
+
+    # Use the local Homebrew installation
+    brew_cmd = local_brew_path
+
+    # Check if local Homebrew is available, install if not
+    if !isfile(local_brew_path)
+        @info "Installing local Homebrew to: $local_homebrew_dir"
+        try
+            # Create the directory
+            mkpath(local_homebrew_dir)
+
+            # Download and extract Homebrew tarball directly
+            @info "Downloading latest Homebrew release..."
+
+            # Get the latest release info
+            latest_release_url = "https://api.github.com/repos/Homebrew/brew/releases/latest"
+            response = HTTP.get(latest_release_url)
+            release_data = JSON.parse(String(response.body))
+            latest_tag = release_data["tag_name"]
+            tarball_url = release_data["tarball_url"]
+
+            @info "Found latest Homebrew release: $latest_tag"
+            tarball_path = joinpath(local_homebrew_dir, "homebrew-$latest_tag.tar.gz")
+
+            # Download the tarball
+            Downloads.download(tarball_url, tarball_path)
+
+            # Extract the tarball to our directory
+            @info "Extracting Homebrew..."
+            run(`tar -xzf $tarball_path -C $local_homebrew_dir --strip-components=1`; wait=true)
+
+            # Remove the tarball
+            rm(tarball_path)
+
+            # Verify the brew executable exists
+            if !isfile(local_brew_path)
+                error("Homebrew extraction failed - brew executable not found at: $local_brew_path")
+            end
+
+            # Post-install setup
+            @info "Running Homebrew post-install setup..."
+            run(`$brew_cmd update --force --quiet`; wait=true)
+
+            # Fix zsh permissions
+            brew_prefix = chomp(read(`$brew_cmd --prefix`, String))
+            zsh_share_dir = joinpath(brew_prefix, "share", "zsh")
+            if isdir(zsh_share_dir)
+                run(`chmod -R go-w $zsh_share_dir`; wait=true)
+            end
+
+            @info "Local Homebrew installed successfully"
+        catch e
+            error("Failed to install local Homebrew: $e")
+        end
+    else
+        @info "Local Homebrew found at: $local_brew_path"
     end
 
-    # Check if coveralls is already installed
+    # Check if coveralls is already installed locally
     if !force
-        coveralls_path = Sys.which("coveralls")
-        if coveralls_path !== nothing && isfile(coveralls_path)
-            @info "Coveralls reporter already installed via Homebrew at: $coveralls_path"
-            return coveralls_path
+        # Check for coveralls in the local Homebrew bin directory
+        local_coveralls_path = joinpath(local_homebrew_dir, "bin", "coveralls")
+        if isfile(local_coveralls_path)
+            @info "Coveralls reporter already installed via local Homebrew at: $local_coveralls_path"
+            return local_coveralls_path
         end
     end
 
-    @info "Installing Coveralls reporter via Homebrew..."
+    @info "Installing Coveralls reporter via local Homebrew..."
 
     try
-        # Add the tap if it doesn't exist
+        # Add the tap if it doesn't exist (ignore failures)
         @info "Adding Homebrew tap: $(reporter_info.tap)"
-        run(`brew tap $(reporter_info.tap)`; wait=true)
+        try
+            run(`$brew_cmd tap $(reporter_info.tap)`; wait=true)
+        catch e
+            @debug "Tap command failed (possibly already exists): $e"
+        end
 
-        # Install coveralls
+        # Install coveralls (ignore exit status)
         @info "Installing Coveralls reporter..."
-        if force
-            run(`brew reinstall $(reporter_info.package)`; wait=true)
-        else
-            run(`brew install $(reporter_info.package)`; wait=true)
+        try
+            if force
+                run(`$brew_cmd reinstall $(reporter_info.package)`; wait=true)
+            else
+                run(`$brew_cmd install $(reporter_info.package)`; wait=true)
+            end
+        catch e
+            @debug "Install command failed (possibly already installed): $e"
         end
 
-        # Get the installed path
-        coveralls_path = Sys.which("coveralls")
-        if coveralls_path === nothing
-            error("Coveralls installation failed - command not found in PATH")
+        # Check if the binary exists regardless of install command status
+        local_coveralls_path = joinpath(local_homebrew_dir, "bin", "coveralls")
+        if !isfile(local_coveralls_path)
+            error("Coveralls installation failed - not found at expected path: $local_coveralls_path")
         end
-        @info "Coveralls reporter installed at: $coveralls_path"
-        return coveralls_path
+        @info "Coveralls reporter installed locally at: $local_coveralls_path"
+        return local_coveralls_path
 
     catch e
-        error("Failed to install Coveralls reporter via Homebrew: $e")
+        error("Failed to install Coveralls reporter via local Homebrew: $e")
     end
 end
 
@@ -176,7 +241,8 @@ Install Coveralls reporter via direct download (Linux/Windows).
 function install_via_download(reporter_info, platform; force=false, install_dir=nothing)
     # Determine installation directory
     if install_dir === nothing
-        install_dir = mktempdir(; prefix="coveralls_reporter_", cleanup=false)
+        # Use scratch space for persistent storage across sessions
+        install_dir = @get_scratch!("coveralls_reporter")
     else
         mkpath(install_dir)
     end

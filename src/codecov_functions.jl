@@ -83,7 +83,8 @@ function download_codecov_uploader(; force=false, install_dir=nothing)
 
     # Determine installation directory
     if install_dir === nothing
-        install_dir = mktempdir(; prefix="codecov_uploader_", cleanup=false)
+        # Use scratch space for persistent storage across sessions
+        install_dir = @get_scratch!("codecov_uploader")
     else
         mkpath(install_dir)
     end
