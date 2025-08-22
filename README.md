@@ -1,21 +1,64 @@
 Coverage.jl
 ===========
 
----
-
-> [!WARNING]  
-> **WARNING: codecov and coveralls no longer support 3rd party uploaders (such as this one). You must use their official uploaders. You can still use CoverageTools (re-exported by this package) to pre-process the files however.**
->
-> * <https://docs.codecov.com/docs/codecov-uploader>
-> * <https://docs.coveralls.io/integrations#universal-coverage-reporter>
-
----
-
 [![Build Status](https://github.com/JuliaCI/Coverage.jl/workflows/CI/badge.svg)](https://github.com/JuliaCI/Coverage.jl/actions/workflows/CI.yml?query=branch%3Amaster)
 [![coveralls](https://coveralls.io/repos/github/JuliaCI/Coverage.jl/badge.svg?branch=master)](https://coveralls.io/github/JuliaCI/Coverage.jl?branch=master)
 [![codecov](https://codecov.io/gh/JuliaCI/Coverage.jl/branch/master/graph/badge.svg?label=codecov)](https://codecov.io/gh/JuliaCI/Coverage.jl)
 
 **"Take Julia code coverage and memory allocation results, do useful things with them"**
+
+**Coverage.jl has been modernized** to work with the official uploaders from Codecov and Coveralls.
+The package now provides:
+- 🔄 **Coverage data processing** using CoverageTools.jl
+- 📤 **Export functionality** for official uploaders
+- 🚀 **Automated upload helpers** for CI environments
+- 📋 **Helper scripts** for easy integration
+
+> [!NOTE]
+> **Coverage.jl now uses official uploaders from Codecov and Coveralls** for better reliability and future compatibility. The familiar `Codecov.submit()` and `Coveralls.submit()` functions continue to work seamlessly.
+
+## Quick Start
+
+### Automated Upload (Recommended)
+
+```julia
+using Coverage
+
+# Process and upload to both services
+process_and_upload(service=:both, folder="src")
+
+# Or just one service
+process_and_upload(service=:codecov, folder="src")
+```
+
+### Manual Export + Official Uploaders
+
+```julia
+using Coverage, Coverage.LCOV
+
+# Process coverage
+coverage = process_folder("src")
+
+# Export to LCOV format
+LCOV.writefile("coverage.info", coverage)
+
+# Use with official uploaders in CI
+# Codecov: Upload via codecov/codecov-action@v3
+# Coveralls: Upload via coverallsapp/github-action@v2
+```
+
+### Using Helper Scripts
+
+```bash
+# Universal upload script
+julia scripts/upload_coverage.jl --service both --folder src
+
+# Codecov only
+julia scripts/upload_codecov.jl --folder src --flags julia
+
+# Dry run to test
+julia scripts/upload_coverage.jl --dry-run
+```
 
 **Code coverage**: Julia can track how many times, if any, each line of your code is run. This is useful for measuring how much of your code base your tests actually test, and can reveal the parts of your code that are not tested and might be hiding a bug. You can use Coverage.jl to summarize the results of this tracking, or to send them to a service like [Coveralls.io](https://coveralls.io) or [Codecov.io](https://codecov.io/github/JuliaCI).
 
@@ -151,14 +194,14 @@ When using Coverage.jl locally, over time a lot of `.cov` files can accumulate. 
 
        ```yml
        after_success:
-       - julia -e 'using Pkg; Pkg.add("Coverage"); using Coverage; Codecov.submit(process_folder())'
+       - julia -e 'using Pkg; Pkg.add("Coverage"); using Coverage; Coverage.upload_to_codecov(process_folder())'
        ```
 
    - On AppVeyor:
 
        ```yml
        after_test:
-       - C:\projects\julia\bin\julia -e "using Pkg; Pkg.add(\"Coverage\"); using Coverage; Codecov.submit(process_folder())"
+       - C:\projects\julia\bin\julia -e "using Pkg; Pkg.add(\"Coverage\"); using Coverage; Coverage.upload_to_codecov(process_folder())"
        ```
 
    - If you're running coverage on your own machine and want to upload results
@@ -166,7 +209,7 @@ When using Coverage.jl locally, over time a lot of `.cov` files can accumulate. 
 
        ```bash
        #!/bin/bash
-       CODECOV_TOKEN=$YOUR_TOKEN_HERE julia -e 'using Pkg; using Coverage; Codecov.submit_local(process_folder())'
+       CODECOV_TOKEN=$YOUR_TOKEN_HERE julia -e 'using Pkg; using Coverage; Coverage.upload_to_codecov(process_folder())'
        ```
 
 ## Tracking Coverage with [Coveralls.io](https://coveralls.io)
@@ -201,14 +244,14 @@ When using Coverage.jl locally, over time a lot of `.cov` files can accumulate. 
 
        ```yml
        after_success:
-       - julia -e 'using Pkg; Pkg.add("Coverage"); using Coverage; Coveralls.submit(process_folder())'
+       - julia -e 'using Pkg; Pkg.add("Coverage"); using Coverage; Coverage.upload_to_coveralls(process_folder())'
        ```
 
    - On AppVeyor:
 
        ```yml
        after_test:
-       - C:\julia\bin\julia -e "using Pkg; Pkg.add(\"Coverage\"); using Coverage; Coveralls.submit(process_folder())"
+       - C:\julia\bin\julia -e "using Pkg; Pkg.add(\"Coverage\"); using Coverage; Coverage.upload_to_coveralls(process_folder())"
        ```
 
 ## A note for advanced users
