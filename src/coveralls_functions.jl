@@ -128,7 +128,7 @@ Returns (brew_cmd, use_local, local_homebrew_dir, local_brew_path).
 function detect_homebrew_status()
     local_homebrew_dir = @get_scratch!("local_homebrew")
     local_brew_path = joinpath(local_homebrew_dir, "bin", "brew")
-    
+
     # Try system Homebrew first
     system_brew_cmd = Sys.which("brew")
     if system_brew_cmd !== nothing
@@ -143,7 +143,7 @@ function detect_homebrew_status()
             @debug "System Homebrew check failed: $e"
         end
     end
-    
+
     @info "Using local Homebrew installation"
     return (local_brew_path, true, local_homebrew_dir, local_brew_path)
 end
@@ -187,7 +187,7 @@ Install a local Homebrew instance.
 """
 function install_local_homebrew(local_homebrew_dir, local_brew_path)
     @info "Installing local Homebrew to: $local_homebrew_dir"
-    
+
     mkpath(local_homebrew_dir)
 
     # Download and extract Homebrew
@@ -195,19 +195,39 @@ function install_local_homebrew(local_homebrew_dir, local_brew_path)
     response = HTTP.get(latest_release_url)
     release_data = JSON.parse(String(response.body))
     tarball_url = release_data["tarball_url"]
-    
+
     tarball_path = joinpath(local_homebrew_dir, "homebrew-latest.tar.gz")
     Downloads.download(tarball_url, tarball_path)
-    
+
     run(`tar -xzf $tarball_path -C $local_homebrew_dir --strip-components=1`)
     rm(tarball_path)
-    
+
     if !isfile(local_brew_path)
         error("Homebrew extraction failed - brew executable not found")
     end
 
-    # Post-install setup
-    run(`$local_brew_path update --force --quiet`)
+    # Post-install setup with better error handling
+    try
+        # Set environment variables for local Homebrew
+        homebrew_env = copy(ENV)
+        homebrew_env["HOMEBREW_NO_AUTO_UPDATE"] = "1"
+        homebrew_env["HOMEBREW_NO_INSTALL_CLEANUP"] = "1"
+        homebrew_env["HOMEBREW_NO_ANALYTICS"] = "1"
+        homebrew_env["HOMEBREW_CACHE"] = joinpath(local_homebrew_dir, "cache")
+        homebrew_env["HOMEBREW_TEMP"] = joinpath(local_homebrew_dir, "temp")
+        homebrew_env["TMPDIR"] = joinpath(local_homebrew_dir, "temp")
+
+        # Create cache and temp directories
+        mkpath(homebrew_env["HOMEBREW_CACHE"])
+        mkpath(homebrew_env["HOMEBREW_TEMP"])
+
+        withenv(homebrew_env) do
+            run(`$local_brew_path update --force --quiet`)
+        end
+    catch e
+        @warn "Homebrew post-install setup failed, but continuing: $e"
+    end
+
     @info "Local Homebrew installed successfully"
 end
 
@@ -220,9 +240,39 @@ function install_coveralls_with_homebrew(brew_cmd, reporter_info, coveralls_path
     homebrew_type = use_local_homebrew ? "local Homebrew" : "system Homebrew"
     @info "Installing Coveralls reporter via $homebrew_type..."
 
+    # Set up environment for local Homebrew
+    homebrew_env = copy(ENV)
+    if use_local_homebrew
+        local_homebrew_dir = dirname(dirname(brew_cmd))  # Get parent of bin directory
+        homebrew_env["HOMEBREW_NO_AUTO_UPDATE"] = "1"
+        homebrew_env["HOMEBREW_NO_INSTALL_CLEANUP"] = "1"
+        homebrew_env["HOMEBREW_NO_ANALYTICS"] = "1"
+        homebrew_env["HOMEBREW_CACHE"] = joinpath(local_homebrew_dir, "cache")
+        homebrew_env["HOMEBREW_TEMP"] = joinpath(local_homebrew_dir, "temp")
+        homebrew_env["TMPDIR"] = joinpath(local_homebrew_dir, "temp")
+        homebrew_env["HOMEBREW_NO_BOTTLE_SOURCE_FALLBACK"] = "1"
+        homebrew_env["HOMEBREW_FORCE_BREWED_CURL"] = "1"
+        homebrew_env["HOMEBREW_NO_ENV_HINTS"] = "1"
+        homebrew_env["HOMEBREW_QUIET"] = "1"
+
+        # Ensure directories exist
+        mkpath(homebrew_env["HOMEBREW_CACHE"])
+        mkpath(homebrew_env["HOMEBREW_TEMP"])
+
+        # Set additional permissions to handle CI environments
+        try
+            chmod(homebrew_env["HOMEBREW_CACHE"], 0o755)
+            chmod(homebrew_env["HOMEBREW_TEMP"], 0o755)
+        catch e
+            @debug "Could not set directory permissions: $e"
+        end
+    end
+
     # Add tap (ignore failures)
     try
-        run(`$brew_cmd tap $(reporter_info.tap)`)
+        withenv(homebrew_env) do
+            run(`$brew_cmd tap $(reporter_info.tap)`)
+        end
     catch e
         @debug "Tap command failed (possibly already exists): $e"
     end
@@ -230,16 +280,25 @@ function install_coveralls_with_homebrew(brew_cmd, reporter_info, coveralls_path
     # Install coveralls
     install_cmd = force ? "reinstall" : "install"
     try
-        run(`$brew_cmd $install_cmd $(reporter_info.package)`)
+        withenv(homebrew_env) do
+            # For local Homebrew, try to install with more permissive settings
+            if use_local_homebrew
+                run(`$brew_cmd $install_cmd $(reporter_info.package) --force-bottle`)
+            else
+                run(`$brew_cmd $install_cmd $(reporter_info.package)`)
+            end
+        end
     catch e
-        @debug "Install command failed (possibly already installed): $e"
+        @error "Install command failed: $e"
+        # Re-throw to let caller handle the error
+        rethrow(e)
     end
 
     # Verify installation
     if !isfile(coveralls_path)
         error("Coveralls installation failed - not found at: $coveralls_path")
     end
-    
+
     @info "Coveralls reporter installed at: $coveralls_path"
     return coveralls_path
 end
@@ -297,7 +356,7 @@ function get_coveralls_executable(; auto_download=true, install_dir=nothing)
     # For macOS, check Homebrew installations
     if platform == :macos
         _, use_local_homebrew, local_homebrew_dir, _ = detect_homebrew_status()
-        
+
         # Check system Homebrew if available
         if !use_local_homebrew
             system_brew_cmd = Sys.which("brew")
@@ -314,7 +373,7 @@ function get_coveralls_executable(; auto_download=true, install_dir=nothing)
                 end
             end
         end
-        
+
         # Check local Homebrew installation
         local_coveralls_path = joinpath(local_homebrew_dir, "bin", "coveralls")
         if isfile(local_coveralls_path)
