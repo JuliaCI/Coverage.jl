@@ -208,20 +208,18 @@ function install_local_homebrew(local_homebrew_dir, local_brew_path)
 
     # Post-install setup with better error handling
     try
-        # Set environment variables for local Homebrew
-        homebrew_env = copy(ENV)
-        homebrew_env["HOMEBREW_NO_AUTO_UPDATE"] = "1"
-        homebrew_env["HOMEBREW_NO_INSTALL_CLEANUP"] = "1"
-        homebrew_env["HOMEBREW_NO_ANALYTICS"] = "1"
-        homebrew_env["HOMEBREW_CACHE"] = joinpath(local_homebrew_dir, "cache")
-        homebrew_env["HOMEBREW_TEMP"] = joinpath(local_homebrew_dir, "temp")
-        homebrew_env["TMPDIR"] = joinpath(local_homebrew_dir, "temp")
-
         # Create cache and temp directories
-        mkpath(homebrew_env["HOMEBREW_CACHE"])
-        mkpath(homebrew_env["HOMEBREW_TEMP"])
+        cache_dir = joinpath(local_homebrew_dir, "cache")
+        temp_dir = joinpath(local_homebrew_dir, "temp")
+        mkpath(cache_dir)
+        mkpath(temp_dir)
 
-        withenv(homebrew_env) do
+        withenv("HOMEBREW_NO_AUTO_UPDATE" => "1",
+                "HOMEBREW_NO_INSTALL_CLEANUP" => "1",
+                "HOMEBREW_NO_ANALYTICS" => "1",
+                "HOMEBREW_CACHE" => cache_dir,
+                "HOMEBREW_TEMP" => temp_dir,
+                "TMPDIR" => temp_dir) do
             run(`$local_brew_path update --force --quiet`)
         end
     catch e
@@ -240,37 +238,43 @@ function install_coveralls_with_homebrew(brew_cmd, reporter_info, coveralls_path
     homebrew_type = use_local_homebrew ? "local Homebrew" : "system Homebrew"
     @info "Installing Coveralls reporter via $homebrew_type..."
 
-    # Set up environment for local Homebrew
-    homebrew_env = copy(ENV)
-    if use_local_homebrew
+    # Set up environment variables for local Homebrew
+    local_env_vars = if use_local_homebrew
         local_homebrew_dir = dirname(dirname(brew_cmd))  # Get parent of bin directory
-        homebrew_env["HOMEBREW_NO_AUTO_UPDATE"] = "1"
-        homebrew_env["HOMEBREW_NO_INSTALL_CLEANUP"] = "1"
-        homebrew_env["HOMEBREW_NO_ANALYTICS"] = "1"
-        homebrew_env["HOMEBREW_CACHE"] = joinpath(local_homebrew_dir, "cache")
-        homebrew_env["HOMEBREW_TEMP"] = joinpath(local_homebrew_dir, "temp")
-        homebrew_env["TMPDIR"] = joinpath(local_homebrew_dir, "temp")
-        homebrew_env["HOMEBREW_NO_BOTTLE_SOURCE_FALLBACK"] = "1"
-        homebrew_env["HOMEBREW_FORCE_BREWED_CURL"] = "1"
-        homebrew_env["HOMEBREW_NO_ENV_HINTS"] = "1"
-        homebrew_env["HOMEBREW_QUIET"] = "1"
+        cache_dir = joinpath(local_homebrew_dir, "cache")
+        temp_dir = joinpath(local_homebrew_dir, "temp")
 
         # Ensure directories exist
-        mkpath(homebrew_env["HOMEBREW_CACHE"])
-        mkpath(homebrew_env["HOMEBREW_TEMP"])
+        mkpath(cache_dir)
+        mkpath(temp_dir)
 
         # Set additional permissions to handle CI environments
         try
-            chmod(homebrew_env["HOMEBREW_CACHE"], 0o755)
-            chmod(homebrew_env["HOMEBREW_TEMP"], 0o755)
+            chmod(cache_dir, 0o755)
+            chmod(temp_dir, 0o755)
         catch e
             @debug "Could not set directory permissions: $e"
         end
+
+        [
+            "HOMEBREW_NO_AUTO_UPDATE" => "1",
+            "HOMEBREW_NO_INSTALL_CLEANUP" => "1",
+            "HOMEBREW_NO_ANALYTICS" => "1",
+            "HOMEBREW_CACHE" => cache_dir,
+            "HOMEBREW_TEMP" => temp_dir,
+            "TMPDIR" => temp_dir,
+            "HOMEBREW_NO_BOTTLE_SOURCE_FALLBACK" => "1",
+            "HOMEBREW_FORCE_BREWED_CURL" => "1",
+            "HOMEBREW_NO_ENV_HINTS" => "1",
+            "HOMEBREW_QUIET" => "1"
+        ]
+    else
+        []
     end
 
     # Add tap (ignore failures)
     try
-        withenv(homebrew_env) do
+        withenv(local_env_vars...) do
             run(`$brew_cmd tap $(reporter_info.tap)`)
         end
     catch e
@@ -280,7 +284,7 @@ function install_coveralls_with_homebrew(brew_cmd, reporter_info, coveralls_path
     # Install coveralls
     install_cmd = force ? "reinstall" : "install"
     try
-        withenv(homebrew_env) do
+        withenv(local_env_vars...) do
             # For local Homebrew, try to install with more permissive settings
             if use_local_homebrew
                 run(`$brew_cmd $install_cmd $(reporter_info.package) --force-bottle`)
