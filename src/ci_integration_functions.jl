@@ -164,8 +164,8 @@ function upload_to_coveralls(fcs::Vector{FileCoverage};
         # Add coverage file
         push!(cmd_args, coverage_file)
 
-        # Set up environment variables
-        env = copy(ENV)
+        # Set up environment variables for withenv
+        env_vars = []
 
         # Add token if provided or available in environment
         upload_token = token
@@ -173,25 +173,25 @@ function upload_to_coveralls(fcs::Vector{FileCoverage};
             upload_token = get(ENV, "COVERALLS_REPO_TOKEN", nothing)
         end
         if upload_token !== nothing
-            env["COVERALLS_REPO_TOKEN"] = upload_token
+            push!(env_vars, "COVERALLS_REPO_TOKEN" => upload_token)
         end
 
         # Set parallel flag if requested
         if parallel === true
-            env["COVERALLS_PARALLEL"] = "true"
+            push!(env_vars, "COVERALLS_PARALLEL" => "true")
         elseif parallel === false
-            env["COVERALLS_PARALLEL"] = "false"
+            push!(env_vars, "COVERALLS_PARALLEL" => "false")
         end
         # If parallel=nothing, let the environment variable take precedence
 
         # Set job flag for distinguishing parallel jobs
         if job_flag !== nothing
-            env["COVERALLS_FLAG_NAME"] = job_flag
+            push!(env_vars, "COVERALLS_FLAG_NAME" => job_flag)
         end
 
         # Set build number for grouping parallel jobs
         if build_num !== nothing
-            env["COVERALLS_SERVICE_NUMBER"] = string(build_num)
+            push!(env_vars, "COVERALLS_SERVICE_NUMBER" => string(build_num))
             @debug "Using explicit build number for Coveralls" build_num=build_num
         elseif haskey(ENV, "COVERALLS_SERVICE_NUMBER")
             @debug "Using environment COVERALLS_SERVICE_NUMBER" service_number=ENV["COVERALLS_SERVICE_NUMBER"]
@@ -200,8 +200,8 @@ function upload_to_coveralls(fcs::Vector{FileCoverage};
         # Set SSL certificate bundle for macOS binaries (fixes SSL verification issues)
         if Sys.isapple()
             # Set the macOS system CA certificate bundle directly
-            env["SSL_CERT_FILE"] = "/etc/ssl/cert.pem"
-            env["SSL_CA_BUNDLE"] = "/etc/ssl/cert.pem"
+            push!(env_vars, "SSL_CERT_FILE" => "/etc/ssl/cert.pem")
+            push!(env_vars, "SSL_CA_BUNDLE" => "/etc/ssl/cert.pem")
             @debug "Using macOS system CA certificate bundle: /etc/ssl/cert.pem"
         end
 
@@ -212,7 +212,9 @@ function upload_to_coveralls(fcs::Vector{FileCoverage};
             return true
         else
             @info "Uploading to Coveralls..."
-            result = run(setenv(Cmd(cmd_args), env); wait=true)
+            result = withenv(env_vars...) do
+                run(Cmd(cmd_args); wait=true)
+            end
             success = result.exitcode == 0
 
             if success
