@@ -815,25 +815,18 @@ withenv(
             # Download/install the coveralls reporter and test basic functionality
             mktempdir() do tmpdir
                 try
-                    # Download/install the reporter (uses Homebrew on macOS, direct download elsewhere)
+                    # Download/install the reporter (direct download for all platforms)
                     exe_path = Coverage.download_coveralls_reporter(; install_dir=tmpdir)
                     @test !isempty(exe_path)  # Should get a valid path
 
-                    # For Homebrew installations, exe_path is the full path to coveralls
-                    # For direct downloads, exe_path is the full path to the binary
-                    if Coverage.detect_platform() == :macos
-                        # On macOS with Homebrew, test the command is available
-                        @test (exe_path == "coveralls" || endswith(exe_path, "/coveralls"))
+                    # Test the downloaded file exists and is executable
+                    @test isfile(exe_path)
+                    if Sys.iswindows()
+                        # On Windows, just check that the file exists and has .exe extension
+                        @test endswith(exe_path, ".exe")
                     else
-                        # On other platforms, test the downloaded file exists and is executable
-                        @test isfile(exe_path)
-                        if Sys.iswindows()
-                            # On Windows, just check that the file exists and has .exe extension
-                            @test endswith(exe_path, ".exe")
-                        else
-                            # On Unix systems, check execute permissions
-                            @test stat(exe_path).mode & 0o111 != 0  # Check execute permissions
-                        end
+                        # On Unix systems (including macOS), check execute permissions
+                        @test stat(exe_path).mode & 0o111 != 0  # Check execute permissions
                     end
 
                     # Test basic command execution (--help should work)

@@ -11,12 +11,14 @@ function get_coveralls_info(platform)
             method = :download
         )
     elseif platform == :macos
+        # Get the latest version dynamically
+        arch = Sys.ARCH == :aarch64 ? "aarch64" : "x86_64"
+        version = get_latest_coveralls_macos_version()
         return (
-            url = nothing,  # Use Homebrew instead
+            url = "https://github.com/vtjnash/coveralls-macos-binaries/releases/latest/download/coveralls-macos-$version-$arch.tar.gz",
             filename = "coveralls",
-            method = :homebrew,
-            tap = "coverallsapp/coveralls",
-            package = "coveralls"
+            method = :download,
+            is_archive = true
         )
     elseif platform == :windows
         return (
@@ -26,6 +28,30 @@ function get_coveralls_info(platform)
         )
     else
         error("Unsupported platform: $platform")
+    end
+end
+
+"""
+    get_latest_coveralls_macos_version()
+
+Get the latest version tag for coveralls-macos-binaries from GitHub API.
+"""
+function get_latest_coveralls_macos_version()
+    try
+        response = HTTP.get("https://api.github.com/repos/vtjnash/coveralls-macos-binaries/releases/latest")
+        release_data = JSON.parse(String(response.body))
+        tag_name = release_data["tag_name"]
+
+        # Extract version from tag name (e.g., "v0.6.15-build.20250827235919" -> "v0.6.15")
+        version_match = match(r"^(v\d+\.\d+\.\d+)", tag_name)
+        if version_match !== nothing
+            return version_match.captures[1]
+        else
+            error("Could not parse version from tag: $tag_name")
+        end
+    catch e
+        @warn "Failed to fetch latest version, falling back to known version: $e"
+        return "v0.6.15"  # Fallback to a known working version
     end
 end
 
@@ -110,207 +136,16 @@ function download_coveralls_reporter(; force=false, install_dir=nothing)
     platform = CoverageUtils.detect_platform()
     reporter_info = get_coveralls_info(platform)
 
-    if reporter_info.method == :homebrew
-        return install_via_homebrew(reporter_info; force=force)
-    elseif reporter_info.method == :download
+    if reporter_info.method == :download
         return install_via_download(reporter_info, platform; force=force, install_dir=install_dir)
     else
         error("Unsupported installation method: $(reporter_info.method)")
     end
 end
-
-"""
-    detect_homebrew_status()
-
-Detect available Homebrew installations and return status information.
-Returns (brew_cmd, use_local, local_homebrew_dir, local_brew_path).
-"""
-function detect_homebrew_status()
-    local_homebrew_dir = @get_scratch!("local_homebrew")
-    local_brew_path = joinpath(local_homebrew_dir, "bin", "brew")
-
-    # Try system Homebrew first
-    system_brew_cmd = Sys.which("brew")
-    if system_brew_cmd !== nothing
-        try
-            # Simple writability test: check if we can write to the brew prefix
-            brew_prefix = chomp(read(`$system_brew_cmd --prefix`, String))
-            if isdir(brew_prefix) && iswritable(brew_prefix)
-                @info "System Homebrew is available and writable"
-                return (system_brew_cmd, false, local_homebrew_dir, local_brew_path)
-            end
-        catch e
-            @debug "System Homebrew check failed: $e"
-        end
-    end
-
-    @info "Using local Homebrew installation"
-    return (local_brew_path, true, local_homebrew_dir, local_brew_path)
-end
-
-"""
-    install_via_homebrew(reporter_info; force=false)
-
-Install Coveralls reporter via Homebrew (macOS).
-First tries system Homebrew, then falls back to local Homebrew if system is locked down.
-"""
-function install_via_homebrew(reporter_info; force=false)
-    brew_cmd, use_local_homebrew, local_homebrew_dir, local_brew_path = detect_homebrew_status()
-
-    # Install local Homebrew if needed
-    if use_local_homebrew && !isfile(local_brew_path)
-        install_local_homebrew(local_homebrew_dir, local_brew_path)
-    end
-
-    # Determine coveralls installation path
-    coveralls_path = if use_local_homebrew
-        joinpath(local_homebrew_dir, "bin", "coveralls")
-    else
-        brew_prefix = chomp(read(`$brew_cmd --prefix`, String))
-        joinpath(brew_prefix, "bin", "coveralls")
-    end
-
-    # Check if already installed
-    if !force && isfile(coveralls_path)
-        @info "Coveralls reporter already installed at: $coveralls_path"
-        return coveralls_path
-    end
-
-    # Install coveralls
-    return install_coveralls_with_homebrew(brew_cmd, reporter_info, coveralls_path, use_local_homebrew, force)
-end
-
-"""
-    install_local_homebrew(local_homebrew_dir, local_brew_path)
-
-Install a local Homebrew instance.
-"""
-function install_local_homebrew(local_homebrew_dir, local_brew_path)
-    @info "Installing local Homebrew to: $local_homebrew_dir"
-
-    mkpath(local_homebrew_dir)
-
-    # Download and extract Homebrew
-    latest_release_url = "https://api.github.com/repos/Homebrew/brew/releases/latest"
-    response = HTTP.get(latest_release_url)
-    release_data = JSON.parse(String(response.body))
-    tarball_url = release_data["tarball_url"]
-
-    tarball_path = joinpath(local_homebrew_dir, "homebrew-latest.tar.gz")
-    Downloads.download(tarball_url, tarball_path)
-
-    run(`tar -xzf $tarball_path -C $local_homebrew_dir --strip-components=1`)
-    rm(tarball_path)
-
-    if !isfile(local_brew_path)
-        error("Homebrew extraction failed - brew executable not found")
-    end
-
-    # Post-install setup with better error handling
-    try
-        # Create cache and temp directories
-        cache_dir = joinpath(local_homebrew_dir, "cache")
-        temp_dir = joinpath(local_homebrew_dir, "temp")
-        mkpath(cache_dir)
-        mkpath(temp_dir)
-
-        withenv("HOMEBREW_NO_AUTO_UPDATE" => "1",
-                "HOMEBREW_NO_INSTALL_CLEANUP" => "1",
-                "HOMEBREW_NO_ANALYTICS" => "1",
-                "HOMEBREW_CACHE" => cache_dir,
-                "HOMEBREW_TEMP" => temp_dir,
-                "TMPDIR" => temp_dir) do
-            run(`$local_brew_path update --force --quiet`)
-        end
-    catch e
-        @warn "Homebrew post-install setup failed, but continuing: $e"
-    end
-
-    @info "Local Homebrew installed successfully"
-end
-
-"""
-    install_coveralls_with_homebrew(brew_cmd, reporter_info, coveralls_path, use_local_homebrew, force=false)
-
-Install coveralls using the specified brew command.
-"""
-function install_coveralls_with_homebrew(brew_cmd, reporter_info, coveralls_path, use_local_homebrew, force=false)
-    homebrew_type = use_local_homebrew ? "local Homebrew" : "system Homebrew"
-    @info "Installing Coveralls reporter via $homebrew_type..."
-
-    # Set up environment variables for local Homebrew
-    local_env_vars = if use_local_homebrew
-        local_homebrew_dir = dirname(dirname(brew_cmd))  # Get parent of bin directory
-        cache_dir = joinpath(local_homebrew_dir, "cache")
-        temp_dir = joinpath(local_homebrew_dir, "temp")
-
-        # Ensure directories exist
-        mkpath(cache_dir)
-        mkpath(temp_dir)
-
-        # Set additional permissions to handle CI environments
-        try
-            chmod(cache_dir, 0o755)
-            chmod(temp_dir, 0o755)
-        catch e
-            @debug "Could not set directory permissions: $e"
-        end
-
-        [
-            "HOMEBREW_NO_AUTO_UPDATE" => "1",
-            "HOMEBREW_NO_INSTALL_CLEANUP" => "1",
-            "HOMEBREW_NO_ANALYTICS" => "1",
-            "HOMEBREW_CACHE" => cache_dir,
-            "HOMEBREW_TEMP" => temp_dir,
-            "TMPDIR" => temp_dir,
-            "HOMEBREW_NO_BOTTLE_SOURCE_FALLBACK" => "1",
-            "HOMEBREW_FORCE_BREWED_CURL" => "1",
-            "HOMEBREW_NO_ENV_HINTS" => "1",
-            "HOMEBREW_QUIET" => "1"
-        ]
-    else
-        []
-    end
-
-    # Add tap (ignore failures)
-    try
-        withenv(local_env_vars...) do
-            run(`$brew_cmd tap $(reporter_info.tap)`)
-        end
-    catch e
-        @debug "Tap command failed (possibly already exists): $e"
-    end
-
-    # Install coveralls
-    install_cmd = force ? "reinstall" : "install"
-    try
-        withenv(local_env_vars...) do
-            # For local Homebrew, try to install with more permissive settings
-            if use_local_homebrew
-                run(`$brew_cmd $install_cmd $(reporter_info.package) --force-bottle`)
-            else
-                run(`$brew_cmd $install_cmd $(reporter_info.package)`)
-            end
-        end
-    catch e
-        @error "Install command failed: $e"
-        # Re-throw to let caller handle the error
-        rethrow(e)
-    end
-
-    # Verify installation
-    if !isfile(coveralls_path)
-        error("Coveralls installation failed - not found at: $coveralls_path")
-    end
-
-    @info "Coveralls reporter installed at: $coveralls_path"
-    return coveralls_path
-end
-
 """
     install_via_download(reporter_info, platform; force=false, install_dir=nothing)
 
-Install Coveralls reporter via direct download (Linux/Windows).
+Install Coveralls reporter via direct download.
 """
 function install_via_download(reporter_info, platform; force=false, install_dir=nothing)
     # Determine installation directory
@@ -336,7 +171,41 @@ function install_via_download(reporter_info, platform; force=false, install_dir=
 
     @info "Downloading Coveralls Universal Coverage Reporter for $platform..."
 
-    return CoverageUtils.download_binary(reporter_info.url, install_dir, reporter_info.filename)
+    # Handle tar.gz archives (for macOS binaries)
+    if haskey(reporter_info, :is_archive) && reporter_info.is_archive
+        # Download archive to temporary location
+        archive_name = basename(reporter_info.url)
+        archive_path = joinpath(install_dir, archive_name)
+
+        try
+            Downloads.download(reporter_info.url, archive_path)
+
+            # Extract directly to the install directory
+            run(`tar -xzf $archive_path -C $install_dir`)
+
+            # The executable should now be in the install directory
+            extracted_exec = joinpath(install_dir, reporter_info.filename)
+            if isfile(extracted_exec)
+                chmod(extracted_exec, 0o755)  # Make executable
+                @info "Coveralls reporter installed at: $extracted_exec"
+
+                # Clean up the archive
+                rm(archive_path)
+
+                return extracted_exec
+            else
+                error("Extracted executable not found at: $extracted_exec")
+            end
+
+        catch e
+            # Clean up on error
+            isfile(archive_path) && rm(archive_path)
+            rethrow(e)
+        end
+    else
+        # Direct binary download (Linux/Windows)
+        return CoverageUtils.download_binary(reporter_info.url, install_dir, reporter_info.filename)
+    end
 end
 
 """
@@ -357,35 +226,6 @@ function get_coveralls_executable(; auto_download=true, install_dir=nothing)
         end
     end
 
-    # For macOS, check Homebrew installations
-    if platform == :macos
-        _, use_local_homebrew, local_homebrew_dir, _ = detect_homebrew_status()
-
-        # Check system Homebrew if available
-        if !use_local_homebrew
-            system_brew_cmd = Sys.which("brew")
-            if system_brew_cmd !== nothing
-                try
-                    brew_prefix = chomp(read(`$system_brew_cmd --prefix`, String))
-                    system_coveralls_path = joinpath(brew_prefix, "bin", "coveralls")
-                    if isfile(system_coveralls_path)
-                        @info "Found Coveralls reporter in system Homebrew: $system_coveralls_path"
-                        return system_coveralls_path
-                    end
-                catch e
-                    @debug "Could not check system Homebrew installation: $e"
-                end
-            end
-        end
-
-        # Check local Homebrew installation
-        local_coveralls_path = joinpath(local_homebrew_dir, "bin", "coveralls")
-        if isfile(local_coveralls_path)
-            @info "Found Coveralls reporter in local Homebrew: $local_coveralls_path"
-            return local_coveralls_path
-        end
-    end
-
     # Check in specified install directory
     if install_dir !== nothing
         local_path = joinpath(install_dir, reporter_info.filename)
@@ -393,6 +233,14 @@ function get_coveralls_executable(; auto_download=true, install_dir=nothing)
             @info "Found Coveralls reporter at: $local_path"
             return local_path
         end
+    end
+
+    # Check default install directory (scratch space)
+    default_install_dir = @get_scratch!("coveralls_reporter")
+    default_path = joinpath(default_install_dir, reporter_info.filename)
+    if isfile(default_path)
+        @info "Found Coveralls reporter at: $default_path"
+        return default_path
     end
 
     # Auto-download if enabled
