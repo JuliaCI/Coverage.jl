@@ -11,11 +11,9 @@ function get_coveralls_info(platform)
             method = :download
         )
     elseif platform == :macos
-        # Get the latest version dynamically
         arch = Sys.ARCH == :aarch64 ? "aarch64" : "x86_64"
-        version = get_latest_coveralls_macos_version()
         return (
-            url = "https://github.com/vtjnash/coveralls-macos-binaries/releases/latest/download/coveralls-macos-$version-$arch.tar.gz",
+            url = "https://github.com/vtjnash/coveralls-macos-binaries/releases/latest/download/coveralls-macos-$arch.tar.gz",
             filename = "coveralls",
             method = :download,
             is_archive = true
@@ -28,30 +26,6 @@ function get_coveralls_info(platform)
         )
     else
         error("Unsupported platform: $platform")
-    end
-end
-
-"""
-    get_latest_coveralls_macos_version()
-
-Get the latest version tag for coveralls-macos-binaries from GitHub API.
-"""
-function get_latest_coveralls_macos_version()
-    try
-        response = HTTP.get("https://api.github.com/repos/vtjnash/coveralls-macos-binaries/releases/latest")
-        release_data = JSON.parse(String(response.body))
-        tag_name = release_data["tag_name"]
-
-        # Extract version from tag name (e.g., "v0.6.15-build.20250827235919" -> "v0.6.15")
-        version_match = match(r"^(v\d+\.\d+\.\d+)", tag_name)
-        if version_match !== nothing
-            return version_match.captures[1]
-        else
-            error("Could not parse version from tag: $tag_name")
-        end
-    catch e
-        @warn "Failed to fetch latest version, falling back to known version: $e"
-        return "v0.6.15"  # Fallback to a known working version
     end
 end
 
