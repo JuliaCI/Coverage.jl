@@ -71,6 +71,20 @@ julia scripts/upload_coverage.jl --dry-run
 
 Most users will want to use [Coverage.jl](https://github.com/JuliaCI/Coverage.jl).
 
+## Binary Sources
+
+Coverage.jl automatically downloads and uses official uploader binaries for different platforms:
+
+- **Codecov**: Official [codecov uploader](https://docs.codecov.com/docs/codecov-uploader) from [codecov/uploader](https://github.com/codecov/uploader) (all platforms)
+
+- **Coveralls**: Platform-specific binaries
+  - **Linux/Windows**: Official [coverallsapp/coverage-reporter](https://github.com/coverallsapp/coverage-reporter) releases
+  - **macOS**: Custom-built binaries from [vtjnash/coveralls-macos-binaries](https://github.com/vtjnash/coveralls-macos-binaries)
+
+The macOS Coveralls binaries are specially built because the official coverage-reporter doesn't provide macOS binaries. These custom builds include embedded OpenSSL dependencies.
+
+All binaries are automatically downloaded to Julia's scratch space when first needed and cached for subsequent use.
+
 ## Working locally
 
 ### Code coverage
