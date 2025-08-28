@@ -197,6 +197,14 @@ function upload_to_coveralls(fcs::Vector{FileCoverage};
             @debug "Using environment COVERALLS_SERVICE_NUMBER" service_number=ENV["COVERALLS_SERVICE_NUMBER"]
         end
 
+        # Set SSL certificate bundle for macOS binaries (fixes SSL verification issues)
+        if Sys.isapple()
+            # Set the macOS system CA certificate bundle directly
+            env["SSL_CERT_FILE"] = "/etc/ssl/cert.pem"
+            env["SSL_CA_BUNDLE"] = "/etc/ssl/cert.pem"
+            @debug "Using macOS system CA certificate bundle: /etc/ssl/cert.pem"
+        end
+
         # Execute command
         if dry_run
             @info "Would execute: $(join(cmd_args, " "))"
