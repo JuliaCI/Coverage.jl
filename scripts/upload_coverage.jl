@@ -55,10 +55,10 @@ function main()
     # Check results
     if service == :both
         success = all(values(result))
-        println(success ? "✅ All uploads successful" : "❌ Some uploads failed")
+        println(success ? "All uploads successful" : "Some uploads failed")
     else
         success = result
-        println(success ? "✅ Upload successful" : "❌ Upload failed")
+        println(success ? "Upload successful" : "Upload failed")
     end
 
     return success ? 0 : 1

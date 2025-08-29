@@ -88,7 +88,7 @@ function main()
         args = parse_commandline()
 
         # Show configuration
-        println("📊 Coveralls Upload Configuration")
+        println("Coveralls Upload Configuration")
         println("Folder: $(args["folder"])")
         println("Format: $(args["format"])")
         println("Token: $(args["token"] !== nothing ? "<provided>" : "from environment")")
@@ -96,15 +96,15 @@ function main()
         println()
 
         # Process coverage
-        println("🔄 Processing coverage data...")
+        println("Processing coverage data...")
         fcs = process_folder(args["folder"])
 
         if isempty(fcs)
-            println("❌ No coverage data found in folder: $(args["folder"])")
+            println("No coverage data found in folder: $(args["folder"])")
             exit(1)
         end
 
-        println("✅ Found coverage data for $(length(fcs)) files")
+        println("Found coverage data for $(length(fcs)) files")
 
         # Upload to Coveralls
         success = upload_to_coveralls(fcs;
@@ -114,15 +114,15 @@ function main()
         )
 
         if success
-            println("🎉 Successfully uploaded to Coveralls!")
+            println("Successfully uploaded to Coveralls!")
             exit(0)
         else
-            println("❌ Failed to upload to Coveralls")
+            println("Failed to upload to Coveralls")
             exit(1)
         end
 
     catch e
-        println("❌ Error: $(sprint(Base.display_error, e))")
+        println("Error: $(sprint(Base.display_error, e))")
         exit(1)
     end
 end

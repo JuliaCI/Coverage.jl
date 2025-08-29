@@ -352,14 +352,14 @@ function finish_coveralls_parallel(; token=nothing, build_num=nothing)
         )
 
         if response.status == 200
-            @info "✅ Successfully signaled parallel job completion to Coveralls"
+            @info "Successfully signaled parallel job completion to Coveralls"
             return true
         else
-            @error "❌ Failed to signal parallel completion" status=response.status
+            @error "Failed to signal parallel completion" status=response.status
             return false
         end
     catch e
-        @error "❌ Error signaling parallel completion to Coveralls" exception=e
+        @error "Error signaling parallel completion to Coveralls" exception=e
         return false
     end
 end

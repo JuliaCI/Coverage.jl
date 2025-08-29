@@ -62,7 +62,7 @@ function main_with_error_handling(main_func)
     try
         return main_func()
     catch e
-        println("❌ Error: $(sprint(Base.display_error, e))")
+        println("Error: $(sprint(Base.display_error, e))")
         return 1
     end
 end

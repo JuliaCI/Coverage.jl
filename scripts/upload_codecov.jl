@@ -44,7 +44,7 @@ function main()
     fcs = process_folder(folder)
 
     if isempty(fcs)
-        println("❌ No coverage data found in folder: $folder")
+        println("No coverage data found in folder: $folder")
         return 1
     end
 

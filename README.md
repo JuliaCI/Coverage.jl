@@ -9,10 +9,10 @@ Coverage.jl
 
 **Coverage.jl has been modernized** to work with the official uploaders from Codecov and Coveralls.
 The package now provides:
-- 🔄 **Coverage data processing** using CoverageTools.jl
-- 📤 **Export functionality** for official uploaders
-- 🚀 **Automated upload helpers** for CI environments
-- 📋 **Helper scripts** for easy integration
+- **Coverage data processing** using CoverageTools.jl
+- **Export functionality** for official uploaders
+- **Automated upload helpers** for CI environments
+- **Helper scripts** for easy integration
 
 > [!NOTE]
 > **Coverage.jl now uses official uploaders from Codecov and Coveralls** for better reliability and future compatibility. The familiar `Codecov.submit()` and `Coveralls.submit()` functions continue to work seamlessly.

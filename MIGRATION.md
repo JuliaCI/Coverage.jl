@@ -6,15 +6,15 @@ This guide helps you migrate from the deprecated direct upload functionality to 
 
 Coverage.jl has been modernized to work with the official uploaders from Codecov and Coveralls, as both services have deprecated support for 3rd party uploaders.
 
-### Before (Deprecated ❌)
+### Before (Deprecated)
 ```julia
 using Coverage
 fcs = process_folder("src")
-Codecov.submit(fcs)           # ❌ Deprecated
-Coveralls.submit(fcs)         # ❌ Deprecated
+Codecov.submit(fcs)           # Deprecated
+Coveralls.submit(fcs)         # Deprecated
 ```
 
-### After (Modern ✅)
+### After (Modern)
 ```julia
 using Coverage
 fcs = process_folder("src")

@@ -779,13 +779,13 @@ withenv(
 
                         # The fact that it started without immediate crash is good enough
                         @test true  # If we get here, the executable at least started
-                        @info "✅ Codecov uploader executable verified (can start)"
+                        @info "Codecov uploader executable verified (can start)"
                     catch e
                         # If it fails with a specific error message, that's actually good
                         # (means it's running but needs proper args/config)
                         if isa(e, ProcessFailedException) && e.procs[1].exitcode != 127
                             @test true  # Non-127 exit means executable works (127 = not found)
-                            @info "✅ Codecov uploader executable verified (exits with expected error)"
+                            @info "Codecov uploader executable verified (exits with expected error)"
                         else
                             @warn "Codecov uploader may not be functional" exception=e
                             # Don't fail the test - platform issues might prevent execution
@@ -797,7 +797,7 @@ withenv(
                     try
                         output = read(`$exe_path --version`, String)
                         @test !isempty(strip(output))
-                        @info "✅ Codecov uploader version: $(strip(output))"
+                        @info "Codecov uploader version: $(strip(output))"
                     catch e
                         # Version command might not be available, that's ok
                         @debug "Version command not available" exception=e
@@ -842,12 +842,12 @@ withenv(
 
                         # The fact that it started without immediate crash is good enough
                         @test true
-                        @info "✅ Coveralls reporter executable verified (can start)"
+                        @info "Coveralls reporter executable verified (can start)"
                     catch e
                         # If it fails with a specific error message, that's actually good
                         if isa(e, ProcessFailedException) && e.procs[1].exitcode != 127
                             @test true  # Non-127 exit means executable works
-                            @info "✅ Coveralls reporter executable verified (exits with expected error)"
+                            @info "Coveralls reporter executable verified (exits with expected error)"
                         else
                             @warn "Coveralls reporter may not be functional" exception=e
                             @test_skip "Coveralls executable functionality"
@@ -858,13 +858,13 @@ withenv(
                     try
                         output = read(`$exe_path --version`, String)
                         @test !isempty(strip(output))
-                        @info "✅ Coveralls reporter version: $(strip(output))"
+                        @info "Coveralls reporter version: $(strip(output))"
                     catch e
                         # Try alternative version command
                         try
                             output = read(`$exe_path version`, String)
                             @test !isempty(strip(output))
-                            @info "✅ Coveralls reporter version: $(strip(output))"
+                            @info "Coveralls reporter version: $(strip(output))"
                         catch e2
                             @debug "Version command not available" exception=e2
                         end
@@ -908,13 +908,13 @@ withenv(
                                 end
 
                                 @test true
-                                @info "✅ Codecov can process LCOV files"
+                                @info "Codecov can process LCOV files"
                             catch e
                                 if isa(e, ProcessFailedException)
                                     # Check if it's a validation error vs system error
                                     if e.procs[1].exitcode != 127  # Not "command not found"
                                         @test true  # File was processed, error might be network/auth related
-                                        @info "✅ Codecov processed file (expected error without token)"
+                                        @info "Codecov processed file (expected error without token)"
                                     else
                                         @test_skip "Codecov executable system error"
                                     end
@@ -950,7 +950,7 @@ withenv(
                                 end
 
                                 @test true
-                                @info "✅ Coveralls can process LCOV files"
+                                @info "Coveralls can process LCOV files"
                             catch e
                                 # Try without --dry-run flag (might not be supported)
                                 try
@@ -961,7 +961,7 @@ withenv(
                                         kill(result)
                                     end
                                     @test true
-                                    @info "✅ Coveralls executable responds to commands"
+                                    @info "Coveralls executable responds to commands"
                                 catch e2
                                     @test_skip "Coveralls file processing test failed"
                                 end
