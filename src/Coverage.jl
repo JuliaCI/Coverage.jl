@@ -27,9 +27,15 @@ export prepare_for_codecov, prepare_for_coveralls
 export upload_to_codecov, upload_to_coveralls, process_and_upload
 export finish_coveralls_parallel
 
+# Modern export utility functions
+export export_codecov_json, export_coveralls_json
+
+# Utility functions
+export detect_platform
+
 # Internal utilities module
 include("coverage_utils.jl")
-using .CoverageUtils
+using .CoverageUtils: detect_platform
 
 const CovCount = CoverageTools.CovCount
 const FileCoverage = CoverageTools.FileCoverage

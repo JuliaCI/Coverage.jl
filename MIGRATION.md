@@ -106,18 +106,19 @@ Coverage.jl now provides these functions directly:
 
 ## Environment Variables
 
+The modern upload functions use these environment variables:
+
 | Variable | Service | Description |
 |----------|---------|-------------|
 | `CODECOV_TOKEN` | Codecov | Repository token for Codecov |
 | `COVERALLS_REPO_TOKEN` | Coveralls | Repository token for Coveralls |
-| `CODECOV_FLAGS` | Codecov | Comma-separated flags |
-| `CODECOV_NAME` | Codecov | Upload name |
+
+**Note**: Legacy environment variables `CODECOV_FLAGS` and `CODECOV_NAME` are only supported by the deprecated `Codecov.submit()` functions, not the modern `upload_to_codecov()` function. Use function parameters instead.
 
 ## Supported Formats
 
 - **LCOV** (`.info`) - Recommended, supported by both services
 - **JSON** - Native format for each service
-- **XML** - Codecov only (via LCOV conversion)
 
 ## Platform Support
 
