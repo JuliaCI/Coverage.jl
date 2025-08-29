@@ -35,7 +35,7 @@ export detect_platform
 
 # Internal utilities module
 include("coverage_utils.jl")
-using .CoverageUtils: detect_platform
+using .CoverageUtils: detect_platform, create_deprecation_message, ensure_output_dir
 
 const CovCount = CoverageTools.CovCount
 const FileCoverage = CoverageTools.FileCoverage
