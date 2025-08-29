@@ -1,0 +1,84 @@
+# GitHub Actions workflow example for Coverage.jl modernized upload
+name: CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        julia-version: ['1.6', '1', 'nightly']
+        os: [ubuntu-latest, windows-latest, macOS-latest]
+        exclude:
+          # Reduce the number of jobs by excluding some combinations
+          - julia-version: '1.6'
+            os: windows-latest
+          - julia-version: '1.6'
+            os: macOS-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Julia
+      uses: julia-actions/julia-buildpkg@v1
+      with:
+        version: ${{ matrix.julia-version }}
+
+    - name: Run tests with coverage
+      uses: julia-actions/julia-runtest@v1
+      with:
+        coverage: true
+
+    # Option 1: Use Coverage.jl with official uploaders (recommended)
+    - name: Process and upload coverage with Coverage.jl
+      if: matrix.julia-version == '1' && matrix.os == 'ubuntu-latest'
+      run: |
+        julia -e '
+          using Pkg; Pkg.add("Coverage")
+          using Coverage
+          process_and_upload(service=:both, folder="src")
+        '
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
+
+    # Option 2: Use Coverage.jl to prepare LCOV, then official uploaders directly
+    # - name: Process coverage to LCOV
+    #   if: matrix.julia-version == '1' && matrix.os == 'ubuntu-latest'
+    #   run: |
+    #     julia -e '
+    #       using Pkg; Pkg.add("Coverage")
+    #       using Coverage, Coverage.LCOV
+    #       coverage = process_folder("src")
+    #       LCOV.writefile("coverage.info", coverage)
+    #     '
+    #
+    # - name: Upload to Codecov
+    #   if: matrix.julia-version == '1' && matrix.os == 'ubuntu-latest'
+    #   uses: codecov/codecov-action@v3
+    #   with:
+    #     files: ./coverage.info
+    #     token: ${{ secrets.CODECOV_TOKEN }}
+    #     flags: julia
+    #
+    # - name: Upload to Coveralls
+    #   if: matrix.julia-version == '1' && matrix.os == 'ubuntu-latest'
+    #   uses: coverallsapp/github-action@v2
+    #   with:
+    #     files: ./coverage.info
+    #     github-token: ${{ secrets.GITHUB_TOKEN }}
+
+    # Option 3: Use the helper script
+    # - name: Upload coverage using script
+    #   if: matrix.julia-version == '1' && matrix.os == 'ubuntu-latest'
+    #   run: |
+    #     curl -O https://raw.githubusercontent.com/JuliaCI/Coverage.jl/master/scripts/upload_coverage.jl
+    #     julia upload_coverage.jl --service both --folder src
+    #   env:
+    #     CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+    #     COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
