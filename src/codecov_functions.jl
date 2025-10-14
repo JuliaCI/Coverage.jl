@@ -40,7 +40,7 @@ function export_codecov_json(fcs::Vector{FileCoverage}, output_file="coverage.js
     codecov_data = to_codecov_json(fcs)
 
     open(output_file, "w") do io
-        JSON.print(io, codecov_data)
+        JSON.json(io, codecov_data)
     end
 
     @info "Codecov JSON exported to: $output_file"

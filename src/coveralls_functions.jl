@@ -69,7 +69,7 @@ function export_coveralls_json(fcs::Vector{FileCoverage}, output_file="coveralls
     end
 
     open(output_file, "w") do io
-        JSON.print(io, coveralls_data)
+        JSON.json(io, coveralls_data)
     end
 
     @info "Coveralls JSON exported to: $output_file"
