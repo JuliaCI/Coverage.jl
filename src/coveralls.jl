@@ -121,7 +121,7 @@ function prepare_request(fcs::Vector{FileCoverage}, local_env::Bool, git_info=qu
         data["service_name"] = "github"
         data["git"] = parse_git_info(git_info)
 
-        event_path = open(JSON.Parser.parse, ENV["GITHUB_EVENT_PATH"])
+        event_path = open(JSON.parse, ENV["GITHUB_EVENT_PATH"])
         github_pr_info = get(event_path, "pull_request", Dict())
         github_pr = get(github_pr_info, "number", "")
         github_pr::Union{AbstractString, Integer}

@@ -163,7 +163,7 @@ function add_ci_to_kwargs(kwargs::Dict)
             build        = ENV["BUILD_BUILDID"],
         )
     elseif haskey(ENV, "GITHUB_ACTION") # GitHub Actions
-        event_path = open(JSON.Parser.parse, ENV["GITHUB_EVENT_PATH"])
+        event_path = open(JSON.parse, ENV["GITHUB_EVENT_PATH"])
         ref = ENV["GITHUB_REF"]
         if startswith(ref, "refs/heads/")
             branch = ref[12:end]
@@ -308,7 +308,7 @@ end
 function upload_to_s3(; s3url, fcs)
     startswith(s3url, "https://") || error("Invalid codecov response: $s3url")
     # Upload to S3
-    request = HTTP.put(s3url; body=json(to_json(fcs)),
+    request = HTTP.put(s3url; body=JSON.json(to_json(fcs)),
                        header=Dict("Content-Type" => "application/json",
                                    "x-amz-storage-class" => "REDUCED_REDUNDANCY"))
     @debug "Result of submission:" * mask_token(String(request))
