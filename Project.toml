@@ -23,7 +23,7 @@ Downloads = "1.6.0"
 HTTP = "0.8, 0.9, 1"
 JSON = "1"
 MbedTLS = "0.6, 0.7, 1"
-SHA = "0.7.0"
+SHA = "0.7.0, 1"
 Scratch = "1"
 julia = "1"
 
