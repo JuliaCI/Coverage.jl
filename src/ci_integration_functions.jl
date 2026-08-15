@@ -313,6 +313,10 @@ This should be called once after all parallel upload_to_coveralls() calls are co
 - `token`: Coveralls repo token (defaults to COVERALLS_REPO_TOKEN environment variable)
 - `build_num`: Build number for the parallel jobs (overrides COVERALLS_SERVICE_NUMBER environment variable)
 
+The Coveralls host defaults to `https://coveralls.io` and can be overridden with
+the `COVERALLS_ENDPOINT` environment variable. An unsuccessful response raises an
+error so callers can retry the request.
+
 Call this from a separate CI job that runs after all parallel coverage jobs finish.
 """
 function finish_coveralls_parallel(; token=nothing, build_num=nothing)
@@ -321,9 +325,10 @@ function finish_coveralls_parallel(; token=nothing, build_num=nothing)
     if upload_token === nothing
         upload_token = get(ENV, "COVERALLS_REPO_TOKEN", nothing)
     end
-    if upload_token === nothing
+    if upload_token === nothing || upload_token == ""
         error("Coveralls token required for parallel completion. Set COVERALLS_REPO_TOKEN environment variable or pass token parameter.")
     end
+    upload_token = string(upload_token)
 
     # Prepare the completion webhook payload
     payload_data = Dict("status" => "done")
@@ -337,29 +342,48 @@ function finish_coveralls_parallel(; token=nothing, build_num=nothing)
         @warn "No build number available for parallel completion - this may cause issues with parallel job grouping"
     end
 
-    payload = Dict(
-        "repo_token" => upload_token,
-        "payload" => payload_data
+    payload = Dict("payload" => payload_data)
+    endpoint = get(ENV, "COVERALLS_ENDPOINT", "")
+    isempty(endpoint) && (endpoint = "https://coveralls.io")
+    webhook_url = "$(rstrip(endpoint, '/'))/webhook"
+    # HTTP errors can include the token-bearing request URL; keep it out of CI logs.
+    scrub_token(message) = replace(
+        replace(message, r"repo_token=[^&\s\"']*" => "repo_token=<redacted>"),
+        upload_token => "<redacted>",
     )
 
     @info "Signaling Coveralls parallel job completion..."
 
-    try
-        response = HTTP.post(
-            "https://coveralls.io/webhook",
+    response = try
+        HTTP.post(
+            webhook_url,
             ["Content-Type" => "application/json"],
-            JSON.json(payload)
+            JSON.json(payload);
+            query=Dict("repo_token" => upload_token),
+            status_exception=false,
         )
-
-        if response.status == 200
-            @info "Successfully signaled parallel job completion to Coveralls"
-            return true
-        else
-            @error "Failed to signal parallel completion" status=response.status
-            return false
-        end
-    catch e
-        @error "Error signaling parallel completion to Coveralls" exception=e
-        return false
+    catch err
+        error("Coveralls parallel completion request failed: " *
+              scrub_token(sprint(showerror, err)))
     end
+
+    response_body = scrub_token(String(response.body))
+    response_data = try
+        JSON.parse(response_body)
+    catch
+        nothing
+    end
+
+    if !(200 <= response.status < 300)
+        message = response_data isa AbstractDict ? get(response_data, "error", response_body) : response_body
+        error("Coveralls parallel completion failed (HTTP $(response.status)): $message")
+    elseif !(response_data isa AbstractDict)
+        error("Coveralls parallel completion returned invalid JSON (HTTP $(response.status)): $response_body")
+    elseif get(response_data, "done", false) !== true
+        message = get(response_data, "error", response_body)
+        error("Coveralls did not complete the parallel build: $message")
+    end
+
+    @info "Successfully completed Coveralls parallel build" url=get(response_data, "url", nothing) jobs=get(response_data, "jobs", nothing)
+    return true
 end

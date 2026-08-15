@@ -4,7 +4,7 @@
 # https://github.com/JuliaCI/Coverage.jl
 #######################################################################
 
-using Coverage, Test, LibGit2, JSON
+using Coverage, Test, LibGit2, JSON, HTTP
 
 import CoverageTools
 
@@ -14,6 +14,7 @@ withenv(
     "DISABLE_AMEND_COVERAGE_FROM_SRC" => nothing,
     "COVERALLS_TOKEN" => "token_name_1",
     "COVERALLS_URL" => nothing,
+    "COVERALLS_ENDPOINT" => nothing,
     "CODECOV_URL" => nothing,
     "CODECOV_URL_PATH" => nothing,
     "CODECOV_TOKEN" => nothing,
@@ -1133,7 +1134,65 @@ withenv(
                 @test success == true
 
                 # Test finish_coveralls_parallel requires token
-                @test_throws ErrorException Coverage.finish_coveralls_parallel()
+                withenv("COVERALLS_REPO_TOKEN" => nothing) do
+                    @test_throws ErrorException Coverage.finish_coveralls_parallel()
+                end
+
+                if isdefined(HTTP, :serve!) && isdefined(HTTP, :port)
+                    requests = HTTP.Request[]
+                    responses = HTTP.Response[
+                        HTTP.Response(200, JSON.json(Dict(
+                            "done" => true,
+                            "url" => "https://coveralls.io/builds/123",
+                            "jobs" => 3,
+                        ))),
+                        HTTP.Response(422, JSON.json(Dict("error" => "No matching build"))),
+                        HTTP.Response(200, JSON.json(Dict("done" => false))),
+                        HTTP.Response(200, "not json"),
+                    ]
+                    server = HTTP.serve!("127.0.0.1", 0; listenany=true) do request
+                        push!(requests, request)
+                        return isempty(responses) ? HTTP.Response(599, "unexpected request") :
+                               popfirst!(responses)
+                    end
+                    port = HTTP.port(server)
+
+                    try
+                        withenv("COVERALLS_ENDPOINT" => "http://127.0.0.1:$port") do
+                            @test Coverage.finish_coveralls_parallel(
+                                token="token with & symbols", build_num=123)
+                            @test_throws ErrorException Coverage.finish_coveralls_parallel(
+                                token="token", build_num=123)
+                            @test_throws ErrorException Coverage.finish_coveralls_parallel(
+                                token="token", build_num=123)
+                            @test_throws ErrorException Coverage.finish_coveralls_parallel(
+                                token="token", build_num=123)
+                        end
+                    finally
+                        close(server)
+                    end
+
+                    @test length(requests) == 4
+                    @test isempty(responses)
+                    request = first(requests)
+                    @test request.target ==
+                        "/webhook?repo_token=token%20with%20%26%20symbols"
+                    @test HTTP.header(request, "Content-Type") == "application/json"
+                    @test JSON.parse(request.body) == Dict(
+                        "payload" => Dict("build_num" => "123", "status" => "done"))
+
+                    secret = "secret token&value"
+                    err = withenv("COVERALLS_ENDPOINT" => "http://127.0.0.1:$port") do
+                        try
+                            Coverage.finish_coveralls_parallel(token=secret, build_num=123)
+                        catch err
+                            err
+                        end
+                    end
+                    @test err isa ErrorException
+                    @test !occursin(secret, sprint(showerror, err))
+                    @test !occursin("secret%20token%26value", sprint(showerror, err))
+                end
 
                 # Test process_and_upload with parallel options
                 mkdir("src")
