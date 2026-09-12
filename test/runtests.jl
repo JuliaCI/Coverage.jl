@@ -1178,7 +1178,7 @@ withenv(
                     @test request.target ==
                         "/webhook?repo_token=token%20with%20%26%20symbols"
                     @test HTTP.header(request, "Content-Type") == "application/json"
-                    @test JSON.parse(request.body) == Dict(
+                    @test JSON.parse(String(request.body)) == Dict(
                         "payload" => Dict("build_num" => "123", "status" => "done"))
 
                     secret = "secret token&value"
