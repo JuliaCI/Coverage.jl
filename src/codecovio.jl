@@ -308,8 +308,10 @@ end
 function upload_to_s3(; s3url, fcs)
     startswith(s3url, "https://") || error("Invalid codecov response: $s3url")
     # Upload to S3
-    request = HTTP.put(s3url; body=JSON.json(to_json(fcs)))
+    request = HTTP.put(s3url; body=JSON.json(to_json(fcs)),
+                       headers=Dict("Content-Type" => "application/json"))
     @debug "Result of submission:" * mask_token(string(request))
+    return request
 end
 
 function construct_uri_string(kwargs::Dict)
