@@ -585,14 +585,20 @@ withenv(
         @test masked == "https://enterprise-codecov-1.com/upload/v4?token=<HIDDEN>&build=t_job_num"
 
         @testset "Run the `Coverage.Codecov.upload_to_s3` function against the \"black hole\" server" begin
+            echo_server = "https://httpbingo.julialang.org/put"
             black_hole_server = get(
                 ENV,
                 "JULIA_COVERAGE_BLACK_HOLE_SERVER_URL_PUT",
-                "https://httpbingo.julialang.org/put",
+                echo_server,
             )
             s3url = black_hole_server
             fcs = Vector{CoverageTools.FileCoverage}(undef, 0)
-            Coverage.Codecov.upload_to_s3(; s3url=s3url, fcs=fcs)
+            response = Coverage.Codecov.upload_to_s3(; s3url=s3url, fcs=fcs)
+            if black_hole_server == echo_server
+                echoed = JSON.parse(String(response.body))["headers"]
+                @test echoed["Content-Type"] == ["application/json"]
+                @test !any(startswith(lowercase(k), "x-amz-") for k in keys(echoed))
+            end
         end
     end
 
