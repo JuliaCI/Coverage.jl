@@ -812,6 +812,18 @@ withenv(
             end
         end
 
+        @testset "Codecov CLI Executable" begin
+            mktempdir() do tmpdir
+                exe_path = Coverage.download_codecov_cli(; install_dir=tmpdir)
+                @test Coverage.file_sha256(exe_path) == Coverage.CODECOV_CLI_SHA256[Coverage.codecov_cli_asset()]
+                @test startswith(read(`$exe_path --version`, String), "codecovcli")
+                # A cached download that does not match is replaced
+                write(exe_path, "corrupt")
+                @test Coverage.download_codecov_cli(; install_dir=tmpdir) == exe_path
+                @test Coverage.file_sha256(exe_path) == Coverage.CODECOV_CLI_SHA256[Coverage.codecov_cli_asset()]
+            end
+        end
+
         @testset "Coveralls Reporter Executable" begin
             # Download/install the coveralls reporter and test basic functionality
             mktempdir() do tmpdir
@@ -1264,6 +1276,32 @@ withenv(
         @test linux_url in ["https://uploader.codecov.io/latest/linux/codecov", "https://uploader.codecov.io/latest/aarch64/codecov"]
         @test Coverage.get_codecov_url(:windows) == "https://uploader.codecov.io/latest/windows/codecov.exe"
         @test_throws ErrorException Coverage.get_codecov_url(:unsupported)
+
+        @test haskey(Coverage.CODECOV_CLI_SHA256, Coverage.codecov_cli_asset())
+        @test Coverage.codecov_cli_args("codecov", "c.info"; token="t", flags=["a", "b"],
+                                        name="n", build_id=7, branch="o:b") ==
+            ["codecov", "upload-coverage", "--file", "c.info", "--disable-search", "--plugin", "noop",
+             "--fail-on-error", "--token", "t", "--flag", "a", "--flag", "b", "--name", "n",
+             "--build", "7", "--branch", "o:b"]
+    end
+
+    @testset "Codecov unprotected branch" begin
+        unprotected = Coverage.codecov_unprotected_branch
+        mktempdir() do tmpdir
+            event = joinpath(tmpdir, "event.json")
+            write(event, JSON.json(Dict("pull_request" => Dict("head" => Dict("label" => "someone:fix")))))
+            gha = Dict("GITHUB_ACTIONS" => "true", "GITHUB_EVENT_PATH" => event)
+            @test unprotected(merge(gha, Dict("GITHUB_EVENT_NAME" => "pull_request"))) == "someone:fix"
+            @test unprotected(merge(gha, Dict("GITHUB_EVENT_NAME" => "pull_request_target"))) == "someone:fix"
+            @test unprotected(merge(gha, Dict("GITHUB_EVENT_NAME" => "push"))) === nothing
+        end
+        bk = Dict("BUILDKITE" => "true", "BUILDKITE_BRANCH" => "fix",
+                  "BUILDKITE_PULL_REQUEST_REPO" => "git://github.com/someone/julia.git")
+        @test unprotected(merge(bk, Dict("BUILDKITE_PULL_REQUEST" => "12"))) == "someone:fix"
+        @test unprotected(merge(bk, Dict("BUILDKITE_PULL_REQUEST" => "12",
+                                         "BUILDKITE_BRANCH" => "other:fix"))) == "other:fix"
+        @test unprotected(merge(bk, Dict("BUILDKITE_PULL_REQUEST" => "false"))) === nothing
+        @test unprotected(Dict{String,String}()) === nothing
     end
 
     @testset "New Module Exports" begin
