@@ -3,7 +3,11 @@
 """
     upload_to_codecov(fcs::Vector{FileCoverage}; format=:lcov, flags=nothing, name=nothing, token=nothing, build_id=nothing, dry_run=false, cleanup=true)
 
-Process coverage data and upload to Codecov using the official uploader.
+Process coverage data and upload to Codecov using the official Codecov CLI.
+
+Without a token, pull request builds on GitHub Actions and Buildkite upload with the CLI
+under a branch named `owner:branch`, which Codecov accepts for public repositories. Other
+uploads without a token use the legacy Codecov uploader, as before.
 
 # Arguments
 - `fcs`: Vector of FileCoverage objects containing coverage data
@@ -39,52 +43,46 @@ function upload_to_codecov(fcs::Vector{FileCoverage};
     coverage_file = prepare_for_codecov(fcs; format=format)
 
     try
-        # Get codecov executable
-        codecov_exe = get_codecov_executable()
-
-        # Build command arguments
-        cmd_args = [codecov_exe]
-
-        # Add coverage file
-        if format == :lcov
-            push!(cmd_args, "-f", coverage_file)
-        elseif format == :json
-            push!(cmd_args, "-f", coverage_file)
-        end
-
         # Add token if provided or available in environment
         upload_token = token
         if upload_token === nothing
             upload_token = get(ENV, "CODECOV_TOKEN", nothing)
         end
-        if upload_token !== nothing
-            push!(cmd_args, "-t", upload_token)
+        # GitHub Actions gives an unset secret as an empty string.
+        if upload_token !== nothing && isempty(upload_token)
+            upload_token = nothing
         end
+        flag_list = flags === nothing ? String[] : flags isa AbstractString ? [flags] : flags
 
-        # Add flags if provided
-        if flags !== nothing
-            flag_list = flags isa String ? [flags] : flags
+        # Without a token, Codecov takes uploads from its CLI only for pull request
+        # branches. The legacy uploader stays for the other tokenless uploads, which
+        # Codecov's legacy endpoint accepts from some CI services.
+        branch = upload_token === nothing ? codecov_unprotected_branch() : nothing
+        use_cli = upload_token !== nothing || branch !== nothing
+        codecov_exe = try
+            use_cli ? get_codecov_cli_executable() : get_codecov_executable()
+        catch e
+            @error "Failed to get the Codecov uploader" exception=e
+            return false
+        end
+        if use_cli
+            cmd_args = codecov_cli_args(codecov_exe, coverage_file;
+                token=upload_token, flags=flag_list, name=name, build_id=build_id, branch=branch)
+        else
+            cmd_args = [codecov_exe, "-f", coverage_file]
             for flag in flag_list
                 push!(cmd_args, "-F", flag)
             end
+            name !== nothing && push!(cmd_args, "-n", name)
+            build_id !== nothing && push!(cmd_args, "-b", string(build_id))
+            # Exit with non-zero on failure (instead of default exit code 0)
+            push!(cmd_args, "-Z")
         end
-
-        # Add name if provided
-        if name !== nothing
-            push!(cmd_args, "-n", name)
-        end
-
-        # Add build identifier for parallel job grouping
-        if build_id !== nothing
-            push!(cmd_args, "-b", string(build_id))
-        end
-
-        # Add flag to exit with non-zero on failure (instead of default exit code 0)
-        push!(cmd_args, "-Z")
 
         # Execute command
         if dry_run
-            @info "Would execute: $(join(cmd_args, " "))"
+            shown = upload_token === nothing ? cmd_args : replace(cmd_args, upload_token => "<token>")
+            @info "Would execute: $(join(shown, " "))"
             return true
         else
             @info "Uploading to Codecov..."
@@ -111,6 +109,22 @@ function upload_to_codecov(fcs::Vector{FileCoverage};
             @debug "Cleaned up temporary file: $coverage_file"
         end
     end
+end
+
+# The Codecov CLI command that uploads exactly `coverage_file`, as the legacy uploader did:
+# no search for other reports and no gcov run.
+function codecov_cli_args(codecov_exe, coverage_file; token=nothing, flags=String[],
+                          name=nothing, build_id=nothing, branch=nothing)
+    cmd_args = [codecov_exe, "upload-coverage", "--file", coverage_file,
+                "--disable-search", "--plugin", "noop", "--fail-on-error"]
+    token !== nothing && push!(cmd_args, "--token", token)
+    for flag in flags
+        push!(cmd_args, "--flag", flag)
+    end
+    name !== nothing && push!(cmd_args, "--name", name)
+    build_id !== nothing && push!(cmd_args, "--build", string(build_id))
+    branch !== nothing && push!(cmd_args, "--branch", branch)
+    return cmd_args
 end
 
 """

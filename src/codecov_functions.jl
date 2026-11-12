@@ -142,3 +142,125 @@ function get_codecov_executable(; auto_download=true, install_dir=nothing)
         error("Codecov uploader not found. Set auto_download=true or install manually.")
     end
 end
+
+# The Codecov CLI is pinned so that every download is checked against a known SHA-256.
+const CODECOV_CLI_VERSION = "v11.3.2"
+const CODECOV_CLI_SHA256 = Dict(
+    "codecovcli_linux" => "8e1bfb71661378530f6ea21e82b414095899e565cbb4cf555c613064be17b973",
+    "codecovcli_linux_arm64" => "a4b71cac685742e272e7cfd4a390cafc3736f57ebc3cf7ba2e24010f19c7f23f",
+    "codecovcli_alpine_x86_64" => "8ad26ddd1e506eef499b4ef845b8039063835950141a77e53ed95ed7a063a990",
+    "codecovcli_alpine_arm64" => "01cfbf0998f0335475da48b43edae2d391f9cf975f64f9b2212c17be6471657f",
+    "codecovcli_macos" => "c7957a4c7a0f80eee58f53cd8ec7ec6cbdacffdbabb427bdfc2ce2a23f794164",
+    "codecovcli_windows.exe" => "0ed5e32ac608d32e75d20ecfcb0b4a533a038ca3344285e715677bd91ae9a5f4",
+)
+
+"""
+    codecov_cli_asset()
+
+The name of the Codecov CLI release asset for the current platform.
+"""
+function codecov_cli_asset()
+    platform = CoverageUtils.detect_platform()
+    platform == :windows && return "codecovcli_windows.exe"
+    # The macOS build is universal.
+    platform == :macos && return "codecovcli_macos"
+    # 32-bit Julia on a 64-bit host runs the 64-bit build, as it did the legacy uploader.
+    if Sys.ARCH in (:x86_64, :i686)
+        return occursin("musl", Sys.MACHINE) ? "codecovcli_alpine_x86_64" : "codecovcli_linux"
+    elseif Sys.ARCH == :aarch64
+        return occursin("musl", Sys.MACHINE) ? "codecovcli_alpine_arm64" : "codecovcli_linux_arm64"
+    end
+    error("The Codecov CLI has no build for $(Sys.MACHINE)")
+end
+
+file_sha256(path) = bytes2hex(open(SHA.sha256, path))
+
+"""
+    download_codecov_cli(; force=false, install_dir=nothing)
+
+Download the pinned Codecov CLI for the current platform and check its SHA-256.
+"""
+function download_codecov_cli(; force=false, install_dir=nothing)
+    asset = codecov_cli_asset()
+    expected = CODECOV_CLI_SHA256[asset]
+    install_dir = something(install_dir, @get_scratch!("codecov_cli"))
+    mkpath(install_dir)
+    exec_path = joinpath(install_dir, "codecov-$(CODECOV_CLI_VERSION)" * (Sys.iswindows() ? ".exe" : ""))
+    if !force && isfile(exec_path) && file_sha256(exec_path) == expected
+        @info "Codecov CLI already exists at: $exec_path"
+        return exec_path
+    end
+
+    url = "https://github.com/codecov/codecov-cli/releases/download/$(CODECOV_CLI_VERSION)/$(asset)"
+    @info "Downloading Codecov CLI $(CODECOV_CLI_VERSION) from: $url"
+    tmp_path = tempname(install_dir)
+    try
+        Downloads.download(url, tmp_path)
+        digest = file_sha256(tmp_path)
+        if digest != expected
+            error("The Codecov CLI download has SHA-256 $digest, expected $expected")
+        end
+        chmod(tmp_path, 0o755)
+        mv(tmp_path, exec_path; force=true)
+    finally
+        rm(tmp_path; force=true)
+    end
+    return exec_path
+end
+
+"""
+    get_codecov_cli_executable(; auto_download=true, install_dir=nothing)
+
+Get the path to the Codecov CLI, using a `codecov` in PATH if it is the CLI, or downloading it.
+"""
+function get_codecov_cli_executable(; auto_download=true, install_dir=nothing)
+    codecov_path = Sys.which(Sys.iswindows() ? "codecov.exe" : "codecov")
+    if codecov_path !== nothing
+        # A `codecov` in PATH may be the legacy uploader, which takes other arguments.
+        version = try
+            read(`$codecov_path --version`, String)
+        catch
+            ""
+        end
+        if startswith(version, "codecovcli")
+            @info "Found Codecov CLI in PATH: $codecov_path"
+            return codecov_path
+        end
+    end
+    if auto_download
+        return download_codecov_cli(; install_dir=install_dir)
+    else
+        error("Codecov CLI not found. Set auto_download=true or install it in PATH.")
+    end
+end
+
+"""
+    codecov_unprotected_branch(env=ENV)
+
+The branch name, in the form `owner:branch`, of a pull request build on GitHub Actions or
+Buildkite, or `nothing` outside one. Codecov takes an upload without a token for such a branch.
+"""
+function codecov_unprotected_branch(env=ENV)
+    if get(env, "GITHUB_ACTIONS", "") == "true" &&
+            startswith(get(env, "GITHUB_EVENT_NAME", ""), "pull_request")
+        event_path = get(env, "GITHUB_EVENT_PATH", "")
+        isfile(event_path) || return nothing
+        event = JSON.parsefile(event_path)
+        pull_request = get(event, "pull_request", nothing)
+        pull_request isa AbstractDict || return nothing
+        head = get(pull_request, "head", nothing)
+        head isa AbstractDict || return nothing
+        label = get(head, "label", nothing)
+        return label isa AbstractString && occursin(':', label) ? String(label) : nothing
+    elseif get(env, "BUILDKITE", "") == "true" &&
+            get(env, "BUILDKITE_PULL_REQUEST", "false") ∉ ("", "false")
+        branch = get(env, "BUILDKITE_BRANCH", "")
+        isempty(branch) && return nothing
+        # Buildkite can already prefix the branches of forks with their owner.
+        occursin(':', branch) && return branch
+        m = match(r"github\.com[/:]([^/]+)/", get(env, "BUILDKITE_PULL_REQUEST_REPO", ""))
+        m === nothing && return nothing
+        return "$(m[1]):$(branch)"
+    end
+    return nothing
+end

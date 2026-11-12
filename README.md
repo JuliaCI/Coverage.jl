@@ -75,7 +75,7 @@ Most users will want to use [Coverage.jl](https://github.com/JuliaCI/Coverage.jl
 
 Coverage.jl automatically downloads and uses official uploader binaries for different platforms:
 
-- **Codecov**: Official [codecov uploader](https://docs.codecov.com/docs/codecov-uploader) from [codecov/uploader](https://github.com/codecov/uploader) (all platforms)
+- **Codecov**: Official [Codecov CLI](https://docs.codecov.com/docs/the-codecov-cli) from [codecov/codecov-cli](https://github.com/codecov/codecov-cli) releases (all platforms), pinned and checked against its SHA-256. Pull request builds on GitHub Actions and Buildkite can upload without a token. Other uploads without a token still use the legacy [codecov uploader](https://github.com/codecov/uploader).
 
 - **Coveralls**: Platform-specific binaries
   - **Linux/Windows**: Official [coverallsapp/coverage-reporter](https://github.com/coverallsapp/coverage-reporter) releases
