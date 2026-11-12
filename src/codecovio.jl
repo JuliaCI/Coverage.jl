@@ -297,7 +297,7 @@ function submit_generic(fcs::Vector{FileCoverage}, kwargs::Dict)
         # Tell Codecov we have an upload for them
         response = HTTP.post(uri_str; headers=Dict("Accept" => "text/plain"))
         # Get the temporary URL to use for uploading to S3
-        repr = String(response)
+        repr = string(response)
         s3url = get(split(String(response.body), '\n'), 2, "")
         repr = chomp(replace(repr, s3url => ""))
         @debug "Result of submission:" * repr
@@ -308,10 +308,8 @@ end
 function upload_to_s3(; s3url, fcs)
     startswith(s3url, "https://") || error("Invalid codecov response: $s3url")
     # Upload to S3
-    request = HTTP.put(s3url; body=JSON.json(to_json(fcs)),
-                       header=Dict("Content-Type" => "application/json",
-                                   "x-amz-storage-class" => "REDUCED_REDUNDANCY"))
-    @debug "Result of submission:" * mask_token(String(request))
+    request = HTTP.put(s3url; body=JSON.json(to_json(fcs)))
+    @debug "Result of submission:" * mask_token(string(request))
 end
 
 function construct_uri_string(kwargs::Dict)
